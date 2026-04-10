@@ -1,0 +1,143 @@
+.panel {
+  margin-top: 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-surface) 84%, transparent);
+  padding: 0.85rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.header h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.statusOn,
+.statusOff {
+  border-radius: 999px;
+  padding: 0.18rem 0.52rem;
+  font-size: 0.74rem;
+  border: 1px solid var(--color-border);
+}
+
+.statusOn {
+  background: color-mix(in srgb, var(--color-success) 24%, transparent);
+  color: color-mix(in srgb, var(--color-success) 84%, white 16%);
+}
+
+.statusOff {
+  color: var(--color-text-soft);
+}
+
+.feedbackOk,
+.feedbackError {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+}
+
+.feedbackOk {
+  color: var(--color-success);
+}
+
+.feedbackError {
+  color: var(--color-danger);
+}
+
+.singleActionForm {
+  margin-top: 0.7rem;
+}
+
+.primaryAction,
+.secondaryAction,
+.ghostAction,
+.dangerAction,
+.linkButton {
+  border-radius: 10px;
+  padding: 0.56rem 0.8rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primaryAction {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.secondaryAction {
+  margin-top: 0.62rem;
+  background: color-mix(in srgb, var(--color-secondary) 16%, var(--color-surface));
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.progressForm {
+  margin-top: 0.68rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.56rem;
+}
+
+.field span {
+  font-size: 0.78rem;
+  color: var(--color-text-soft);
+}
+
+.field select,
+.field input {
+  width: 100%;
+}
+
+.field select {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: 0.5rem 0.62rem;
+}
+
+.quickActions {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.46rem;
+}
+
+.ghostAction {
+  background: color-mix(in srgb, var(--color-surface-soft) 85%, transparent);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.dangerAction {
+  background: color-mix(in srgb, var(--color-danger) 12%, var(--color-surface));
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
+.authNotice p {
+  margin: 0;
+  color: var(--color-text-soft);
+  line-height: 1.45;
+}
+
+.linkButton {
+  margin-top: 0.66rem;
+  background: color-mix(in srgb, var(--color-secondary) 14%, var(--color-surface));
+  color: var(--color-secondary);
+  border-color: var(--color-border);
+}

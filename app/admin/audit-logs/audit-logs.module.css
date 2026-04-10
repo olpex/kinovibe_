@@ -1,0 +1,320 @@
+.page {
+  width: min(1280px, 100% - 2rem);
+  margin: 0 auto;
+  padding: 1.25rem 0 2rem;
+}
+
+.topBar {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 0.75rem;
+  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--color-bg) 78%, transparent);
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.linkPill,
+.linkPillAlt {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: 0.52rem 0.72rem;
+  text-decoration: none;
+  font: inherit;
+}
+
+.linkPillAlt {
+  cursor: pointer;
+}
+
+.headerCard {
+  margin-top: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  padding: 0.9rem;
+}
+
+.headerCard h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+}
+
+.headerCard p {
+  margin: 0.45rem 0 0;
+  color: var(--color-text-soft);
+}
+
+.headerActions {
+  margin-top: 0.65rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.exportLink {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-secondary) 14%, var(--color-surface));
+  color: var(--color-secondary);
+  text-decoration: none;
+  padding: 0.5rem 0.72rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.retentionCard {
+  margin-top: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  padding: 0.8rem;
+}
+
+.retentionCard h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.02rem;
+}
+
+.retentionCard p {
+  margin: 0.38rem 0 0;
+  color: var(--color-text-soft);
+}
+
+.retentionSuccess,
+.retentionError {
+  margin-top: 0.52rem !important;
+  font-size: 0.82rem;
+}
+
+.retentionSuccess {
+  color: var(--color-success) !important;
+}
+
+.retentionError {
+  color: var(--color-danger) !important;
+}
+
+.retentionForm {
+  margin-top: 0.62rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.retentionForm label {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.retentionForm span {
+  color: var(--color-text-soft);
+  font-size: 0.78rem;
+}
+
+.retentionForm input {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: 0.5rem 0.62rem;
+  min-width: 130px;
+}
+
+.retentionForm button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-danger) 80%, #fff 20%);
+  color: #fff;
+  padding: 0.58rem 0.78rem;
+  cursor: pointer;
+}
+
+.retentionForm button:disabled {
+  opacity: 0.66;
+  cursor: not-allowed;
+}
+
+.filters {
+  margin-top: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  padding: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.filters label {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.filters span {
+  color: var(--color-text-soft);
+  font-size: 0.78rem;
+}
+
+.filters input {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: 0.52rem 0.62rem;
+}
+
+.filters button {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.62rem 0.86rem;
+  cursor: pointer;
+}
+
+.tableWrap {
+  margin-top: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.56rem 0.62rem;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.82rem;
+}
+
+.table th {
+  background: color-mix(in srgb, var(--color-surface-soft) 75%, transparent);
+  color: var(--color-text-soft);
+  position: sticky;
+  top: 0;
+}
+
+.table td small {
+  display: block;
+  color: var(--color-text-soft);
+  margin-top: 0.18rem;
+}
+
+.table td pre {
+  margin: 0;
+  max-width: 340px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.73rem;
+  color: var(--color-text-soft);
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+}
+
+.emptyCell {
+  text-align: center !important;
+  color: var(--color-text-soft);
+  padding: 1rem !important;
+}
+
+.notice {
+  margin-top: 0.85rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  padding: 1rem;
+}
+
+.notice h1,
+.notice h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+}
+
+.notice p {
+  margin: 0.45rem 0 0;
+  color: var(--color-text-soft);
+}
+
+.pagination {
+  margin-top: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+}
+
+.pagination a {
+  color: var(--color-secondary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pagination p {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.84rem;
+}
+
+.disabled {
+  color: var(--color-text-soft);
+  opacity: 0.6;
+}
+
+@media (max-width: 980px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    width: min(1280px, 100% - 1.25rem);
+  }
+
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+}

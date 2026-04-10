@@ -1,0 +1,201 @@
+.page {
+  width: min(1120px, 100% - 2rem);
+  margin: 0 auto;
+  padding: 1.25rem 0 2rem;
+}
+
+.topBar {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 0.75rem;
+  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--color-bg) 78%, transparent);
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.linkPill,
+.linkPillAlt {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: 0.52rem 0.72rem;
+  text-decoration: none;
+  font: inherit;
+}
+
+.linkPillAlt {
+  cursor: pointer;
+}
+
+.summary {
+  margin-top: 1rem;
+}
+
+.summary h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+}
+
+.summary p {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-soft);
+}
+
+.emptyCard {
+  margin-top: 1rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  padding: 1rem;
+}
+
+.emptyCard h1,
+.emptyCard h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.06rem;
+}
+
+.emptyCard p {
+  margin: 0.45rem 0 0;
+  color: var(--color-text-soft);
+}
+
+.ctaLink {
+  margin-top: 0.65rem;
+  display: inline-block;
+  color: var(--color-secondary);
+  font-weight: 600;
+}
+
+.groupSection {
+  margin-top: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  padding: 0.8rem;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.groupHeader h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.04rem;
+}
+
+.groupHeader span {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--color-text-soft);
+  padding: 0.16rem 0.45rem;
+}
+
+.emptyGroup {
+  margin-top: 0.65rem;
+  color: var(--color-text-soft);
+  font-size: 0.88rem;
+}
+
+.grid {
+  margin-top: 0.72rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.72rem;
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  text-decoration: none;
+}
+
+.poster {
+  height: 240px;
+}
+
+.cardBody {
+  padding: 0.7rem;
+}
+
+.cardBody h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-family: var(--font-heading);
+}
+
+.cardBody p {
+  margin: 0.3rem 0 0;
+  color: var(--color-text-soft);
+  font-size: 0.82rem;
+}
+
+.metaRow {
+  margin-top: 0.48rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.77rem;
+}
+
+.metaRow span {
+  color: var(--color-success);
+  font-family: var(--font-mono);
+}
+
+.metaRow time {
+  color: var(--color-text-soft);
+}
+
+.progressTrack {
+  margin-top: 0.5rem;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface-soft) 82%, #000 18%);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-secondary), var(--color-primary));
+}
+
+@media (max-width: 760px) {
+  .page {
+    width: min(1120px, 100% - 1.25rem);
+  }
+
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

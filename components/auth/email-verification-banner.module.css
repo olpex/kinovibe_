@@ -1,0 +1,36 @@
+.banner {
+  margin-top: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 62%, var(--color-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-warning) 14%, var(--color-surface));
+  color: var(--color-text);
+  padding: 0.68rem 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.banner p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.banner a {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
+  color: var(--color-text);
+  text-decoration: none;
+  padding: 0.44rem 0.64rem;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 760px) {
+  .banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

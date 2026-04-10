@@ -1,0 +1,60 @@
+:root {
+  --font-heading: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
+
+  --color-primary: #e50914;
+  --color-secondary: #00b3ff;
+  --color-bg: #0b0f14;
+  --color-surface: #151b24;
+  --color-surface-soft: #1a2230;
+  --color-text: #f5f7fa;
+  --color-text-soft: #9aa4b2;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-border: rgba(255, 255, 255, 0.1);
+
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.25);
+}
+
+body[data-theme="light"] {
+  --color-bg: #f2f5fb;
+  --color-surface: #ffffff;
+  --color-surface-soft: #ebeff7;
+  --color-text: #111827;
+  --color-text-soft: #4b5563;
+  --color-border: rgba(15, 23, 42, 0.14);
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
