@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Metadata } from "next";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { searchTmdbMovies } from "@/lib/tmdb/client";
 import styles from "./search.module.css";
@@ -30,7 +33,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = (params.q ?? "").trim();
   const page = parsePage(params.page);
-  const [results, sessionUser] = await Promise.all([searchTmdbMovies(query, page), getSessionUser()]);
+  const [results, sessionUser, locale] = await Promise.all([
+    searchTmdbMovies(query, page),
+    getSessionUser(),
+    getRequestLocale()
+  ]);
 
   const hasPrev = results.page > 1;
   const hasNext = results.page < results.totalPages;
@@ -56,17 +63,23 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         </form>
         <div className={styles.actions}>
           <Link href="/watchlist" className={styles.linkPill}>
-            Watchlist
+            {translate(locale, "nav.watchlist")}
           </Link>
+          {sessionUser.isAuthenticated ? (
+            <Link href="/profile" className={styles.linkPill}>
+              {translate(locale, "nav.profile")}
+            </Link>
+          ) : null}
+          <LanguageToggle className={styles.linkPill} />
           {sessionUser.isAuthenticated ? (
             <form action={signOutAction}>
               <button type="submit" className={styles.linkPillAlt}>
-                Sign out
+                {translate(locale, "nav.signOut")}
               </button>
             </form>
           ) : (
             <Link href="/auth?next=/watchlist" className={styles.linkPillAlt}>
-              Sign in
+              {translate(locale, "nav.signIn")}
             </Link>
           )}
         </div>

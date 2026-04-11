@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { RetentionControls } from "./retention-controls";
 import { signOutAction } from "@/lib/auth/actions";
 import { isAdminEmail } from "@/lib/auth/admin";
@@ -210,6 +211,13 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
           KinoVibe
         </Link>
         <div className={styles.actions}>
+          <Link href="/admin/analytics" className={styles.linkPill}>
+            Analytics
+          </Link>
+          <Link href="/profile" className={styles.linkPill}>
+            Profile
+          </Link>
+          <LanguageToggle className={styles.linkPill} />
           <Link href="/watchlist" className={styles.linkPill}>
             Watchlist
           </Link>

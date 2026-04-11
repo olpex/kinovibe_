@@ -46,5 +46,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/watchlist/:path*", "/auth/reset/:path*", "/admin/:path*"]
+  matcher: ["/watchlist/:path*", "/profile/:path*", "/auth/reset/:path*", "/admin/:path*"]
 };

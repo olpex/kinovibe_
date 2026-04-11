@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { WatchlistControls } from "@/components/watchlist/watchlist-controls";
 import { signOutAction } from "@/lib/auth/actions";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbMovieDetails } from "@/lib/tmdb/client";
 import { getUserMovieWatchlistState } from "@/lib/watchlist/server";
@@ -53,7 +56,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
     notFound();
   }
 
-  const sessionUser = await getSessionUser();
+  const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
 
   let movie: Awaited<ReturnType<typeof getTmdbMovieDetails>> | null = null;
   let watchlistState = WATCHLIST_DEFAULT_STATE;
@@ -107,17 +110,23 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
         </form>
         <div className={styles.actions}>
           <Link href="/watchlist" className={styles.linkPill}>
-            Watchlist
+            {translate(locale, "nav.watchlist")}
           </Link>
+          {sessionUser.isAuthenticated ? (
+            <Link href="/profile" className={styles.linkPill}>
+              {translate(locale, "nav.profile")}
+            </Link>
+          ) : null}
+          <LanguageToggle className={styles.linkPill} />
           {sessionUser.isAuthenticated ? (
             <form action={signOutAction}>
               <button type="submit" className={styles.linkPillAlt}>
-                Sign out
+                {translate(locale, "nav.signOut")}
               </button>
             </form>
           ) : (
             <Link href="/auth?next=/watchlist" className={styles.linkPillAlt}>
-              Sign in
+              {translate(locale, "nav.signIn")}
             </Link>
           )}
         </div>
@@ -159,7 +168,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           <div className={styles.heroActions}>
             {movie.trailerUrl ? (
               <a href={movie.trailerUrl} target="_blank" rel="noreferrer" className={styles.primaryAction}>
-                Watch trailer
+                {translate(locale, "home.watchTrailer")}
               </a>
             ) : (
               <span className={styles.disabledAction}>Trailer unavailable</span>

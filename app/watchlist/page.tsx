@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import styles from "./watchlist.module.css";
 
@@ -68,7 +71,7 @@ const STATUS_LABELS: Record<(typeof STATUS_ORDER)[number], string> = {
 };
 
 export default async function WatchlistPage() {
-  const supabase = await createSupabaseServerClient();
+  const [supabase, locale] = await Promise.all([createSupabaseServerClient(), getRequestLocale()]);
   if (!supabase) {
     return (
       <main className={styles.page}>
@@ -118,11 +121,18 @@ export default async function WatchlistPage() {
         </Link>
         <div className={styles.actions}>
           <Link href="/search" className={styles.linkPill}>
-            Search
+            {translate(locale, "nav.search")}
+          </Link>
+          <Link href="/profile" className={styles.linkPill}>
+            {translate(locale, "nav.profile")}
+          </Link>
+          <LanguageToggle className={styles.linkPill} />
+          <Link href="/" className={styles.linkPill}>
+            {translate(locale, "nav.home")}
           </Link>
           <form action={signOutAction}>
             <button type="submit" className={styles.linkPillAlt}>
-              Sign out
+              {translate(locale, "nav.signOut")}
             </button>
           </form>
         </div>

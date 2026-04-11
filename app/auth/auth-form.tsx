@@ -7,15 +7,17 @@ import {
   signInWithPasswordAction,
   signUpWithPasswordAction
 } from "@/lib/auth/actions";
+import { translate, type Locale } from "@/lib/i18n/shared";
 import { AUTH_FORM_INITIAL_STATE } from "@/lib/auth/types";
 import styles from "./auth.module.css";
 import Link from "next/link";
 
 type AuthFormProps = {
   nextPath: string;
+  locale: Locale;
 };
 
-export function AuthForm({ nextPath }: AuthFormProps) {
+export function AuthForm({ nextPath, locale }: AuthFormProps) {
   const [signInState, signInAction, signInPending] = useActionState(
     signInWithPasswordAction,
     AUTH_FORM_INITIAL_STATE
@@ -36,7 +38,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
   return (
     <div className={styles.grid}>
       <section className={styles.card}>
-        <h2>Sign in</h2>
+        <h2>{translate(locale, "nav.signIn")}</h2>
         <p>Use your existing KinoVibe account.</p>
         {signInState.message ? (
           <p className={signInState.ok ? styles.feedbackOk : styles.feedbackError}>
@@ -54,7 +56,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
             <input type="password" name="password" required autoComplete="current-password" />
           </label>
           <button type="submit" disabled={signInPending}>
-            {signInPending ? "Signing in..." : "Sign in"}
+            {signInPending ? "Signing in..." : translate(locale, "nav.signIn")}
           </button>
         </form>
         <form action={googleAction} className={styles.oauthForm}>

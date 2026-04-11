@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { AuthForm } from "./auth-form";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "./auth.module.css";
 
@@ -32,7 +35,7 @@ function safeNextPath(value: string | undefined): string {
 export default async function AuthPage({ searchParams }: AuthPageProps) {
   const params = await searchParams;
   const nextPath = safeNextPath(params.next);
-  const sessionUser = await getSessionUser();
+  const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
   const hasCallbackError = params.error === "callback";
   const hasConfigError = params.error === "config";
 
@@ -46,9 +49,12 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
         <Link href="/" className={styles.logo}>
           KinoVibe
         </Link>
-        <Link href="/" className={styles.backLink}>
-          Back home
-        </Link>
+        <div className={styles.topActions}>
+          <LanguageToggle className={styles.backLink} />
+          <Link href="/" className={styles.backLink}>
+            {translate(locale, "nav.backHome")}
+          </Link>
+        </div>
       </header>
 
       <section className={styles.hero}>
@@ -69,7 +75,7 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
         ) : null}
       </section>
 
-      <AuthForm nextPath={nextPath} />
+      <AuthForm nextPath={nextPath} locale={locale} />
     </main>
   );
 }

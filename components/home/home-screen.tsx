@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
+import { translate, type Locale } from "@/lib/i18n/shared";
 import { signOutAction } from "@/lib/auth/actions";
 import { MediaRail } from "./media-rail";
 import { ThemeToggle } from "./theme-toggle";
@@ -9,9 +11,10 @@ import styles from "./home-screen.module.css";
 type HomeScreenProps = {
   data: HomeScreenData;
   session: HomeSession;
+  locale: Locale;
 };
 
-export function HomeScreen({ data, session }: HomeScreenProps) {
+export function HomeScreen({ data, session, locale }: HomeScreenProps) {
   const featured = data.trendingNow[0] ?? data.topPicks[0] ?? null;
   const heroBackground = featured?.backdropUrl
     ? `linear-gradient(125deg, rgba(11, 15, 20, 0.88), rgba(21, 27, 36, 0.95)), url(${featured.backdropUrl}) center / cover no-repeat`
@@ -32,14 +35,20 @@ export function HomeScreen({ data, session }: HomeScreenProps) {
             <input name="q" type="search" placeholder="Find by title, actor, or genre" />
           </form>
           <Link href="/watchlist" className={styles.navPill}>
-            Watchlist
+            {translate(locale, "nav.watchlist")}
           </Link>
+          {session.isAuthenticated ? (
+            <Link href="/profile" className={styles.navPill}>
+              {translate(locale, "nav.profile")}
+            </Link>
+          ) : null}
+          <LanguageToggle className={styles.themeButton} />
           <ThemeToggle />
           {session.isAuthenticated ? (
             <>
               <form action={signOutAction}>
                 <button type="submit" className={styles.navPillAlt}>
-                  Sign out
+                  {translate(locale, "nav.signOut")}
                 </button>
               </form>
               <Link href="/watchlist" className={styles.avatarButton} aria-label="Open watchlist">
@@ -66,7 +75,7 @@ export function HomeScreen({ data, session }: HomeScreenProps) {
         }}
       >
         <div className={styles.heroContent}>
-          <p className={styles.heroEyebrow}>Featured tonight</p>
+          <p className={styles.heroEyebrow}>{translate(locale, "home.featuredTonight")}</p>
           <h1>{featured?.title ?? "KinoVibe"}</h1>
           <p className={styles.heroMeta}>
             {featured?.genre ?? "Cinema"} · {featured?.year ?? new Date().getUTCFullYear()} ·{" "}
@@ -79,10 +88,10 @@ export function HomeScreen({ data, session }: HomeScreenProps) {
           <div className={styles.heroButtons}>
             {featured ? (
               <Link href={`/movie/${featured.id}`} className={styles.primaryButton}>
-                Watch trailer
+                {translate(locale, "home.watchTrailer")}
               </Link>
             ) : (
-              <span className={styles.secondaryButton}>Watch trailer</span>
+              <span className={styles.secondaryButton}>{translate(locale, "home.watchTrailer")}</span>
             )}
             {featured ? (
               <Link
@@ -93,17 +102,17 @@ export function HomeScreen({ data, session }: HomeScreenProps) {
                 }
                 className={styles.secondaryButton}
               >
-                Add to watchlist
+                {translate(locale, "home.addToWatchlist")}
               </Link>
             ) : (
-              <span className={styles.secondaryButton}>Add to watchlist</span>
+              <span className={styles.secondaryButton}>{translate(locale, "home.addToWatchlist")}</span>
             )}
           </div>
         </div>
       </section>
 
       <section className={styles.genreSection}>
-        <h2>Browse genres</h2>
+        <h2>{translate(locale, "home.browseGenres")}</h2>
         <div className={styles.genreRow}>
           {data.genreChips.map((genre, index) => (
             <Link
@@ -145,7 +154,7 @@ export function HomeScreen({ data, session }: HomeScreenProps) {
         <Link href="/search">Search</Link>
         <Link href="/watchlist">Watchlist</Link>
         <Link href={session.isAuthenticated ? "/watchlist" : "/auth?next=/watchlist"}>
-          {session.isAuthenticated ? "Profile" : "Sign in"}
+          {session.isAuthenticated ? translate(locale, "nav.profile") : translate(locale, "nav.signIn")}
         </Link>
       </nav>
     </main>

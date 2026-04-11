@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
+import { SiteActivityTracker } from "@/components/analytics/site-activity-tracker";
+import { getRequestLocale } from "@/lib/i18n/server";
 import "./globals.css";
 
 const headingFont = Space_Grotesk({
@@ -29,13 +31,16 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const locale = await getRequestLocale();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         data-theme="dark"
         className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable}`}
       >
+        <SiteActivityTracker />
         {children}
       </body>
     </html>

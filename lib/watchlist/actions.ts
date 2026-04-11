@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { recordSiteEvent } from "@/lib/analytics/events";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureMovieRecord, parseRuntimeToMinutes } from "./server";
 import {
@@ -198,6 +200,22 @@ export async function watchlistAction(
       authenticated: true,
       message: "Could not update your watchlist."
     };
+  }
+
+  if (operation === "add") {
+    const adminClient = createSupabaseAdminClient();
+    const analyticsClient = adminClient ?? supabase;
+    await recordSiteEvent(analyticsClient, {
+      eventType: "movie_added",
+      userId,
+      pagePath: `/movie/${payload.tmdbId}`,
+      elementKey: "watchlist:add",
+      movieTmdbId: payload.tmdbId,
+      metadata: {
+        status,
+        progressPercent
+      }
+    });
   }
 
   revalidatePath("/");
