@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { toTmdbLanguage, type Locale } from "@/lib/i18n/shared";
 import {
+  TmdbMovieAlternativeTitlesResponse,
   TmdbGenreListResponse,
   TmdbMovie,
   TmdbMovieCreditsResponse,
@@ -49,6 +50,27 @@ const GOOGLE_TARGET_BY_LOCALE: Record<Locale, string> = {
   el: "el",
   hr: "hr",
   me: "sr"
+};
+
+const REGION_BY_LOCALE: Record<Locale, string> = {
+  en: "US",
+  uk: "UA",
+  de: "DE",
+  fr: "FR",
+  it: "IT",
+  es: "ES",
+  sv: "SE",
+  fi: "FI",
+  no: "NO",
+  da: "DK",
+  cs: "CZ",
+  pl: "PL",
+  sk: "SK",
+  hu: "HU",
+  ro: "RO",
+  el: "GR",
+  hr: "HR",
+  me: "ME"
 };
 
 function parseYear(releaseDate: string | null): number {
@@ -101,6 +123,44 @@ function genreLabel(genreIds: number[], genresMap: Map<number, string>): string 
   }
   return "Cinema";
 }
+
+function releaseTypePriority(type: string): number {
+  const normalized = type.trim().toLowerCase();
+  if (normalized.includes("official")) {
+    return 0;
+  }
+  if (normalized.includes("theatrical") || normalized.includes("cinema")) {
+    return 1;
+  }
+  if (normalized.includes("premiere")) {
+    return 2;
+  }
+  if (normalized.includes("release")) {
+    return 3;
+  }
+  return 10;
+}
+
+const getRegionalReleaseTitle = cache(
+  async (movieId: number, locale: Locale): Promise<string | null> => {
+    const region = REGION_BY_LOCALE[locale] ?? DEFAULT_REGION;
+    try {
+      const response = await fetchTmdb<TmdbMovieAlternativeTitlesResponse>(
+        `/movie/${movieId}/alternative_titles`,
+        {},
+        604800
+      );
+
+      const candidates = response.titles
+        .filter((entry) => entry.iso_3166_1 === region && entry.title.trim().length > 0)
+        .sort((a, b) => releaseTypePriority(a.type) - releaseTypePriority(b.type));
+
+      return candidates[0]?.title ?? null;
+    } catch {
+      return null;
+    }
+  }
+);
 
 const translateText = cache(
   async (text: string, locale: Locale): Promise<string> => {
@@ -212,19 +272,15 @@ export function mapTmdbMovieToCard(movie: TmdbMovie, genresMap: Map<number, stri
 }
 
 async function localizeCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
-  if (locale === "en") {
-    return card;
-  }
-
-  const [title, genre, overview] = await Promise.all([
-    translateText(card.title, locale),
-    translateText(card.genre, locale),
-    translateText(card.overview ?? "", locale)
+  const [releaseTitle, genre, overview] = await Promise.all([
+    getRegionalReleaseTitle(card.id, locale),
+    locale === "en" ? Promise.resolve(card.genre) : translateText(card.genre, locale),
+    locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale)
   ]);
 
   return {
     ...card,
-    title,
+    title: releaseTitle ?? card.title,
     genre,
     overview: overview || card.overview
   };
@@ -426,22 +482,22 @@ export const getTmdbMovieDetails = cache(
     const shouldTranslateFromEnglish =
       locale !== "en" &&
       detailsInEnglish !== null &&
-      details.title === detailsInEnglish.title &&
       details.overview === detailsInEnglish.overview;
 
-    const [translatedTitle, translatedOverview, translatedTagline, translatedStatus] =
+    const [translatedOverview, translatedTagline, translatedStatus] =
       shouldTranslateFromEnglish
         ? await Promise.all([
-            translateText(details.title, locale),
             translateText(details.overview || detailsInEnglish?.overview || "", locale),
             translateText(details.tagline || detailsInEnglish?.tagline || "", locale),
             translateText(details.status, locale)
           ])
-        : [details.title, details.overview, details.tagline, details.status];
+        : [details.overview, details.tagline, details.status];
+
+    const releaseTitle = await getRegionalReleaseTitle(movieId, locale);
 
     return {
       id: details.id,
-      title: translatedTitle,
+      title: releaseTitle ?? details.title,
       overview: translatedOverview,
       tagline: translatedTagline,
       year: parseYear(details.release_date),
@@ -485,34 +541,18 @@ export async function getTmdbMovieLocalizedSummaries(
   const summaries = await Promise.all(
     uniqueIds.map(async (movieId) => {
       try {
-        const [details, detailsInEnglish] = await Promise.all([
-          fetchTmdb<TmdbMovieDetailsResponse>(
-            `/movie/${movieId}`,
-            { language },
-            3600
-          ),
-          locale === "en"
-            ? Promise.resolve(null)
-            : fetchTmdb<TmdbMovieDetailsResponse>(`/movie/${movieId}`, { language: "en-US" }, 3600)
-        ]);
-
-        const shouldTranslateFallback =
-          locale !== "en" &&
-          detailsInEnglish !== null &&
-          details.title === detailsInEnglish.title;
-
-        const [title, genre] = shouldTranslateFallback
-          ? await Promise.all([
-              translateText(details.title, locale),
-              translateText(details.genres[0]?.name ?? "Cinema", locale)
-            ])
-          : [details.title, details.genres[0]?.name ?? "Cinema"];
+        const details = await fetchTmdb<TmdbMovieDetailsResponse>(
+          `/movie/${movieId}`,
+          { language },
+          3600
+        );
+        const releaseTitle = await getRegionalReleaseTitle(movieId, locale);
 
         return {
           tmdbId: movieId,
-          title,
+          title: releaseTitle ?? details.title,
           year: parseYear(details.release_date),
-          genre,
+          genre: details.genres[0]?.name ?? "Cinema",
           rating: details.vote_average || 0,
           posterUrl: posterUrl(details.poster_path)
         } satisfies LocalizedMovieSummary;

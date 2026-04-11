@@ -82,3 +82,12 @@ export type TmdbMovieWatchProvidersResponse = {
     }
   >;
 };
+
+export type TmdbMovieAlternativeTitlesResponse = {
+  id: number;
+  titles: Array<{
+    iso_3166_1: string;
+    title: string;
+    type: string;
+  }>;
+};
