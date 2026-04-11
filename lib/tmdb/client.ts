@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { toTmdbLanguage, type Locale } from "@/lib/i18n/shared";
+import { toTmdbLanguage, translate, type Locale } from "@/lib/i18n/shared";
 import {
   TmdbAwardResult,
   TmdbAwardsResponse,
@@ -560,11 +560,15 @@ function mapAwardResult(item: TmdbAwardResult): AwardCard {
   };
 }
 
-function awardFallbackFromMovies(items: HomeMovie[], prefix: string): AwardCard[] {
+function awardFallbackFromMovies(
+  items: HomeMovie[],
+  prefix: string,
+  locale: Locale
+): AwardCard[] {
   return items.map((item, index) => ({
     id: `${prefix}-${item.id}-${index}`,
     title: item.title,
-    category: "Editorial spotlight",
+    category: translate(locale, "award.editorialSpotlight"),
     year: String(item.year),
     imageUrl: item.posterUrl
   }));
@@ -594,7 +598,7 @@ export async function getTmdbAwards(
     category === "upcoming"
       ? await getTmdbMovieCatalogPage("upcoming", locale, 1)
       : await getTmdbMovieCatalogPage("top_rated", locale, 1);
-  return awardFallbackFromMovies(fallbackSource.items.slice(0, 20), category);
+  return awardFallbackFromMovies(fallbackSource.items.slice(0, 20), category, locale);
 }
 
 export type TmdbSearchResult = {
