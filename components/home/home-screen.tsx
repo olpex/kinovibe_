@@ -1,11 +1,8 @@
 import Link from "next/link";
-import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
-import { UserAvatar } from "@/components/user/user-avatar";
+import { SiteHeader } from "@/components/navigation/site-header";
 import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
-import { signOutAction } from "@/lib/auth/actions";
 import { MediaRail } from "./media-rail";
-import { ThemeToggle } from "./theme-toggle";
 import { HomeScreenData, HomeSession } from "./types";
 import styles from "./home-screen.module.css";
 
@@ -32,61 +29,7 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
       <div className={styles.bgOrbOne} />
       <div className={styles.bgOrbTwo} />
 
-      <header className={styles.topBar}>
-        <Link className={styles.logo} href="/" aria-label={translate(locale, "home.logoAria")}>
-          KinoVibe
-        </Link>
-        <div className={styles.actions}>
-          <form action="/search" method="get" className={styles.searchWrap}>
-            <span className={styles.searchLabel}>{translate(locale, "home.searchLabel")}</span>
-            <input
-              name="q"
-              type="search"
-              placeholder={translate(locale, "home.searchPlaceholder")}
-            />
-          </form>
-          <Link href="/watchlist" className={styles.navPill}>
-            {translate(locale, "nav.watchlist")}
-          </Link>
-          {session.isAuthenticated ? (
-            <Link href="/profile" className={styles.navPill}>
-              {translate(locale, "nav.profile")}
-            </Link>
-          ) : null}
-          <LanguageToggle className={styles.navPill} />
-          <ThemeToggle locale={locale} />
-          {session.isAuthenticated ? (
-            <>
-              <form action={signOutAction}>
-                <button type="submit" className={styles.navPillAlt}>
-                  {translate(locale, "nav.signOut")}
-                </button>
-              </form>
-              <Link
-                href="/watchlist"
-                className={styles.avatarButton}
-                aria-label={translate(locale, "home.openWatchlistAria")}
-              >
-                <UserAvatar
-                  size="sm"
-                  email={session.email}
-                  firstName={session.firstName}
-                  lastName={session.lastName}
-                  avatarUrl={session.avatarUrl}
-                />
-              </Link>
-            </>
-          ) : (
-            <Link
-              href="/auth?next=/watchlist"
-              className={styles.avatarButton}
-              aria-label={translate(locale, "home.signInAria")}
-            >
-              <UserAvatar size="sm" email="guest@kinovibe.app" />
-            </Link>
-          )}
-        </div>
-      </header>
+      <SiteHeader locale={locale} session={session} />
       <EmailVerificationBanner session={session} nextPath="/" />
 
       <section

@@ -1,0 +1,186 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { SiteHeader } from "@/components/navigation/site-header";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
+import { getSessionUser } from "@/lib/supabase/session";
+import { getTmdbTvDetails } from "@/lib/tmdb/client";
+import styles from "./tv.module.css";
+
+type TvDetailsPageProps = {
+  params: Promise<{ id: string }>;
+};
+
+function parseTvId(value: string): number | null {
+  const id = Number(value);
+  if (Number.isNaN(id) || id <= 0) {
+    return null;
+  }
+  return Math.floor(id);
+}
+
+export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
+  const resolved = await params;
+  const tvId = parseTvId(resolved.id);
+  if (!tvId) {
+    notFound();
+  }
+
+  const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
+
+  let tv: Awaited<ReturnType<typeof getTmdbTvDetails>> | null = null;
+  try {
+    tv = await getTmdbTvDetails(tvId, locale);
+  } catch {
+    tv = null;
+  }
+
+  if (!tv) {
+    return (
+      <main className={styles.page}>
+        <div style={{ maxWidth: "1240px", margin: "0 auto", display: "grid", gap: "1rem" }}>
+          <SiteHeader locale={locale} session={sessionUser} />
+          <section className={styles.errorCard}>
+            <h1>{translate(locale, "movie.detailsUnavailable")}</h1>
+            <p>{translate(locale, "movie.tmdbMissing")}</p>
+            <Link href="/tv">{translate(locale, "nav.tvShows")}</Link>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className={styles.page}>
+      <div style={{ maxWidth: "1240px", margin: "0 auto", display: "grid", gap: "1rem" }}>
+        <SiteHeader locale={locale} session={sessionUser} />
+        <section
+          className={styles.hero}
+          style={{
+            background: tv.backdropUrl
+              ? `linear-gradient(120deg, rgba(11, 15, 20, 0.88), rgba(21, 27, 36, 0.95)), url(${tv.backdropUrl}) center / cover no-repeat`
+              : "linear-gradient(145deg, #1f2632 0%, #11161f 100%)"
+          }}
+        >
+          <div className={styles.posterWrap}>
+            <div
+              className={styles.poster}
+              style={{
+                background: tv.posterUrl
+                  ? `url(${tv.posterUrl}) center / cover no-repeat`
+                  : "linear-gradient(145deg, #3A0CA3, #4CC9F0)"
+              }}
+            />
+          </div>
+          <div className={styles.heroContent}>
+            <p className={styles.eyebrow}>{translate(locale, "menu.tvDetails")}</p>
+            <h1>{tv.title}</h1>
+            {tv.tagline ? <p className={styles.tagline}>{tv.tagline}</p> : null}
+            <p className={styles.meta}>
+              {tv.year} · {tv.runtime} · {tv.rating.toFixed(1)} · {tv.status} · {tv.originalLanguage}
+            </p>
+            <p className={styles.meta}>
+              {translate(locale, "menu.seasons")}: {tv.seasons} · {translate(locale, "menu.episodes")}: {tv.episodes}
+            </p>
+            <div className={styles.genreRow}>
+              {tv.genres.map((genre) => (
+                <span key={genre}>{genre}</span>
+              ))}
+            </div>
+            <p className={styles.overview}>{tv.overview}</p>
+            <div className={styles.heroActions}>
+              {tv.trailerUrl ? (
+                <a href={tv.trailerUrl} target="_blank" rel="noreferrer" className={styles.primaryAction}>
+                  {translate(locale, "home.watchTrailer")}
+                </a>
+              ) : (
+                <span className={styles.disabledAction}>{translate(locale, "movie.trailerUnavailable")}</span>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2>{translate(locale, "movie.whereToWatch")} ({tv.watchProviders.region})</h2>
+          <div className={styles.providers}>
+            <div>
+              <h3>{translate(locale, "movie.subscription")}</h3>
+              <p>
+                {tv.watchProviders.subscription.length > 0
+                  ? tv.watchProviders.subscription.join(", ")
+                  : translate(locale, "movie.noSubscriptionData")}
+              </p>
+            </div>
+            <div>
+              <h3>{translate(locale, "movie.rent")}</h3>
+              <p>
+                {tv.watchProviders.rent.length > 0
+                  ? tv.watchProviders.rent.join(", ")
+                  : translate(locale, "movie.noRentData")}
+              </p>
+            </div>
+            <div>
+              <h3>{translate(locale, "movie.buy")}</h3>
+              <p>
+                {tv.watchProviders.buy.length > 0
+                  ? tv.watchProviders.buy.join(", ")
+                  : translate(locale, "movie.noBuyData")}
+              </p>
+            </div>
+          </div>
+          {tv.watchProviders.link ? (
+            <a href={tv.watchProviders.link} target="_blank" rel="noreferrer" className={styles.providerLink}>
+              {translate(locale, "movie.openProviders")}
+            </a>
+          ) : null}
+        </section>
+
+        <section className={styles.section}>
+          <h2>{translate(locale, "movie.cast")}</h2>
+          <div className={styles.castGrid}>
+            {tv.cast.map((person) => (
+              <article key={person.id} className={styles.castCard}>
+                <div
+                  className={styles.castAvatar}
+                  style={{
+                    background: person.avatarUrl
+                      ? `url(${person.avatarUrl}) center / cover no-repeat`
+                      : "linear-gradient(145deg, #5f6675, #2e3442)"
+                  }}
+                />
+                <div>
+                  <h3>{person.name}</h3>
+                  <p>{person.character || translate(locale, "movie.castUnknownCharacter")}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <h2>{translate(locale, "movie.similarTitles")}</h2>
+          <div className={styles.similarGrid}>
+            {tv.similar.map((item) => (
+              <Link key={item.id} href={`/tv/${item.id}`} className={styles.similarCard}>
+                <div
+                  className={styles.similarPoster}
+                  style={{
+                    background: item.posterUrl
+                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), url(${item.posterUrl}) center / cover no-repeat`
+                      : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
+                  }}
+                />
+                <div className={styles.similarBody}>
+                  <h3>{item.title}</h3>
+                  <p>
+                    {item.genre} · {item.year}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}

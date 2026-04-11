@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { Metadata } from "next";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
-import { LanguageToggle } from "@/components/i18n/language-toggle";
-import { signOutAction } from "@/lib/auth/actions";
+import { SiteHeader } from "@/components/navigation/site-header";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
@@ -47,43 +46,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <main className={styles.page}>
-      <header className={styles.topBar}>
-        <Link href="/" className={styles.logo}>
-          KinoVibe
-        </Link>
-        <form action="/search" method="get" className={styles.searchForm}>
-          <input
-            name="q"
-            type="search"
-            defaultValue={query}
-            placeholder={translate(locale, "search.placeholder")}
-            aria-label={translate(locale, "search.aria")}
-          />
-          <button type="submit">{translate(locale, "nav.search")}</button>
-        </form>
-        <div className={styles.actions}>
-          <Link href="/watchlist" className={styles.linkPill}>
-            {translate(locale, "nav.watchlist")}
-          </Link>
-          {sessionUser.isAuthenticated ? (
-            <Link href="/profile" className={styles.linkPill}>
-              {translate(locale, "nav.profile")}
-            </Link>
-          ) : null}
-          <LanguageToggle className={styles.linkPill} />
-          {sessionUser.isAuthenticated ? (
-            <form action={signOutAction}>
-              <button type="submit" className={styles.linkPillAlt}>
-                {translate(locale, "nav.signOut")}
-              </button>
-            </form>
-          ) : (
-            <Link href="/auth?next=/watchlist" className={styles.linkPillAlt}>
-              {translate(locale, "nav.signIn")}
-            </Link>
-          )}
-        </div>
-      </header>
+      <SiteHeader
+        locale={locale}
+        session={sessionUser}
+        searchQuery={query}
+        searchPlaceholder={translate(locale, "search.placeholder")}
+      />
       <EmailVerificationBanner session={sessionUser} nextPath={nextPath} />
 
       <section className={styles.resultsHeader}>

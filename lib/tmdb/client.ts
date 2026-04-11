@@ -1,6 +1,8 @@
 import { cache } from "react";
 import { toTmdbLanguage, type Locale } from "@/lib/i18n/shared";
 import {
+  TmdbAwardResult,
+  TmdbAwardsResponse,
   TmdbMovieAlternativeTitlesResponse,
   TmdbGenreListResponse,
   TmdbMovie,
@@ -8,7 +10,17 @@ import {
   TmdbMovieDetailsResponse,
   TmdbMovieVideosResponse,
   TmdbMovieWatchProvidersResponse,
-  TmdbMoviesResponse
+  TmdbMoviesResponse,
+  TmdbPeopleResponse,
+  TmdbPersonCombinedCreditsResponse,
+  TmdbPersonDetailsResponse,
+  TmdbPersonKnownForItem,
+  TmdbTv,
+  TmdbTvAlternativeTitlesResponse,
+  TmdbTvCreditsResponse,
+  TmdbTvDetailsResponse,
+  TmdbTvResponse,
+  TmdbTvVideosResponse
 } from "./types";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
@@ -80,6 +92,15 @@ function parseYear(releaseDate: string | null): number {
 
   const year = Number(releaseDate.slice(0, 4));
   return Number.isNaN(year) ? new Date().getUTCFullYear() : year;
+}
+
+function parseDisplayYear(releaseDate: string | null): string {
+  if (!releaseDate) {
+    return "TBA";
+  }
+
+  const year = Number(releaseDate.slice(0, 4));
+  return Number.isNaN(year) ? "TBA" : String(year);
 }
 
 function formatRuntime(minutes: number | null | undefined, id: number): string {
@@ -158,6 +179,25 @@ const getRegionalReleaseTitle = cache(
     }
   }
 );
+
+const getRegionalTvTitle = cache(async (tvId: number, locale: Locale): Promise<string | null> => {
+  const region = REGION_BY_LOCALE[locale] ?? DEFAULT_REGION;
+  try {
+    const response = await fetchTmdb<TmdbTvAlternativeTitlesResponse>(
+      `/tv/${tvId}/alternative_titles`,
+      {},
+      604800
+    );
+
+    const candidates = response.results
+      .filter((entry) => entry.iso_3166_1 === region && entry.title.trim().length > 0)
+      .sort((a, b) => releaseTypePriority(a.type) - releaseTypePriority(b.type));
+
+    return candidates[0]?.title ?? null;
+  } catch {
+    return null;
+  }
+});
 
 const translateText = cache(
   async (text: string, locale: Locale): Promise<string> => {
@@ -239,6 +279,15 @@ const getGenresMap = cache(async (locale: Locale): Promise<Map<number, string>> 
   return new Map(response.genres.map((genre) => [genre.id, genre.name]));
 });
 
+const getTvGenresMap = cache(async (locale: Locale): Promise<Map<number, string>> => {
+  const language = toTmdbLanguage(locale);
+  const response = await fetchTmdb<TmdbGenreListResponse>("/genre/tv/list", {
+    language
+  });
+
+  return new Map(response.genres.map((genre) => [genre.id, genre.name]));
+});
+
 export type HomeMovie = {
   id: number;
   title: string;
@@ -268,6 +317,21 @@ export function mapTmdbMovieToCard(movie: TmdbMovie, genresMap: Map<number, stri
   };
 }
 
+export function mapTmdbTvToCard(tv: TmdbTv, genresMap: Map<number, string>): HomeMovie {
+  return {
+    id: tv.id,
+    title: tv.name,
+    year: parseYear(tv.first_air_date),
+    genre: genreLabel(tv.genre_ids, genresMap),
+    runtime: "Series",
+    rating: tv.vote_average || 0,
+    gradient: gradientByMovieId(tv.id),
+    posterUrl: posterUrl(tv.poster_path),
+    backdropUrl: backdropUrl(tv.backdrop_path),
+    overview: tv.overview
+  };
+}
+
 async function localizeCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
   const [releaseTitle, genre, overview] = await Promise.all([
     getRegionalReleaseTitle(card.id, locale),
@@ -278,6 +342,21 @@ async function localizeCard(card: HomeMovie, locale: Locale): Promise<HomeMovie>
   return {
     ...card,
     title: releaseTitle ?? card.title,
+    genre,
+    overview: overview || card.overview
+  };
+}
+
+async function localizeTvCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
+  const [regionalTitle, genre, overview] = await Promise.all([
+    getRegionalTvTitle(card.id, locale),
+    locale === "en" ? Promise.resolve(card.genre) : translateText(card.genre, locale),
+    locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale)
+  ]);
+
+  return {
+    ...card,
+    title: regionalTitle ?? card.title,
     genre,
     overview: overview || card.overview
   };
@@ -330,6 +409,192 @@ export async function getTmdbHomeCatalog(locale: Locale = "en"): Promise<TmdbHom
     popular: localizedPopular,
     topRated: localizedTopRated
   };
+}
+
+export type TmdbPagedCards = {
+  page: number;
+  totalPages: number;
+  totalResults: number;
+  items: HomeMovie[];
+};
+
+export type MovieMenuCategory = "popular" | "now_playing" | "upcoming" | "top_rated";
+export type TvMenuCategory = "popular" | "airing_today" | "on_the_air" | "top_rated";
+
+const MOVIE_CATEGORY_PATH: Record<MovieMenuCategory, string> = {
+  popular: "/movie/popular",
+  now_playing: "/movie/now_playing",
+  upcoming: "/movie/upcoming",
+  top_rated: "/movie/top_rated"
+};
+
+const TV_CATEGORY_PATH: Record<TvMenuCategory, string> = {
+  popular: "/tv/popular",
+  airing_today: "/tv/airing_today",
+  on_the_air: "/tv/on_the_air",
+  top_rated: "/tv/top_rated"
+};
+
+export async function getTmdbMovieCatalogPage(
+  category: MovieMenuCategory,
+  locale: Locale = "en",
+  page = 1
+): Promise<TmdbPagedCards> {
+  const safePage = Math.max(1, Math.min(page, 500));
+  const language = toTmdbLanguage(locale);
+  const genresMap = await getGenresMap(locale);
+  const response = await fetchTmdb<TmdbMoviesResponse>(
+    MOVIE_CATEGORY_PATH[category],
+    { language, page: String(safePage) },
+    900
+  );
+
+  return {
+    page: response.page,
+    totalPages: response.total_pages,
+    totalResults: response.total_results,
+    items: await Promise.all(
+      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap), locale))
+    )
+  };
+}
+
+export async function getTmdbTvCatalogPage(
+  category: TvMenuCategory,
+  locale: Locale = "en",
+  page = 1
+): Promise<TmdbPagedCards> {
+  const safePage = Math.max(1, Math.min(page, 500));
+  const language = toTmdbLanguage(locale);
+  const genresMap = await getTvGenresMap(locale);
+  const response = await fetchTmdb<TmdbTvResponse>(
+    TV_CATEGORY_PATH[category],
+    { language, page: String(safePage) },
+    900
+  );
+
+  return {
+    page: response.page,
+    totalPages: response.total_pages,
+    totalResults: response.total_results,
+    items: await Promise.all(
+      response.results.map((tv) => localizeTvCard(mapTmdbTvToCard(tv, genresMap), locale))
+    )
+  };
+}
+
+export type PersonCard = {
+  id: number;
+  name: string;
+  department: string;
+  knownFor: string;
+  popularity: number;
+  avatarUrl?: string;
+  gradient: [string, string];
+};
+
+export type TmdbPagedPeople = {
+  page: number;
+  totalPages: number;
+  totalResults: number;
+  items: PersonCard[];
+};
+
+function personKnownForLabel(items: TmdbPersonKnownForItem[]): string {
+  if (items.length === 0) {
+    return "No known titles";
+  }
+
+  return items
+    .slice(0, 3)
+    .map((item) => item.title ?? item.name ?? "Untitled")
+    .join(", ");
+}
+
+export async function getTmdbPopularPeople(
+  locale: Locale = "en",
+  page = 1
+): Promise<TmdbPagedPeople> {
+  const safePage = Math.max(1, Math.min(page, 500));
+  const language = toTmdbLanguage(locale);
+  const response = await fetchTmdb<TmdbPeopleResponse>(
+    "/person/popular",
+    { language, page: String(safePage) },
+    900
+  );
+
+  return {
+    page: response.page,
+    totalPages: response.total_pages,
+    totalResults: response.total_results,
+    items: response.results.map((person) => ({
+      id: person.id,
+      name: person.name,
+      department: person.known_for_department || "Artist",
+      knownFor: personKnownForLabel(person.known_for ?? []),
+      popularity: person.popularity || 0,
+      avatarUrl: posterUrl(person.profile_path),
+      gradient: gradientByMovieId(person.id)
+    }))
+  };
+}
+
+export type AwardCard = {
+  id: string;
+  title: string;
+  category: string;
+  year: string;
+  imageUrl?: string;
+};
+
+function mapAwardResult(item: TmdbAwardResult): AwardCard {
+  return {
+    id: item.id,
+    title: item.name,
+    category: item.category ?? "Award",
+    year:
+      typeof item.year === "number"
+        ? String(item.year)
+        : parseDisplayYear(item.event_date ?? null),
+    imageUrl: item.image_url ?? undefined
+  };
+}
+
+function awardFallbackFromMovies(items: HomeMovie[], prefix: string): AwardCard[] {
+  return items.map((item, index) => ({
+    id: `${prefix}-${item.id}-${index}`,
+    title: item.title,
+    category: "Editorial spotlight",
+    year: String(item.year),
+    imageUrl: item.posterUrl
+  }));
+}
+
+export async function getTmdbAwards(
+  category: "popular" | "upcoming",
+  locale: Locale = "en"
+): Promise<AwardCard[]> {
+  try {
+    const language = toTmdbLanguage(locale);
+    const path = category === "upcoming" ? "/award/upcoming" : "/award";
+    const response = await fetchTmdb<TmdbAwardsResponse>(
+      path,
+      { language, page: "1" },
+      1800
+    );
+    const results = response.results ?? [];
+    if (results.length > 0) {
+      return results.slice(0, 24).map(mapAwardResult);
+    }
+  } catch {
+    // TMDB public APIs may not expose awards in every environment.
+  }
+
+  const fallbackSource =
+    category === "upcoming"
+      ? await getTmdbMovieCatalogPage("upcoming", locale, 1)
+      : await getTmdbMovieCatalogPage("top_rated", locale, 1);
+  return awardFallbackFromMovies(fallbackSource.items.slice(0, 20), category);
 }
 
 export type TmdbSearchResult = {
@@ -521,6 +786,202 @@ export const getTmdbMovieDetails = cache(
         buy: toUniqueProviderNames(providerRegion?.buy)
       },
       similar: await Promise.all(similarItems.map((item) => localizeCard(item, locale)))
+    };
+  }
+);
+
+export type TvDetailsView = {
+  id: number;
+  title: string;
+  overview: string;
+  tagline: string;
+  year: number;
+  rating: number;
+  runtime: string;
+  status: string;
+  originalLanguage: string;
+  seasons: number;
+  episodes: number;
+  genres: string[];
+  posterUrl?: string;
+  backdropUrl?: string;
+  trailerUrl?: string;
+  trailerName?: string;
+  cast: Array<{
+    id: number;
+    name: string;
+    character: string;
+    avatarUrl?: string;
+  }>;
+  watchProviders: {
+    region: string;
+    link?: string;
+    subscription: string[];
+    rent: string[];
+    buy: string[];
+  };
+  similar: HomeMovie[];
+};
+
+export const getTmdbTvDetails = cache(
+  async (tvId: number, locale: Locale = "en"): Promise<TvDetailsView> => {
+    const language = toTmdbLanguage(locale);
+    const [details, detailsInEnglish, credits, videos, similar, providers] = await Promise.all([
+      fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language }, 3600),
+      locale === "en"
+        ? Promise.resolve(null)
+        : fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language: "en-US" }, 3600),
+      fetchTmdb<TmdbTvCreditsResponse>(`/tv/${tvId}/credits`, { language }, 3600),
+      fetchTmdb<TmdbTvVideosResponse>(`/tv/${tvId}/videos`, { language }, 3600),
+      fetchTmdb<TmdbTvResponse>(`/tv/${tvId}/similar`, { language, page: "1" }, 3600),
+      fetchTmdb<TmdbMovieWatchProvidersResponse>(`/tv/${tvId}/watch/providers`, {}, 3600)
+    ]);
+
+    const preferredTrailer = videos.results.find(
+      (video) =>
+        video.site === "YouTube" && video.type === "Trailer" && Boolean(video.official)
+    );
+    const fallbackTrailer = videos.results.find(
+      (video) => video.site === "YouTube" && (video.type === "Trailer" || video.type === "Teaser")
+    );
+    const trailer = preferredTrailer ?? fallbackTrailer;
+
+    const providerRegionCode =
+      providers.results[DEFAULT_REGION]
+        ? DEFAULT_REGION
+        : providers.results.US
+          ? "US"
+          : providers.results.GB
+            ? "GB"
+            : null;
+    const providerRegion = providerRegionCode ? providers.results[providerRegionCode] : null;
+
+    const genresMap = await getTvGenresMap(locale);
+    const similarItems = similar.results
+      .slice(0, 8)
+      .map((item) => mapTmdbTvToCard(item, genresMap));
+
+    const shouldTranslateFromEnglish =
+      locale !== "en" &&
+      detailsInEnglish !== null &&
+      details.overview === detailsInEnglish.overview;
+
+    const [translatedOverview, translatedTagline, translatedStatus] =
+      shouldTranslateFromEnglish
+        ? await Promise.all([
+            translateText(details.overview || detailsInEnglish?.overview || "", locale),
+            translateText(details.tagline || detailsInEnglish?.tagline || "", locale),
+            translateText(details.status, locale)
+          ])
+        : [details.overview, details.tagline, details.status];
+
+    const regionalTitle = await getRegionalTvTitle(tvId, locale);
+    const runtime = details.episode_run_time[0]
+      ? formatRuntime(details.episode_run_time[0], tvId)
+      : "Runtime TBD";
+
+    return {
+      id: details.id,
+      title: regionalTitle ?? details.name,
+      overview: translatedOverview,
+      tagline: translatedTagline,
+      year: parseYear(details.first_air_date),
+      rating: details.vote_average || 0,
+      runtime,
+      status: translatedStatus,
+      originalLanguage: details.original_language.toUpperCase(),
+      seasons: details.number_of_seasons,
+      episodes: details.number_of_episodes,
+      genres: details.genres.map((genre) => genre.name),
+      posterUrl: posterUrl(details.poster_path),
+      backdropUrl: backdropUrl(details.backdrop_path),
+      trailerUrl: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : undefined,
+      trailerName: trailer?.name,
+      cast: credits.cast.slice(0, 12).map((person) => ({
+        id: person.id,
+        name: person.name,
+        character: person.character,
+        avatarUrl: posterUrl(person.profile_path)
+      })),
+      watchProviders: {
+        region: providerRegionCode ?? "N/A",
+        link: providerRegion?.link,
+        subscription: toUniqueProviderNames(providerRegion?.flatrate),
+        rent: toUniqueProviderNames(providerRegion?.rent),
+        buy: toUniqueProviderNames(providerRegion?.buy)
+      },
+      similar: await Promise.all(similarItems.map((item) => localizeTvCard(item, locale)))
+    };
+  }
+);
+
+export type PersonCredit = {
+  id: number;
+  mediaType: "movie" | "tv";
+  title: string;
+  character: string;
+  year: number;
+  rating: number;
+  posterUrl?: string;
+};
+
+export type PersonDetailsView = {
+  id: number;
+  name: string;
+  biography: string;
+  department: string;
+  birthDate: string | null;
+  placeOfBirth: string | null;
+  popularity: number;
+  aka: string[];
+  homepage: string | null;
+  avatarUrl?: string;
+  knownFor: PersonCredit[];
+};
+
+function mapPersonCredit(item: TmdbPersonCombinedCreditsResponse["cast"][number]): PersonCredit {
+  return {
+    id: item.id,
+    mediaType: item.media_type,
+    title: item.title ?? item.name ?? "Untitled",
+    character: item.character ?? "Unknown",
+    year: parseYear(item.release_date ?? item.first_air_date ?? null),
+    rating: item.vote_average ?? 0,
+    posterUrl: posterUrl(item.poster_path ?? null)
+  };
+}
+
+export const getTmdbPersonDetails = cache(
+  async (personId: number, locale: Locale = "en"): Promise<PersonDetailsView> => {
+    const language = toTmdbLanguage(locale);
+    const [details, credits] = await Promise.all([
+      fetchTmdb<TmdbPersonDetailsResponse>(`/person/${personId}`, { language }, 3600),
+      fetchTmdb<TmdbPersonCombinedCreditsResponse>(
+        `/person/${personId}/combined_credits`,
+        { language },
+        3600
+      )
+    ]);
+
+    const biography =
+      locale === "en" ? details.biography : await translateText(details.biography || "", locale);
+
+    return {
+      id: details.id,
+      name: details.name,
+      biography,
+      department: details.known_for_department || "Artist",
+      birthDate: details.birthday,
+      placeOfBirth: details.place_of_birth,
+      popularity: details.popularity || 0,
+      aka: details.also_known_as ?? [],
+      homepage: details.homepage,
+      avatarUrl: posterUrl(details.profile_path),
+      knownFor: credits.cast
+        .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
+        .map(mapPersonCredit)
+        .sort((a, b) => b.rating - a.rating)
+        .slice(0, 20)
     };
   }
 );

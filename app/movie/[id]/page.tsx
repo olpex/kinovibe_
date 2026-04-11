@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
-import { LanguageToggle } from "@/components/i18n/language-toggle";
+import { SiteHeader } from "@/components/navigation/site-header";
 import { WatchlistControls } from "@/components/watchlist/watchlist-controls";
-import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
@@ -73,20 +72,11 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   if (!movie) {
     return (
       <main className={styles.page}>
-        <header className={styles.topBar}>
-          <Link href="/" className={styles.logo}>
-            KinoVibe
-          </Link>
-          <form action="/search" method="get" className={styles.searchForm}>
-            <input
-              name="q"
-              type="search"
-              placeholder={translate(locale, "search.anotherMovie")}
-              aria-label={translate(locale, "search.aria")}
-            />
-            <button type="submit">{translate(locale, "nav.search")}</button>
-          </form>
-        </header>
+        <SiteHeader
+          locale={locale}
+          session={sessionUser}
+          searchPlaceholder={translate(locale, "search.anotherMovie")}
+        />
         <section className={styles.errorCard}>
           <h1>{translate(locale, "movie.detailsUnavailable")}</h1>
           <p>
@@ -100,42 +90,11 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
 
   return (
     <main className={styles.page}>
-      <header className={styles.topBar}>
-        <Link href="/" className={styles.logo}>
-          KinoVibe
-        </Link>
-        <form action="/search" method="get" className={styles.searchForm}>
-          <input
-            name="q"
-            type="search"
-            placeholder={translate(locale, "search.anotherMovie")}
-            aria-label={translate(locale, "search.aria")}
-          />
-          <button type="submit">{translate(locale, "nav.search")}</button>
-        </form>
-        <div className={styles.actions}>
-          <Link href="/watchlist" className={styles.linkPill}>
-            {translate(locale, "nav.watchlist")}
-          </Link>
-          {sessionUser.isAuthenticated ? (
-            <Link href="/profile" className={styles.linkPill}>
-              {translate(locale, "nav.profile")}
-            </Link>
-          ) : null}
-          <LanguageToggle className={styles.linkPill} />
-          {sessionUser.isAuthenticated ? (
-            <form action={signOutAction}>
-              <button type="submit" className={styles.linkPillAlt}>
-                {translate(locale, "nav.signOut")}
-              </button>
-            </form>
-          ) : (
-            <Link href="/auth?next=/watchlist" className={styles.linkPillAlt}>
-              {translate(locale, "nav.signIn")}
-            </Link>
-          )}
-        </div>
-      </header>
+      <SiteHeader
+        locale={locale}
+        session={sessionUser}
+        searchPlaceholder={translate(locale, "search.anotherMovie")}
+      />
       <EmailVerificationBanner session={sessionUser} nextPath={`/movie/${movieId}`} />
 
       <section

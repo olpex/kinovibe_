@@ -1,0 +1,111 @@
+.page {
+  min-height: 100vh;
+  padding: 1.25rem;
+  background:
+    radial-gradient(circle at 12% -6%, rgba(0, 179, 255, 0.24), transparent 40%),
+    radial-gradient(circle at 90% 8%, rgba(229, 9, 20, 0.18), transparent 36%),
+    var(--color-bg);
+}
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.section {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: rgba(21, 27, 36, 0.78);
+  padding: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.heading h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.35rem, 2.7vw, 2rem);
+}
+
+.heading p {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.95rem;
+}
+
+.inlineMessage {
+  margin: 0;
+  color: var(--color-text-soft);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.pagination a,
+.pagination span {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.42rem 0.7rem;
+  color: var(--color-text);
+  background: rgba(26, 34, 48, 0.75);
+}
+
+.paginationDisabled {
+  opacity: 0.55;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.linkButton {
+  border: 1px solid var(--color-border);
+  border-radius: 0.8rem;
+  background: rgba(26, 34, 48, 0.78);
+  padding: 0.52rem 0.75rem;
+  color: var(--color-text);
+  display: inline-flex;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.8rem;
+}
+
+.textCard {
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  padding: 0.75rem;
+  background: rgba(11, 15, 20, 0.45);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.textCard h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.textCard p {
+  margin: 0;
+  color: var(--color-text-soft);
+}

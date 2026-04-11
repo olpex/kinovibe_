@@ -1,0 +1,121 @@
+.header {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--color-border);
+  background: rgba(11, 15, 20, 0.74);
+  backdrop-filter: blur(10px);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-size: 1.35rem;
+}
+
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pill,
+.pillAlt {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.42rem 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-soft);
+  background: rgba(26, 34, 48, 0.82);
+  font-weight: 650;
+}
+
+.pillAlt {
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.avatarButton {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 34, 48, 0.65);
+}
+
+.bottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.searchForm {
+  margin-left: auto;
+  min-width: min(100%, 430px);
+  flex: 1 1 320px;
+  max-width: 540px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.searchForm input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.58rem 0.75rem;
+  color: var(--color-text);
+  background: rgba(26, 34, 48, 0.78);
+}
+
+.searchForm button {
+  border: 0;
+  border-radius: 0.75rem;
+  padding: 0.58rem 1rem;
+  color: #fff;
+  background: var(--color-primary);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .header {
+    border-radius: 0.85rem;
+    padding: 0.75rem;
+  }
+
+  .topRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .rightActions {
+    width: 100%;
+  }
+
+  .searchForm {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+}
