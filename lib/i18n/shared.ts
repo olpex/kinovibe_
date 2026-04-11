@@ -93,6 +93,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "home.runtimeTbd": "Runtime TBD",
   "home.fallbackOverview": "Discover trending films, save your picks, and build a cinematic watch rhythm tailored to your taste.",
   "home.progressAria": "{progress}% watched",
+  "home.lastUpdated": "Last updated: {time}",
 
   "auth.verifyBanner": "Your email is not verified yet. Verify to secure your account and keep watchlist sync reliable.",
   "auth.verifyEmail": "Verify email",
@@ -306,6 +307,7 @@ const UK_MESSAGES: Record<string, string> = {
   "home.searchPlaceholder": "Пошук за назвою, актором або жанром",
   "home.details": "Деталі",
   "home.defaultGenre": "Кіно",
+  "home.lastUpdated": "Оновлено: {time}",
   "auth.welcome": "Ласкаво просимо до KinoVibe",
   "auth.welcomeSubtitle": "Увійдіть, щоб синхронізувати список перегляду, прогрес та персональні рекомендації.",
   "auth.signingIn": "Входимо...",

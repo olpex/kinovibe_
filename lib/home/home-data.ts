@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { continueWatching, genreChips, topPicks, trendingNow } from "@/components/home/mock-data";
 import { HomeScreenData, MovieCard } from "@/components/home/types";
 import { DEFAULT_LOCALE, translate, type Locale } from "@/lib/i18n/shared";
@@ -18,7 +17,7 @@ function asOptionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function toRuntimeLabel(value: unknown, movieId: number): string {
+function toRuntimeLabel(value: unknown, fallbackLabel: string): string {
   if (typeof value === "string" && value.trim().length > 0) {
     return value;
   }
@@ -29,10 +28,7 @@ function toRuntimeLabel(value: unknown, movieId: number): string {
     return `${hours}h ${minutes.toString().padStart(2, "0")}m`;
   }
 
-  const minutes = 90 + (movieId % 55);
-  const hours = Math.floor(minutes / 60);
-  const remaining = minutes % 60;
-  return `${hours}h ${remaining.toString().padStart(2, "0")}m`;
+  return fallbackLabel;
 }
 
 function gradientByMovieId(id: number): [string, string] {
@@ -112,7 +108,7 @@ async function getSupabaseContinueWatching(
         title: asString(movie.title, "KinoVibe"),
         year: asNumber(movie.year, new Date().getUTCFullYear()),
         genre,
-        runtime: toRuntimeLabel(movie.runtime, id),
+        runtime: toRuntimeLabel(movie.runtime, translate(locale, "home.runtimeTbd")),
         rating: asNumber(movie.vote_average, 0),
         progress: asNumber(item.progress_percent, 0),
         gradient: gradientByMovieId(id),
@@ -152,7 +148,7 @@ async function getSupabaseTopPicks(
         title: asString(movie.title, "KinoVibe"),
         year: asNumber(movie.year, new Date().getUTCFullYear()),
         genre,
-        runtime: toRuntimeLabel(movie.runtime, id),
+        runtime: toRuntimeLabel(movie.runtime, translate(locale, "home.runtimeTbd")),
         rating: asNumber(movie.vote_average, 0),
         gradient: gradientByMovieId(id),
         posterUrl: asOptionalString(movie.poster_url),
@@ -169,11 +165,13 @@ const FALLBACK_DATA: HomeScreenData = {
   trendingNow,
   continueWatching,
   topPicks,
-  continueWatchingCaption: translate(DEFAULT_LOCALE, "home.continueCaptionFallback")
+  continueWatchingCaption: translate(DEFAULT_LOCALE, "home.continueCaptionFallback"),
+  featuredUpdatedAt: ""
 };
 
-export const getHomeScreenData = cache(async (locale: Locale = "en"): Promise<HomeScreenData> => {
+export async function getHomeScreenData(locale: Locale = "en"): Promise<HomeScreenData> {
   try {
+    const featuredUpdatedAt = new Date().toISOString();
     const catalog = await getTmdbHomeCatalog(locale);
     const supabase = await createSupabaseServerClient();
     const [supabaseContinueWatching, supabaseTopPicks] = await Promise.all([
@@ -198,12 +196,14 @@ export const getHomeScreenData = cache(async (locale: Locale = "en"): Promise<Ho
       continueWatchingCaption:
         supabaseContinueWatching.length > 0
           ? translate(locale, "home.continueCaptionSynced")
-          : translate(locale, "home.continueCaptionPopular")
+          : translate(locale, "home.continueCaptionPopular"),
+      featuredUpdatedAt
     };
   } catch {
     return {
       ...FALLBACK_DATA,
-      continueWatchingCaption: translate(locale, "home.continueCaptionFallback")
+      continueWatchingCaption: translate(locale, "home.continueCaptionFallback"),
+      featuredUpdatedAt: new Date().toISOString()
     };
   }
-});
+}

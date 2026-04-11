@@ -18,6 +18,7 @@ export type HomeScreenData = {
   continueWatching: MovieCard[];
   topPicks: MovieCard[];
   continueWatchingCaption: string;
+  featuredUpdatedAt: string;
 };
 
 export type HomeSession = {

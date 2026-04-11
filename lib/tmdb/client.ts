@@ -89,10 +89,7 @@ function formatRuntime(minutes: number | null | undefined, id: number): string {
     return `${hours}h ${remaining.toString().padStart(2, "0")}m`;
   }
 
-  const placeholder = 92 + (id % 54);
-  const hours = Math.floor(placeholder / 60);
-  const remaining = placeholder % 60;
-  return `${hours}h ${remaining.toString().padStart(2, "0")}m`;
+  return "Runtime TBD";
 }
 
 function posterUrl(path: string | null): string | undefined {

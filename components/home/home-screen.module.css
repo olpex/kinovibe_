@@ -147,6 +147,12 @@
   font-weight: 700;
 }
 
+.heroUpdated {
+  margin: 0.38rem 0 0;
+  color: var(--color-text-soft);
+  font-size: 0.78rem;
+}
+
 .hero h1 {
   margin: 0.45rem 0 0;
   font-size: clamp(1.8rem, 4.7vw, 3rem);

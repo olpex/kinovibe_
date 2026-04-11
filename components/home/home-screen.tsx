@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { UserAvatar } from "@/components/user/user-avatar";
-import { translate, type Locale } from "@/lib/i18n/shared";
+import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import { signOutAction } from "@/lib/auth/actions";
 import { MediaRail } from "./media-rail";
 import { ThemeToggle } from "./theme-toggle";
@@ -17,6 +17,12 @@ type HomeScreenProps = {
 
 export function HomeScreen({ data, session, locale }: HomeScreenProps) {
   const featured = data.trendingNow[0] ?? data.topPicks[0] ?? null;
+  const featuredUpdatedAt = data.featuredUpdatedAt
+    ? new Date(data.featuredUpdatedAt).toLocaleString(toIntlLocale(locale), {
+        dateStyle: "medium",
+        timeStyle: "short"
+      })
+    : null;
   const heroBackground = featured?.backdropUrl
     ? `linear-gradient(125deg, rgba(11, 15, 20, 0.88), rgba(21, 27, 36, 0.95)), url(${featured.backdropUrl}) center / cover no-repeat`
     : `radial-gradient(circle at 20% 20%, ${featured?.gradient[0] ?? "#3A0CA3"} 0%, transparent 55%), radial-gradient(circle at 85% 30%, ${featured?.gradient[1] ?? "#4CC9F0"} 0%, transparent 45%), linear-gradient(140deg, rgba(11, 15, 20, 0.9), rgba(21, 27, 36, 0.98))`;
@@ -91,6 +97,11 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
       >
         <div className={styles.heroContent}>
           <p className={styles.heroEyebrow}>{translate(locale, "home.featuredTonight")}</p>
+          {featuredUpdatedAt ? (
+            <p className={styles.heroUpdated}>
+              {translate(locale, "home.lastUpdated", { time: featuredUpdatedAt })}
+            </p>
+          ) : null}
           <h1>{featured?.title ?? "KinoVibe"}</h1>
           <p className={styles.heroMeta}>
             {featured?.genre ?? translate(locale, "home.defaultGenre")} · {featured?.year ?? new Date().getUTCFullYear()} ·{" "}
