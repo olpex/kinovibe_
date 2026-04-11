@@ -373,7 +373,21 @@ const BASE_MESSAGES: Record<string, string> = {
   "movie.openProviders": "Open full provider details",
   "movie.cast": "Cast",
   "movie.castUnknownCharacter": "Unknown character",
-  "movie.similarTitles": "Similar titles"
+  "movie.similarTitles": "Similar titles",
+
+  "person.mediaTypeMovie": "Movie",
+  "person.mediaTypeTv": "TV Series",
+  "person.noKnownTitles": "No known titles",
+  "person.untitled": "Untitled",
+  "person.unknownCharacter": "Unknown",
+  "person.biography": "Biography",
+  "person.department": "Department",
+  "person.popularity": "Popularity",
+  "person.birthDate": "Birth date",
+  "person.birthPlace": "Place of birth",
+  "person.openHomepage": "Open homepage",
+  "person.alsoKnownAs": "Also known as",
+  "person.knownFor": "Known for"
 };
 
 const UK_MESSAGES: Record<string, string> = {
@@ -466,7 +480,21 @@ const UK_MESSAGES: Record<string, string> = {
   "movie.rent": "Оренда",
   "movie.buy": "Купівля",
   "movie.cast": "Акторський склад",
-  "movie.similarTitles": "Схожі фільми"
+  "movie.similarTitles": "Схожі фільми",
+
+  "person.mediaTypeMovie": "Фільм",
+  "person.mediaTypeTv": "Серіал",
+  "person.noKnownTitles": "Немає відомих робіт",
+  "person.untitled": "Без назви",
+  "person.unknownCharacter": "Невідомо",
+  "person.biography": "Біографія",
+  "person.department": "Напрямок",
+  "person.popularity": "Популярність",
+  "person.birthDate": "Дата народження",
+  "person.birthPlace": "Місце народження",
+  "person.openHomepage": "Відкрити сайт",
+  "person.alsoKnownAs": "Також відомий як",
+  "person.knownFor": "Відомий за"
 };
 
 const TRANSLATIONS: Record<Locale, Record<string, string>> = {

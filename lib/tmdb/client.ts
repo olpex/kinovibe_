@@ -951,6 +951,40 @@ function mapPersonCredit(item: TmdbPersonCombinedCreditsResponse["cast"][number]
   };
 }
 
+async function localizePersonCredit(
+  credit: PersonCredit,
+  locale: Locale
+): Promise<PersonCredit> {
+  if (locale === "en") {
+    return credit;
+  }
+  if (credit.mediaType === "movie") {
+    const [regionalTitle, translatedCharacter] = await Promise.all([
+      getRegionalReleaseTitle(credit.id, locale),
+      credit.character && credit.character !== "Unknown"
+        ? translateText(credit.character, locale)
+        : Promise.resolve(credit.character)
+    ]);
+    return {
+      ...credit,
+      title: regionalTitle ?? credit.title,
+      character: translatedCharacter
+    };
+  }
+  // tv
+  const [regionalTitle, translatedCharacter] = await Promise.all([
+    getRegionalTvTitle(credit.id, locale),
+    credit.character && credit.character !== "Unknown"
+      ? translateText(credit.character, locale)
+      : Promise.resolve(credit.character)
+  ]);
+  return {
+    ...credit,
+    title: regionalTitle ?? credit.title,
+    character: translatedCharacter
+  };
+}
+
 export const getTmdbPersonDetails = cache(
   async (personId: number, locale: Locale = "en"): Promise<PersonDetailsView> => {
     const language = toTmdbLanguage(locale);
@@ -977,11 +1011,14 @@ export const getTmdbPersonDetails = cache(
       aka: details.also_known_as ?? [],
       homepage: details.homepage,
       avatarUrl: posterUrl(details.profile_path),
-      knownFor: credits.cast
-        .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
-        .map(mapPersonCredit)
-        .sort((a, b) => b.rating - a.rating)
-        .slice(0, 20)
+      knownFor: await Promise.all(
+        credits.cast
+          .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
+          .map(mapPersonCredit)
+          .sort((a, b) => b.rating - a.rating)
+          .slice(0, 20)
+          .map((credit) => localizePersonCredit(credit, locale))
+      )
     };
   }
 );
