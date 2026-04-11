@@ -95,13 +95,14 @@ export function HomeScreen({ data, session }: HomeScreenProps) {
         <h2>Browse genres</h2>
         <div className={styles.genreRow}>
           {data.genreChips.map((genre, index) => (
-            <button
-              type="button"
+            <Link
               key={genre}
+              href={`/search?q=${encodeURIComponent(genre)}`}
               className={`${styles.genreChip} ${index === 0 ? styles.genreChipActive : ""}`}
+              aria-label={`Browse ${genre} movies`}
             >
               {genre}
-            </button>
+            </Link>
           ))}
         </div>
       </section>

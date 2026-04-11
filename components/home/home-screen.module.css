@@ -242,12 +242,16 @@
 }
 
 .genreChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-surface-soft);
   color: var(--color-text);
   padding: 0.45rem 0.82rem;
   white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
 }
 
