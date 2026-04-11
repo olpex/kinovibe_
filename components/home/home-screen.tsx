@@ -84,9 +84,20 @@ export function HomeScreen({ data, session }: HomeScreenProps) {
             ) : (
               <span className={styles.secondaryButton}>Watch trailer</span>
             )}
-            <button type="button" className={styles.secondaryButton} disabled={!featured}>
-              Add to watchlist
-            </button>
+            {featured ? (
+              <Link
+                href={
+                  session.isAuthenticated
+                    ? `/movie/${featured.id}`
+                    : `/auth?next=${encodeURIComponent(`/movie/${featured.id}`)}`
+                }
+                className={styles.secondaryButton}
+              >
+                Add to watchlist
+              </Link>
+            ) : (
+              <span className={styles.secondaryButton}>Add to watchlist</span>
+            )}
           </div>
         </div>
       </section>
