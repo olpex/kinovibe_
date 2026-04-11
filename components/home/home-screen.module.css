@@ -234,12 +234,8 @@
   margin-top: 0.7rem;
   display: flex;
   gap: 0.55rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.genreRow::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  overflow: visible;
 }
 
 .genreChip {
