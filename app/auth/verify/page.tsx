@@ -37,7 +37,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
   const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
 
   if (sessionUser.isAuthenticated) {
-    redirect(nextPath);
+    redirect("/");
   }
 
   return (

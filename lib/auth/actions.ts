@@ -7,18 +7,6 @@ import { translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AuthFormState } from "./types";
 
-function safeNextPath(value: string | undefined): string {
-  if (!value || value.trim().length === 0) {
-    return "/";
-  }
-
-  if (value.startsWith("/") && !value.startsWith("//")) {
-    return value;
-  }
-
-  return "/";
-}
-
 function asString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
 }
@@ -51,7 +39,6 @@ export async function signInWithPasswordAction(
   const locale = await getRequestLocale();
   const email = asString(formData.get("email")).trim();
   const password = asString(formData.get("password"));
-  const nextPath = safeNextPath(asString(formData.get("next")));
 
   if (!email || !password) {
     return {
@@ -79,7 +66,7 @@ export async function signInWithPasswordAction(
     const isEmailUnverified = error.message.toLowerCase().includes("email not confirmed");
     if (isEmailUnverified) {
       redirect(
-        `/auth/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent(nextPath)}`
+        `/auth/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent("/")}`
       );
     }
 
@@ -90,7 +77,7 @@ export async function signInWithPasswordAction(
     };
   }
 
-  redirect(nextPath);
+  redirect("/");
 }
 
 export async function signUpWithPasswordAction(
@@ -100,7 +87,6 @@ export async function signUpWithPasswordAction(
   const locale = await getRequestLocale();
   const email = asString(formData.get("email")).trim();
   const password = asString(formData.get("password"));
-  const nextPath = safeNextPath(asString(formData.get("next")));
 
   if (!email || !password) {
     return {
@@ -141,10 +127,10 @@ export async function signUpWithPasswordAction(
   }
 
   if (data.session) {
-    redirect(nextPath);
+    redirect("/");
   }
 
-  redirect(`/auth/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent(nextPath)}`);
+  redirect(`/auth/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent("/")}`);
 }
 
 export async function signInWithGoogleAction(
@@ -152,7 +138,7 @@ export async function signInWithGoogleAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const locale = await getRequestLocale();
-  const nextPath = safeNextPath(asString(formData.get("next")));
+  const nextPath = "/";
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
@@ -229,7 +215,7 @@ export async function resendVerificationEmailAction(
 ): Promise<AuthFormState> {
   const locale = await getRequestLocale();
   const email = asString(formData.get("email")).trim();
-  const nextPath = safeNextPath(asString(formData.get("next")));
+  const nextPath = "/";
   if (!email) {
     return {
       ...previousState,

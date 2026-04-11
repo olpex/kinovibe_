@@ -65,6 +65,6 @@ export async function GET(request: Request) {
     );
   }
 
-  const destination = otpType === "recovery" ? "/auth/reset" : nextPath;
+  const destination = otpType === "recovery" ? "/auth/reset" : "/";
   return NextResponse.redirect(new URL(destination, requestUrl.origin));
 }
