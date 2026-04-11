@@ -4,7 +4,7 @@ import { EmailVerificationBanner } from "@/components/auth/email-verification-ba
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
-import { translate } from "@/lib/i18n/shared";
+import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { searchTmdbMovies } from "@/lib/tmdb/client";
 import styles from "./search.module.css";
@@ -33,10 +33,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = (params.q ?? "").trim();
   const page = parsePage(params.page);
-  const [results, sessionUser, locale] = await Promise.all([
-    searchTmdbMovies(query, page),
-    getSessionUser(),
-    getRequestLocale()
+  const locale = await getRequestLocale();
+  const [results, sessionUser] = await Promise.all([
+    searchTmdbMovies(query, page, locale),
+    getSessionUser()
   ]);
 
   const hasPrev = results.page > 1;
@@ -56,10 +56,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             name="q"
             type="search"
             defaultValue={query}
-            placeholder="Search by title, actor, or keyword"
-            aria-label="Search movies"
+            placeholder={translate(locale, "search.placeholder")}
+            aria-label={translate(locale, "search.aria")}
           />
-          <button type="submit">Search</button>
+          <button type="submit">{translate(locale, "nav.search")}</button>
         </form>
         <div className={styles.actions}>
           <Link href="/watchlist" className={styles.linkPill}>
@@ -87,24 +87,25 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <EmailVerificationBanner session={sessionUser} nextPath={nextPath} />
 
       <section className={styles.resultsHeader}>
-        <h1>Search</h1>
+        <h1>{translate(locale, "nav.search")}</h1>
         {query ? (
           <p>
-            {results.totalResults.toLocaleString()} results for <span>&quot;{query}&quot;</span>
+            {results.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")}{" "}
+            <span>&quot;{query}&quot;</span>
           </p>
         ) : (
-          <p>Type a movie title to start exploring.</p>
+          <p>{translate(locale, "search.startHint")}</p>
         )}
       </section>
 
       {query && results.items.length === 0 ? (
         <section className={styles.emptyState}>
-          <h2>No matches found</h2>
-          <p>Try a shorter title, alternate spelling, or broader keyword.</p>
+          <h2>{translate(locale, "search.noMatches")}</h2>
+          <p>{translate(locale, "search.noMatchesHint")}</p>
         </section>
       ) : null}
 
-      <section className={styles.grid} aria-label="Search results">
+      <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
         {results.items.map((movie) => (
           <Link key={movie.id} href={`/movie/${movie.id}`} className={styles.movieCard}>
             <div
@@ -127,23 +128,24 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       </section>
 
       {query && results.totalPages > 1 ? (
-        <nav className={styles.pagination} aria-label="Pagination">
+        <nav className={styles.pagination} aria-label={translate(locale, "search.paginationAria")}>
           {hasPrev ? (
             <Link href={`/search?q=${encodeURIComponent(query)}&page=${results.page - 1}`}>
-              Previous
+              {translate(locale, "common.previous")}
             </Link>
           ) : (
-            <span className={styles.paginationDisabled}>Previous</span>
+            <span className={styles.paginationDisabled}>{translate(locale, "common.previous")}</span>
           )}
           <p>
-            Page {results.page} of {results.totalPages}
+            {translate(locale, "common.page")} {results.page} {translate(locale, "common.of")}{" "}
+            {results.totalPages}
           </p>
           {hasNext ? (
             <Link href={`/search?q=${encodeURIComponent(query)}&page=${results.page + 1}`}>
-              Next
+              {translate(locale, "common.next")}
             </Link>
           ) : (
-            <span className={styles.paginationDisabled}>Next</span>
+            <span className={styles.paginationDisabled}>{translate(locale, "common.next")}</span>
           )}
         </nav>
       ) : null}

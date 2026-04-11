@@ -5,7 +5,7 @@ import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { getRequestLocale } from "@/lib/i18n/server";
-import { translate } from "@/lib/i18n/shared";
+import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/supabase/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -43,8 +43,8 @@ export default async function AdminAnalyticsPage() {
     return (
       <main className={styles.page}>
         <section className={styles.notice}>
-          <h1>Access denied</h1>
-          <p>Admin access required.</p>
+          <h1>{translate(locale, "admin.accessDenied")}</h1>
+          <p>{translate(locale, "admin.adminRequired")}</p>
         </section>
       </main>
     );
@@ -57,8 +57,8 @@ export default async function AdminAnalyticsPage() {
     return (
       <main className={styles.page}>
         <section className={styles.notice}>
-          <h1>Supabase unavailable</h1>
-          <p>Configure Supabase credentials before loading analytics.</p>
+          <h1>{translate(locale, "admin.supabaseUnavailable")}</h1>
+          <p>{translate(locale, "admin.configureSupabase")}</p>
         </section>
       </main>
     );
@@ -119,7 +119,7 @@ export default async function AdminAnalyticsPage() {
         </Link>
         <div className={styles.actions}>
           <Link href="/admin/audit-logs" className={styles.linkPill}>
-            Audit logs
+            {translate(locale, "nav.auditLogs")}
           </Link>
           <Link href="/profile" className={styles.linkPill}>
             {translate(locale, "nav.profile")}
@@ -139,26 +139,26 @@ export default async function AdminAnalyticsPage() {
         <div className={styles.kpis}>
           <article>
             <h3>{translate(locale, "analytics.visits")}</h3>
-            <p>{totalVisits.toLocaleString("en-US")}</p>
+            <p>{totalVisits.toLocaleString(toIntlLocale(locale))}</p>
           </article>
           <article>
             <h3>{translate(locale, "analytics.clicks")}</h3>
-            <p>{totalClicks.toLocaleString("en-US")}</p>
+            <p>{totalClicks.toLocaleString(toIntlLocale(locale))}</p>
           </article>
           <article>
             <h3>{translate(locale, "analytics.movies")}</h3>
-            <p>{totalMovieAdds.toLocaleString("en-US")}</p>
+            <p>{totalMovieAdds.toLocaleString(toIntlLocale(locale))}</p>
           </article>
           <article>
             <h3>{translate(locale, "analytics.events")}</h3>
-            <p>{events.length.toLocaleString("en-US")}</p>
+            <p>{events.length.toLocaleString(toIntlLocale(locale))}</p>
           </article>
         </div>
       </section>
 
       {error ? (
         <section className={styles.notice}>
-          <h2>Query failed</h2>
+          <h2>{translate(locale, "analytics.queryFailed")}</h2>
           <p>{error.message}</p>
         </section>
       ) : null}

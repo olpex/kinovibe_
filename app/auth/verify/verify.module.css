@@ -25,6 +25,12 @@
   letter-spacing: 0.03em;
 }
 
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .backLink {
   color: var(--color-secondary);
   text-decoration: none;

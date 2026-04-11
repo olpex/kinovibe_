@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { continueWatching, genreChips, topPicks, trendingNow } from "@/components/home/mock-data";
 import { HomeScreenData, MovieCard } from "@/components/home/types";
+import { DEFAULT_LOCALE, translate, type Locale } from "@/lib/i18n/shared";
 import { HomeMovie, getTmdbHomeCatalog } from "@/lib/tmdb/client";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -67,7 +68,8 @@ function normalizeTmdbMovie(movie: HomeMovie): MovieCard {
 type SupabaseClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
 async function getSupabaseContinueWatching(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  locale: Locale
 ): Promise<MovieCard[]> {
   if (!supabase) {
     return [];
@@ -102,12 +104,12 @@ async function getSupabaseContinueWatching(
       const id = asNumber(movie.tmdb_id, 50000 + index);
       const genreSource = movie.genres;
       const genre = Array.isArray(genreSource)
-        ? asString(genreSource[0], "Cinema")
-        : asString(genreSource, "Cinema");
+        ? asString(genreSource[0], translate(locale, "home.defaultGenre"))
+        : asString(genreSource, translate(locale, "home.defaultGenre"));
 
       return {
         id,
-        title: asString(movie.title, "Untitled"),
+        title: asString(movie.title, "KinoVibe"),
         year: asNumber(movie.year, new Date().getUTCFullYear()),
         genre,
         runtime: toRuntimeLabel(movie.runtime, id),
@@ -124,7 +126,10 @@ async function getSupabaseContinueWatching(
   return cards;
 }
 
-async function getSupabaseTopPicks(supabase: SupabaseClient): Promise<MovieCard[]> {
+async function getSupabaseTopPicks(
+  supabase: SupabaseClient,
+  locale: Locale
+): Promise<MovieCard[]> {
   if (!supabase) {
     return [];
   }
@@ -139,12 +144,12 @@ async function getSupabaseTopPicks(supabase: SupabaseClient): Promise<MovieCard[
       const id = asNumber(movie.tmdb_id, 70000 + index);
       const genreSource = movie.genres;
       const genre = Array.isArray(genreSource)
-        ? asString(genreSource[0], "Cinema")
-        : asString(genreSource, "Cinema");
+        ? asString(genreSource[0], translate(locale, "home.defaultGenre"))
+        : asString(genreSource, translate(locale, "home.defaultGenre"));
 
       return {
         id,
-        title: asString(movie.title, "Untitled"),
+        title: asString(movie.title, "KinoVibe"),
         year: asNumber(movie.year, new Date().getUTCFullYear()),
         genre,
         runtime: toRuntimeLabel(movie.runtime, id),
@@ -154,8 +159,7 @@ async function getSupabaseTopPicks(supabase: SupabaseClient): Promise<MovieCard[
         overview: asString(movie.overview, ""),
         backdropUrl: undefined
       } satisfies MovieCard;
-    })
-    .filter((item) => item.title !== "Untitled");
+    });
 
   return cards;
 }
@@ -165,16 +169,16 @@ const FALLBACK_DATA: HomeScreenData = {
   trendingNow,
   continueWatching,
   topPicks,
-  continueWatchingCaption: "Sample data. Connect Supabase and TMDB to personalize this rail."
+  continueWatchingCaption: translate(DEFAULT_LOCALE, "home.continueCaptionFallback")
 };
 
-export const getHomeScreenData = cache(async (): Promise<HomeScreenData> => {
+export const getHomeScreenData = cache(async (locale: Locale = "en"): Promise<HomeScreenData> => {
   try {
-    const catalog = await getTmdbHomeCatalog();
+    const catalog = await getTmdbHomeCatalog(locale);
     const supabase = await createSupabaseServerClient();
     const [supabaseContinueWatching, supabaseTopPicks] = await Promise.all([
-      getSupabaseContinueWatching(supabase),
-      getSupabaseTopPicks(supabase)
+      getSupabaseContinueWatching(supabase, locale),
+      getSupabaseTopPicks(supabase, locale)
     ]);
 
     return {
@@ -193,10 +197,13 @@ export const getHomeScreenData = cache(async (): Promise<HomeScreenData> => {
           : catalog.topRated.map(normalizeTmdbMovie),
       continueWatchingCaption:
         supabaseContinueWatching.length > 0
-          ? "Synced from your KinoVibe profile in Supabase."
-          : "Popular now. Sign in to sync progress from Supabase."
+          ? translate(locale, "home.continueCaptionSynced")
+          : translate(locale, "home.continueCaptionPopular")
     };
   } catch {
-    return FALLBACK_DATA;
+    return {
+      ...FALLBACK_DATA,
+      continueWatchingCaption: translate(locale, "home.continueCaptionFallback")
+    };
   }
 });

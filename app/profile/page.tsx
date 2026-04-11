@@ -22,7 +22,7 @@ export default async function ProfilePage() {
   if (!supabase) {
     return (
       <main className={styles.page}>
-        <p>Supabase is not configured.</p>
+        <p>{translate(locale, "profile.supabaseMissing")}</p>
       </main>
     );
   }

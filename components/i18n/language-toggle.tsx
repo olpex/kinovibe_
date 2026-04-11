@@ -2,7 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getLocaleCookieKey, normalizeLocale, translate, type Locale } from "@/lib/i18n/shared";
+import {
+  getLocaleCookieKey,
+  normalizeLocale,
+  SUPPORTED_LOCALES,
+  translate,
+  type Locale
+} from "@/lib/i18n/shared";
+
+type LanguageToggleProps = {
+  className?: string;
+};
 
 function readLocaleFromCookie(): Locale {
   if (typeof document === "undefined") {
@@ -18,30 +28,30 @@ function readLocaleFromCookie(): Locale {
   return normalizeLocale(cookieValue ? decodeURIComponent(cookieValue) : null);
 }
 
-type LanguageToggleProps = {
-  className?: string;
-};
-
 export function LanguageToggle({ className }: LanguageToggleProps) {
   const [locale, setLocale] = useState<Locale>(() => readLocaleFromCookie());
   const router = useRouter();
-
-  const nextLocale: Locale = locale === "en" ? "uk" : "en";
   const label = useMemo(() => translate(locale, "lang.label"), [locale]);
-  const nextLabel = useMemo(() => translate(nextLocale, nextLocale === "en" ? "lang.en" : "lang.uk"), [nextLocale]);
 
   return (
-    <button
-      type="button"
-      className={className}
-      aria-label={`${label}: ${nextLabel}`}
-      onClick={() => {
-        document.cookie = `${getLocaleCookieKey()}=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=31536000; SameSite=Lax`;
-        setLocale(nextLocale);
-        router.refresh();
-      }}
-    >
-      {nextLocale === "en" ? "EN" : "UA"}
-    </button>
+    <label className={`${className ?? ""} kvLangToggle`.trim()} aria-label={translate(locale, "lang.switch")}>
+      <span className="sr-only">{label}</span>
+      <select
+        className="kvLangSelect"
+        value={locale}
+        onChange={(event) => {
+          const nextLocale = normalizeLocale(event.target.value);
+          document.cookie = `${getLocaleCookieKey()}=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+          setLocale(nextLocale);
+          router.refresh();
+        }}
+      >
+        {SUPPORTED_LOCALES.map((item) => (
+          <option key={item.value} value={item.value}>
+            {item.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }

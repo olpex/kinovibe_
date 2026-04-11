@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { translate, type Locale } from "@/lib/i18n/shared";
 import { watchlistAction } from "@/lib/watchlist/actions";
 import { WATCHLIST_DEFAULT_STATE, WatchlistUiState } from "@/lib/watchlist/types";
 import styles from "./watchlist-controls.module.css";
 
 type WatchlistControlsProps = {
   initialState: WatchlistUiState;
+  locale: Locale;
   movie: {
     tmdbId: number;
     title: string;
@@ -39,7 +41,7 @@ function HiddenMovieFields({ movie }: HiddenMovieFieldsProps) {
   );
 }
 
-export function WatchlistControls({ initialState, movie }: WatchlistControlsProps) {
+export function WatchlistControls({ initialState, movie, locale }: WatchlistControlsProps) {
   const [state, formAction, isPending] = useActionState(
     watchlistAction,
     initialState ?? WATCHLIST_DEFAULT_STATE
@@ -51,10 +53,10 @@ export function WatchlistControls({ initialState, movie }: WatchlistControlsProp
         <div className={styles.authNotice}>
           <p>
             {state.message ||
-              "Sign in to save this movie to your watchlist and track progress."}
+              translate(locale, "watchlist.signInHint")}
           </p>
           <Link href={`/auth?next=/movie/${movie.tmdbId}`} className={styles.linkButton}>
-            Sign in
+            {translate(locale, "nav.signIn")}
           </Link>
         </div>
       </section>
@@ -64,9 +66,11 @@ export function WatchlistControls({ initialState, movie }: WatchlistControlsProp
   return (
     <section className={styles.panel}>
       <header className={styles.header}>
-        <h2>Watchlist</h2>
+        <h2>{translate(locale, "nav.watchlist")}</h2>
         <span className={state.inWatchlist ? styles.statusOn : styles.statusOff}>
-          {state.inWatchlist ? "In watchlist" : "Not in watchlist"}
+          {state.inWatchlist
+            ? translate(locale, "watchlist.inWatchlist")
+            : translate(locale, "watchlist.notInWatchlist")}
         </span>
       </header>
 
@@ -78,7 +82,7 @@ export function WatchlistControls({ initialState, movie }: WatchlistControlsProp
         <form action={formAction} className={styles.singleActionForm}>
           <HiddenMovieFields movie={movie} />
           <button name="operation" value="add" disabled={isPending} className={styles.primaryAction}>
-            {isPending ? "Updating..." : "Add to watchlist"}
+            {isPending ? translate(locale, "common.updating") : translate(locale, "home.addToWatchlist")}
           </button>
         </form>
       ) : (
@@ -86,15 +90,15 @@ export function WatchlistControls({ initialState, movie }: WatchlistControlsProp
           <form action={formAction} className={styles.progressForm}>
             <HiddenMovieFields movie={movie} />
             <label className={styles.field}>
-              <span>Status</span>
+              <span>{translate(locale, "watchlist.statusLabel")}</span>
               <select name="status" defaultValue={state.status} disabled={isPending}>
-                <option value="to_watch">To watch</option>
-                <option value="watching">Watching</option>
-                <option value="watched">Watched</option>
+                <option value="to_watch">{translate(locale, "watchlist.status.toWatch")}</option>
+                <option value="watching">{translate(locale, "watchlist.status.watching")}</option>
+                <option value="watched">{translate(locale, "watchlist.status.watched")}</option>
               </select>
             </label>
             <label className={styles.field}>
-              <span>Progress ({state.progressPercent}%)</span>
+              <span>{translate(locale, "watchlist.progress")} ({state.progressPercent}%)</span>
               <input
                 name="progressPercent"
                 type="range"
@@ -105,7 +109,7 @@ export function WatchlistControls({ initialState, movie }: WatchlistControlsProp
               />
             </label>
             <button name="operation" value="save" disabled={isPending} className={styles.secondaryAction}>
-              Save progress
+              {translate(locale, "watchlist.saveProgress")}
             </button>
           </form>
 
@@ -117,7 +121,7 @@ export function WatchlistControls({ initialState, movie }: WatchlistControlsProp
               disabled={isPending}
               className={styles.ghostAction}
             >
-              Mark watching
+              {translate(locale, "watchlist.markWatching")}
             </button>
             <button
               name="operation"
@@ -125,10 +129,10 @@ export function WatchlistControls({ initialState, movie }: WatchlistControlsProp
               disabled={isPending}
               className={styles.ghostAction}
             >
-              Mark watched
+              {translate(locale, "watchlist.markWatched")}
             </button>
             <button name="operation" value="remove" disabled={isPending} className={styles.dangerAction}>
-              Remove
+              {translate(locale, "watchlist.remove")}
             </button>
           </form>
         </>

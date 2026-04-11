@@ -5,13 +5,15 @@ import {
   purgeAuditLogsByRetentionAction,
   RETENTION_ACTION_INITIAL_STATE
 } from "./actions";
+import { translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./audit-logs.module.css";
 
 type RetentionControlsProps = {
   defaultDays: number;
+  locale: Locale;
 };
 
-export function RetentionControls({ defaultDays }: RetentionControlsProps) {
+export function RetentionControls({ defaultDays, locale }: RetentionControlsProps) {
   const [state, formAction, pending] = useActionState(
     purgeAuditLogsByRetentionAction,
     RETENTION_ACTION_INITIAL_STATE
@@ -19,8 +21,8 @@ export function RetentionControls({ defaultDays }: RetentionControlsProps) {
 
   return (
     <section className={styles.retentionCard}>
-      <h2>Retention</h2>
-      <p>Delete logs older than a chosen number of days.</p>
+      <h2>{translate(locale, "admin.retention")}</h2>
+      <p>{translate(locale, "admin.retentionHint")}</p>
       {state.message ? (
         <p className={state.ok ? styles.retentionSuccess : styles.retentionError}>
           {state.message}
@@ -28,7 +30,7 @@ export function RetentionControls({ defaultDays }: RetentionControlsProps) {
       ) : null}
       <form action={formAction} className={styles.retentionForm}>
         <label>
-          <span>Days to keep</span>
+          <span>{translate(locale, "admin.daysToKeep")}</span>
           <input
             type="number"
             name="retentionDays"
@@ -39,7 +41,7 @@ export function RetentionControls({ defaultDays }: RetentionControlsProps) {
           />
         </label>
         <button type="submit" disabled={pending}>
-          {pending ? "Purging..." : "Apply retention"}
+          {pending ? translate(locale, "admin.purging") : translate(locale, "admin.applyRetention")}
         </button>
       </form>
     </section>

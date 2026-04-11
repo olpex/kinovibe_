@@ -6,6 +6,8 @@ import { RetentionControls } from "./retention-controls";
 import { signOutAction } from "@/lib/auth/actions";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { getDefaultRetentionDays } from "@/lib/audit/retention";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getSessionUser } from "@/lib/supabase/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -82,7 +84,7 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
   const outcomeFilter = (params.outcome ?? "").trim();
   const userFilter = (params.user ?? "").trim();
   const statusFilter = clampStatus(params.status);
-  const sessionUser = await getSessionUser();
+  const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
   if (!sessionUser.isAuthenticated) {
     redirect("/auth?next=/admin/audit-logs");
   }
@@ -97,13 +99,13 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
           </Link>
           <form action={signOutAction}>
             <button type="submit" className={styles.linkPillAlt}>
-              Sign out
+              {translate(locale, "nav.signOut")}
             </button>
           </form>
         </header>
         <section className={styles.notice}>
-          <h1>Access denied</h1>
-          <p>Your account is authenticated but not in the admin allowlist.</p>
+          <h1>{translate(locale, "admin.accessDenied")}</h1>
+          <p>{translate(locale, "admin.adminRequired")}</p>
         </section>
       </main>
     );
@@ -122,8 +124,8 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
           </Link>
         </header>
         <section className={styles.notice}>
-          <h1>Supabase unavailable</h1>
-          <p>Configure Supabase credentials before loading audit logs.</p>
+          <h1>{translate(locale, "admin.supabaseUnavailable")}</h1>
+          <p>{translate(locale, "admin.configureSupabase")}</p>
         </section>
       </main>
     );
@@ -212,64 +214,64 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
         </Link>
         <div className={styles.actions}>
           <Link href="/admin/analytics" className={styles.linkPill}>
-            Analytics
+            {translate(locale, "nav.analytics")}
           </Link>
           <Link href="/profile" className={styles.linkPill}>
-            Profile
+            {translate(locale, "nav.profile")}
           </Link>
           <LanguageToggle className={styles.linkPill} />
           <Link href="/watchlist" className={styles.linkPill}>
-            Watchlist
+            {translate(locale, "nav.watchlist")}
           </Link>
           <form action={signOutAction}>
             <button type="submit" className={styles.linkPillAlt}>
-              Sign out
+              {translate(locale, "nav.signOut")}
             </button>
           </form>
         </div>
       </header>
 
       <section className={styles.headerCard}>
-        <h1>Audit logs</h1>
+        <h1>{translate(locale, "admin.auditTitle")}</h1>
         <p>
           {adminClient
-            ? "Service-role mode: full visibility across users."
-            : "Fallback mode: set SUPABASE_SERVICE_ROLE_KEY for full cross-user visibility."}
+            ? translate(locale, "admin.auditSubtitleServiceRole")
+            : translate(locale, "admin.auditSubtitleFallback")}
         </p>
         <div className={styles.headerActions}>
           <Link href={exportHref} className={styles.exportLink}>
-            Export CSV
+            {translate(locale, "admin.exportCsv")}
           </Link>
         </div>
       </section>
 
-      <RetentionControls defaultDays={DEFAULT_RETENTION_DAYS} />
+      <RetentionControls defaultDays={DEFAULT_RETENTION_DAYS} locale={locale} />
 
       <form className={styles.filters} method="get" action="/admin/audit-logs">
         <label>
-          <span>Route key</span>
+          <span>{translate(locale, "admin.routeKey")}</span>
           <input type="text" name="route" defaultValue={routeFilter} placeholder="api.protected" />
         </label>
         <label>
-          <span>Outcome</span>
+          <span>{translate(locale, "admin.outcome")}</span>
           <input type="text" name="outcome" defaultValue={outcomeFilter} placeholder="success" />
         </label>
         <label>
-          <span>Status code</span>
+          <span>{translate(locale, "admin.statusCode")}</span>
           <input type="number" name="status" defaultValue={statusFilter ?? ""} placeholder="200" />
         </label>
         {adminClient ? (
           <label>
-            <span>User ID</span>
-            <input type="text" name="user" defaultValue={userFilter} placeholder="optional uuid" />
+            <span>{translate(locale, "admin.userId")}</span>
+            <input type="text" name="user" defaultValue={userFilter} placeholder={translate(locale, "admin.optionalUuid")} />
           </label>
         ) : null}
-        <button type="submit">Apply filters</button>
+        <button type="submit">{translate(locale, "admin.applyFilters")}</button>
       </form>
 
       {error ? (
         <section className={styles.notice}>
-          <h2>Query failed</h2>
+          <h2>{translate(locale, "analytics.queryFailed")}</h2>
           <p>{error.message}</p>
         </section>
       ) : null}
@@ -279,20 +281,20 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Time</th>
-                <th>Route</th>
-                <th>User</th>
-                <th>Status</th>
-                <th>Outcome</th>
-                <th>IP</th>
-                <th>Metadata</th>
+                <th>{translate(locale, "admin.time")}</th>
+                <th>{translate(locale, "admin.route")}</th>
+                <th>{translate(locale, "admin.user")}</th>
+                <th>{translate(locale, "admin.status")}</th>
+                <th>{translate(locale, "admin.outcome")}</th>
+                <th>{translate(locale, "admin.ip")}</th>
+                <th>{translate(locale, "admin.metadata")}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    {new Date(row.created_at).toLocaleString("en-US", {
+                    {new Date(row.created_at).toLocaleString(toIntlLocale(locale), {
                       month: "short",
                       day: "numeric",
                       hour: "2-digit",
@@ -308,7 +310,7 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
                   </td>
                   <td>{row.status_code}</td>
                   <td>{row.outcome}</td>
-                  <td>{compactText(row.ip_address)}</td>
+                  <td>{compactText(row.ip_address, translate(locale, "common.notAvailable"))}</td>
                   <td>
                     <pre>{JSON.stringify(row.metadata_json, null, 2)}</pre>
                   </td>
@@ -317,7 +319,7 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
               {rows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className={styles.emptyCell}>
-                    No audit entries for current filters.
+                    {translate(locale, "admin.noAuditEntries")}
                   </td>
                 </tr>
               ) : null}
@@ -327,19 +329,19 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
       ) : null}
 
       {!error ? (
-        <nav className={styles.pagination} aria-label="Audit pagination">
+        <nav className={styles.pagination} aria-label={translate(locale, "admin.auditPaginationAria")}>
           {hasPrev ? (
-            <Link href={buildHref("/admin/audit-logs", prevParams)}>Previous</Link>
+            <Link href={buildHref("/admin/audit-logs", prevParams)}>{translate(locale, "common.previous")}</Link>
           ) : (
-            <span className={styles.disabled}>Previous</span>
+            <span className={styles.disabled}>{translate(locale, "common.previous")}</span>
           )}
           <p>
-            Page {page} of {totalPages} · {totalCount} records
+            {translate(locale, "common.page")} {page} {translate(locale, "common.of")} {totalPages} · {totalCount.toLocaleString(toIntlLocale(locale))} {translate(locale, "admin.records")}
           </p>
           {hasNext ? (
-            <Link href={buildHref("/admin/audit-logs", nextParams)}>Next</Link>
+            <Link href={buildHref("/admin/audit-logs", nextParams)}>{translate(locale, "common.next")}</Link>
           ) : (
-            <span className={styles.disabled}>Next</span>
+            <span className={styles.disabled}>{translate(locale, "common.next")}</span>
           )}
         </nav>
       ) : null}

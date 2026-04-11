@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { ResetPasswordForm } from "./reset-form";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "./reset.module.css";
@@ -11,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ResetPasswordPage() {
-  const sessionUser = await getSessionUser();
+  const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
 
   if (!sessionUser.isConfigured) {
     return (
@@ -22,8 +25,8 @@ export default async function ResetPasswordPage() {
           </Link>
         </header>
         <section className={styles.notice}>
-          <h1>Supabase not configured</h1>
-          <p>Configure Supabase environment variables before using password reset.</p>
+          <h1>{translate(locale, "watchlist.supabaseMissing")}</h1>
+          <p>{translate(locale, "watchlist.supabaseHint")}</p>
         </section>
       </main>
     );
@@ -39,17 +42,23 @@ export default async function ResetPasswordPage() {
         <Link href="/" className={styles.logo}>
           KinoVibe
         </Link>
-        <Link href="/watchlist" className={styles.linkPill}>
-          My watchlist
-        </Link>
+        <div className={styles.actions}>
+          <LanguageToggle className={styles.linkPill} />
+          <Link href="/watchlist" className={styles.linkPill}>
+            {translate(locale, "watchlist.title")}
+          </Link>
+        </div>
       </header>
 
       <section className={styles.hero}>
-        <h1>Reset your password</h1>
-        <p>Account: {sessionUser.email ?? "Authenticated session"}</p>
+        <h1>{translate(locale, "auth.resetTitle")}</h1>
+        <p>
+          {translate(locale, "auth.resetAccount")}:{" "}
+          {sessionUser.email ?? translate(locale, "auth.resetSessionLabel")}
+        </p>
       </section>
 
-      <ResetPasswordForm />
+      <ResetPasswordForm locale={locale} />
     </main>
   );
 }

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { HomeSession } from "@/components/home/types";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import styles from "./email-verification-banner.module.css";
 
 type EmailVerificationBannerProps = {
@@ -7,7 +9,7 @@ type EmailVerificationBannerProps = {
   nextPath: string;
 };
 
-export function EmailVerificationBanner({
+export async function EmailVerificationBanner({
   session,
   nextPath
 }: EmailVerificationBannerProps) {
@@ -15,16 +17,17 @@ export function EmailVerificationBanner({
     return null;
   }
 
+  const locale = await getRequestLocale();
+
   return (
     <section className={styles.banner} role="status" aria-live="polite">
       <p>
-        Your email is not verified yet. Verify to secure your account and keep watchlist sync
-        reliable.
+        {translate(locale, "auth.verifyBanner")}
       </p>
       <Link
         href={`/auth/verify?email=${encodeURIComponent(session.email ?? "")}&next=${encodeURIComponent(nextPath)}`}
       >
-        Verify email
+        {translate(locale, "auth.verifyEmail")}
       </Link>
     </section>
   );

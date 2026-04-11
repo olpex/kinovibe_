@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
-import { translate } from "@/lib/i18n/shared";
+import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getTmdbMovieLocalizedSummaries } from "@/lib/tmdb/client";
 import styles from "./watchlist.module.css";
 
 type WatchlistRow = {
@@ -52,7 +53,7 @@ function normalizeMovie(row: WatchlistRow) {
     tmdbId: movie.tmdb_id,
     title: movie.title,
     year: movie.year ?? null,
-    genre: Array.isArray(movie.genres) && movie.genres.length > 0 ? movie.genres[0] : "Cinema",
+    genre: Array.isArray(movie.genres) && movie.genres.length > 0 ? movie.genres[0] : "",
     posterUrl: movie.poster_url ?? undefined,
     rating: Number(movie.vote_average) || 0
   };
@@ -65,9 +66,9 @@ const STATUS_ORDER: Array<"to_watch" | "watching" | "watched"> = [
 ];
 
 const STATUS_LABELS: Record<(typeof STATUS_ORDER)[number], string> = {
-  to_watch: "To Watch",
-  watching: "Watching",
-  watched: "Watched"
+  to_watch: "watchlist.status.toWatch",
+  watching: "watchlist.status.watching",
+  watched: "watchlist.status.watched"
 };
 
 export default async function WatchlistPage() {
@@ -81,11 +82,8 @@ export default async function WatchlistPage() {
           </Link>
         </header>
         <section className={styles.emptyCard}>
-          <h1>Supabase not configured</h1>
-          <p>
-            Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local`,
-            then refresh.
-          </p>
+          <h1>{translate(locale, "watchlist.supabaseMissing")}</h1>
+          <p>{translate(locale, "watchlist.supabaseHint")}</p>
         </section>
       </main>
     );
@@ -106,10 +104,28 @@ export default async function WatchlistPage() {
     .order("added_at", { ascending: false });
 
   const rows = (data ?? []) as WatchlistRow[];
-  const items = rows.map(normalizeMovie).filter((entry) => entry !== null);
+  const rawItems = rows.map(normalizeMovie).filter((entry) => entry !== null);
+  const localizedMap = await getTmdbMovieLocalizedSummaries(
+    rawItems.map((item) => item.tmdbId),
+    locale
+  );
+  const items = rawItems.map((item) => {
+    const localized = localizedMap.get(item.tmdbId);
+    if (!localized) {
+      return item;
+    }
+    return {
+      ...item,
+      title: localized.title,
+      year: localized.year,
+      genre: localized.genre,
+      rating: localized.rating,
+      posterUrl: localized.posterUrl ?? item.posterUrl
+    };
+  });
   const grouped = STATUS_ORDER.map((status) => ({
     status,
-    label: STATUS_LABELS[status],
+    label: translate(locale, STATUS_LABELS[status]),
     items: items.filter((item) => item.status === status)
   }));
 
@@ -139,23 +155,26 @@ export default async function WatchlistPage() {
       </header>
 
       <section className={styles.summary}>
-        <h1>My Watchlist</h1>
-        <p>{user.email ?? "Your account"} · {items.length} saved titles</p>
+        <h1>{translate(locale, "watchlist.title")}</h1>
+        <p>
+          {user.email ?? translate(locale, "watchlist.account")} ·{" "}
+          {items.length.toLocaleString(toIntlLocale(locale))} {translate(locale, "watchlist.savedTitles")}
+        </p>
       </section>
 
       {error ? (
         <section className={styles.emptyCard}>
-          <h2>Could not load watchlist</h2>
-          <p>{error.message || "Please try again."}</p>
+          <h2>{translate(locale, "watchlist.loadError")}</h2>
+          <p>{error.message || translate(locale, "common.pleaseTryAgain")}</p>
         </section>
       ) : null}
 
       {!error && items.length === 0 ? (
         <section className={styles.emptyCard}>
-          <h2>No saved titles yet</h2>
-          <p>Open search or any movie page and add your first title.</p>
+          <h2>{translate(locale, "watchlist.emptyTitle")}</h2>
+          <p>{translate(locale, "watchlist.emptyHint")}</p>
           <Link href="/search" className={styles.ctaLink}>
-            Find movies
+            {translate(locale, "watchlist.findMovies")}
           </Link>
         </section>
       ) : null}
@@ -168,7 +187,7 @@ export default async function WatchlistPage() {
               <span>{group.items.length}</span>
             </header>
             {group.items.length === 0 ? (
-              <div className={styles.emptyGroup}>No titles in this section yet.</div>
+              <div className={styles.emptyGroup}>{translate(locale, "watchlist.emptySection")}</div>
             ) : (
               <div className={styles.grid}>
                 {group.items.map((item) => (
@@ -184,12 +203,12 @@ export default async function WatchlistPage() {
                     <div className={styles.cardBody}>
                       <h3>{item.title}</h3>
                       <p>
-                        {item.genre} · {item.year ?? "TBA"}
+                        {(item.genre || translate(locale, "home.defaultGenre"))} · {item.year ?? translate(locale, "watchlist.tba")}
                       </p>
                       <div className={styles.metaRow}>
                         <span>{item.rating.toFixed(1)}</span>
                         <time dateTime={item.addedAt}>
-                          {new Date(item.addedAt).toLocaleDateString("en-US", {
+                          {new Date(item.addedAt).toLocaleDateString(toIntlLocale(locale), {
                             month: "short",
                             day: "numeric"
                           })}

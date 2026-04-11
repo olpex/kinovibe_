@@ -25,4 +25,7 @@ export type HomeSession = {
   isAuthenticated: boolean;
   isEmailVerified: boolean;
   email?: string;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
 };

@@ -2,6 +2,8 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { AuthFormState } from "./types";
 
@@ -46,6 +48,7 @@ export async function signInWithPasswordAction(
   previousState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const locale = await getRequestLocale();
   const email = asString(formData.get("email")).trim();
   const password = asString(formData.get("password"));
   const nextPath = safeNextPath(asString(formData.get("next")));
@@ -54,7 +57,7 @@ export async function signInWithPasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Email and password are required."
+      message: translate(locale, "auth.emailAndPasswordRequired")
     };
   }
 
@@ -63,7 +66,7 @@ export async function signInWithPasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "auth.supabaseMissing")
     };
   }
 
@@ -83,7 +86,7 @@ export async function signInWithPasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: error.message || "Could not sign in."
+      message: error.message || translate(locale, "auth.signInFailed")
     };
   }
 
@@ -94,6 +97,7 @@ export async function signUpWithPasswordAction(
   previousState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const locale = await getRequestLocale();
   const email = asString(formData.get("email")).trim();
   const password = asString(formData.get("password"));
   const nextPath = safeNextPath(asString(formData.get("next")));
@@ -102,7 +106,7 @@ export async function signUpWithPasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Email and password are required."
+      message: translate(locale, "auth.emailAndPasswordRequired")
     };
   }
 
@@ -110,7 +114,7 @@ export async function signUpWithPasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Password must be at least 8 characters."
+      message: translate(locale, "auth.passwordMin")
     };
   }
 
@@ -119,7 +123,7 @@ export async function signUpWithPasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "auth.supabaseMissing")
     };
   }
 
@@ -132,7 +136,7 @@ export async function signUpWithPasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: error.message || "Could not create account."
+      message: error.message || translate(locale, "auth.createFailed")
     };
   }
 
@@ -147,13 +151,14 @@ export async function signInWithGoogleAction(
   previousState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const locale = await getRequestLocale();
   const nextPath = safeNextPath(asString(formData.get("next")));
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
       ...previousState,
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "auth.supabaseMissing")
     };
   }
 
@@ -169,7 +174,7 @@ export async function signInWithGoogleAction(
     return {
       ...previousState,
       ok: false,
-      message: error?.message || "Could not start Google sign-in."
+      message: error?.message || translate(locale, "auth.googleStartFailed")
     };
   }
 
@@ -180,12 +185,13 @@ export async function requestPasswordResetAction(
   previousState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const locale = await getRequestLocale();
   const email = asString(formData.get("email")).trim();
   if (!email) {
     return {
       ...previousState,
       ok: false,
-      message: "Email is required."
+      message: translate(locale, "auth.emailRequired")
     };
   }
 
@@ -194,7 +200,7 @@ export async function requestPasswordResetAction(
     return {
       ...previousState,
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "auth.supabaseMissing")
     };
   }
 
@@ -207,13 +213,13 @@ export async function requestPasswordResetAction(
     return {
       ...previousState,
       ok: false,
-      message: error.message || "Could not send reset email."
+      message: error.message || translate(locale, "auth.resetEmailFailed")
     };
   }
 
   return {
     ok: true,
-    message: "Password reset email sent. Open the link in your inbox."
+    message: translate(locale, "auth.resetEmailSent")
   };
 }
 
@@ -221,13 +227,14 @@ export async function resendVerificationEmailAction(
   previousState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const locale = await getRequestLocale();
   const email = asString(formData.get("email")).trim();
   const nextPath = safeNextPath(asString(formData.get("next")));
   if (!email) {
     return {
       ...previousState,
       ok: false,
-      message: "Email is required."
+      message: translate(locale, "auth.emailRequired")
     };
   }
 
@@ -236,7 +243,7 @@ export async function resendVerificationEmailAction(
     return {
       ...previousState,
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "auth.supabaseMissing")
     };
   }
 
@@ -253,13 +260,13 @@ export async function resendVerificationEmailAction(
     return {
       ...previousState,
       ok: false,
-      message: error.message || "Could not resend verification email."
+      message: error.message || translate(locale, "auth.resendFailed")
     };
   }
 
   return {
     ok: true,
-    message: "Verification email sent. Check your inbox."
+    message: translate(locale, "auth.resendEmailSent")
   };
 }
 
@@ -267,6 +274,7 @@ export async function updatePasswordAction(
   previousState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const locale = await getRequestLocale();
   const password = asString(formData.get("password"));
   const confirmPassword = asString(formData.get("confirmPassword"));
 
@@ -274,7 +282,7 @@ export async function updatePasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Both password fields are required."
+      message: translate(locale, "auth.passwordFieldsRequired")
     };
   }
 
@@ -282,7 +290,7 @@ export async function updatePasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Password must be at least 8 characters."
+      message: translate(locale, "auth.passwordMin")
     };
   }
 
@@ -290,7 +298,7 @@ export async function updatePasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Passwords do not match."
+      message: translate(locale, "auth.passwordMismatch")
     };
   }
 
@@ -299,7 +307,7 @@ export async function updatePasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "auth.supabaseMissing")
     };
   }
 
@@ -308,7 +316,7 @@ export async function updatePasswordAction(
     return {
       ...previousState,
       ok: false,
-      message: error.message || "Could not update password."
+      message: error.message || translate(locale, "auth.passwordUpdateFailed")
     };
   }
 

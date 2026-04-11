@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ProfileActionState = {
@@ -21,11 +23,12 @@ export async function updateProfileSettingsAction(
   _previousState: ProfileActionState,
   formData: FormData
 ): Promise<ProfileActionState> {
+  const locale = await getRequestLocale();
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "profile.supabaseMissing")
     };
   }
 
@@ -34,7 +37,7 @@ export async function updateProfileSettingsAction(
   if (!user) {
     return {
       ok: false,
-      message: "Unauthorized."
+      message: translate(locale, "profile.unauthorized")
     };
   }
 
@@ -53,7 +56,7 @@ export async function updateProfileSettingsAction(
     } catch {
       return {
         ok: false,
-        message: "Website URL is invalid."
+        message: translate(locale, "profile.invalidWebsite")
       };
     }
   }
@@ -74,14 +77,14 @@ export async function updateProfileSettingsAction(
   if (error) {
     return {
       ok: false,
-      message: `Could not update profile: ${error.message}`
+      message: translate(locale, "profile.updateFailed", { reason: error.message })
     };
   }
 
   revalidatePath("/profile");
   return {
     ok: true,
-    message: "Profile updated."
+    message: translate(locale, "profile.updated")
   };
 }
 
@@ -89,11 +92,12 @@ export async function changePasswordFromProfileAction(
   _previousState: ProfileActionState,
   formData: FormData
 ): Promise<ProfileActionState> {
+  const locale = await getRequestLocale();
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "profile.supabaseMissing")
     };
   }
 
@@ -101,7 +105,7 @@ export async function changePasswordFromProfileAction(
   if (!auth.data.user) {
     return {
       ok: false,
-      message: "Unauthorized."
+      message: translate(locale, "profile.unauthorized")
     };
   }
 
@@ -110,13 +114,13 @@ export async function changePasswordFromProfileAction(
   if (password.length < 8) {
     return {
       ok: false,
-      message: "Password must be at least 8 characters."
+      message: translate(locale, "auth.passwordMin")
     };
   }
   if (password !== confirmPassword) {
     return {
       ok: false,
-      message: "Passwords do not match."
+      message: translate(locale, "auth.passwordMismatch")
     };
   }
 
@@ -124,12 +128,12 @@ export async function changePasswordFromProfileAction(
   if (error) {
     return {
       ok: false,
-      message: `Could not update password: ${error.message}`
+      message: translate(locale, "profile.passwordUpdateFailed", { reason: error.message })
     };
   }
 
   return {
     ok: true,
-    message: "Password updated."
+    message: translate(locale, "auth.passwordUpdated")
   };
 }

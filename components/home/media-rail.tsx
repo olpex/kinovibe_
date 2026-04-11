@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { translate, type Locale } from "@/lib/i18n/shared";
 import { MovieCard } from "./types";
 import styles from "./home-screen.module.css";
 
 type MediaRailProps = {
   title: string;
   caption: string;
+  locale: Locale;
   items: MovieCard[];
   showProgress?: boolean;
   emptyMessage?: string;
@@ -13,9 +15,10 @@ type MediaRailProps = {
 export function MediaRail({
   title,
   caption,
+  locale,
   items,
   showProgress = false,
-  emptyMessage = "No titles found."
+  emptyMessage = translate(locale, "home.noTitlesFound")
 }: MediaRailProps) {
   return (
     <section className={styles.section}>
@@ -48,11 +51,14 @@ export function MediaRail({
                 <div className={styles.metaRow}>
                   <span className={styles.rating}>{item.rating.toFixed(1)}</span>
                   <Link href={`/movie/${item.id}`} className={styles.inlineCta}>
-                    Details
+                    {translate(locale, "home.details")}
                   </Link>
                 </div>
                 {showProgress && typeof item.progress === "number" ? (
-                  <div className={styles.progressWrap} aria-label={`${item.progress}% watched`}>
+                  <div
+                    className={styles.progressWrap}
+                    aria-label={translate(locale, "home.progressAria", { progress: item.progress })}
+                  >
                     <div
                       className={styles.progressFill}
                       style={{ width: `${item.progress}%` }}

@@ -29,6 +29,7 @@ export async function generateMetadata({
   params
 }: MovieDetailsPageProps): Promise<Metadata> {
   const resolved = await params;
+  const locale = await getRequestLocale();
   const movieId = parseMovieId(resolved.id);
   if (!movieId) {
     return {
@@ -37,7 +38,7 @@ export async function generateMetadata({
   }
 
   try {
-    const movie = await getTmdbMovieDetails(movieId);
+    const movie = await getTmdbMovieDetails(movieId, locale);
     return {
       title: `${movie.title} | KinoVibe`,
       description: movie.overview || `Movie details for ${movie.title}.`
@@ -62,7 +63,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   let watchlistState = WATCHLIST_DEFAULT_STATE;
   try {
     [movie, watchlistState] = await Promise.all([
-      getTmdbMovieDetails(movieId),
+      getTmdbMovieDetails(movieId, locale),
       getUserMovieWatchlistState(movieId)
     ]);
   } catch {
@@ -80,19 +81,18 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
             <input
               name="q"
               type="search"
-              placeholder="Search another movie"
-              aria-label="Search movies"
+              placeholder={translate(locale, "search.anotherMovie")}
+              aria-label={translate(locale, "search.aria")}
             />
-            <button type="submit">Search</button>
+            <button type="submit">{translate(locale, "nav.search")}</button>
           </form>
         </header>
         <section className={styles.errorCard}>
-          <h1>Movie details unavailable</h1>
+          <h1>{translate(locale, "movie.detailsUnavailable")}</h1>
           <p>
-            TMDB could not be reached or your API token is missing. Add
-            `TMDB_API_READ_ACCESS_TOKEN` and refresh.
+            {translate(locale, "movie.tmdbMissing")}
           </p>
-          <Link href="/">Back to home</Link>
+          <Link href="/">{translate(locale, "nav.backHome")}</Link>
         </section>
       </main>
     );
@@ -105,8 +105,13 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           KinoVibe
         </Link>
         <form action="/search" method="get" className={styles.searchForm}>
-          <input name="q" type="search" placeholder="Search another movie" aria-label="Search movies" />
-          <button type="submit">Search</button>
+          <input
+            name="q"
+            type="search"
+            placeholder={translate(locale, "search.anotherMovie")}
+            aria-label={translate(locale, "search.aria")}
+          />
+          <button type="submit">{translate(locale, "nav.search")}</button>
         </form>
         <div className={styles.actions}>
           <Link href="/watchlist" className={styles.linkPill}>
@@ -152,7 +157,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           />
         </div>
         <div className={styles.heroContent}>
-          <p className={styles.eyebrow}>Movie details</p>
+          <p className={styles.eyebrow}>{translate(locale, "movie.details")}</p>
           <h1>{movie.title}</h1>
           {movie.tagline ? <p className={styles.tagline}>{movie.tagline}</p> : null}
           <p className={styles.meta}>
@@ -171,11 +176,12 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
                 {translate(locale, "home.watchTrailer")}
               </a>
             ) : (
-              <span className={styles.disabledAction}>Trailer unavailable</span>
+              <span className={styles.disabledAction}>{translate(locale, "movie.trailerUnavailable")}</span>
             )}
           </div>
           <WatchlistControls
             initialState={watchlistState}
+            locale={locale}
             movie={{
               tmdbId: movie.id,
               title: movie.title,
@@ -191,42 +197,42 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
       </section>
 
       <section className={styles.section}>
-        <h2>Where to watch ({movie.watchProviders.region})</h2>
+        <h2>{translate(locale, "movie.whereToWatch")} ({movie.watchProviders.region})</h2>
         <div className={styles.providers}>
           <div>
-            <h3>Subscription</h3>
+            <h3>{translate(locale, "movie.subscription")}</h3>
             <p>
               {movie.watchProviders.subscription.length > 0
                 ? movie.watchProviders.subscription.join(", ")
-                : "No subscription data available."}
+                : translate(locale, "movie.noSubscriptionData")}
             </p>
           </div>
           <div>
-            <h3>Rent</h3>
+            <h3>{translate(locale, "movie.rent")}</h3>
             <p>
               {movie.watchProviders.rent.length > 0
                 ? movie.watchProviders.rent.join(", ")
-                : "No rental data available."}
+                : translate(locale, "movie.noRentData")}
             </p>
           </div>
           <div>
-            <h3>Buy</h3>
+            <h3>{translate(locale, "movie.buy")}</h3>
             <p>
               {movie.watchProviders.buy.length > 0
                 ? movie.watchProviders.buy.join(", ")
-                : "No purchase data available."}
+                : translate(locale, "movie.noBuyData")}
             </p>
           </div>
         </div>
         {movie.watchProviders.link ? (
           <a href={movie.watchProviders.link} target="_blank" rel="noreferrer" className={styles.providerLink}>
-            Open full provider details
+            {translate(locale, "movie.openProviders")}
           </a>
         ) : null}
       </section>
 
       <section className={styles.section}>
-        <h2>Cast</h2>
+        <h2>{translate(locale, "movie.cast")}</h2>
         <div className={styles.castGrid}>
           {movie.cast.map((person) => (
             <article key={person.id} className={styles.castCard}>
@@ -240,7 +246,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
               />
               <div>
                 <h3>{person.name}</h3>
-                <p>{person.character || "Cast"}</p>
+                <p>{person.character || translate(locale, "movie.castUnknownCharacter")}</p>
               </div>
             </article>
           ))}
@@ -248,7 +254,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
       </section>
 
       <section className={styles.section}>
-        <h2>Similar titles</h2>
+        <h2>{translate(locale, "movie.similarTitles")}</h2>
         <div className={styles.similarGrid}>
           {movie.similar.map((item) => (
             <Link key={item.id} href={`/movie/${item.id}`} className={styles.similarCard}>

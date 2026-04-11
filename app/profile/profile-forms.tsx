@@ -57,7 +57,7 @@ export function ProfileForms({ locale, initialProfile }: ProfileFormsProps) {
             <input name="country" defaultValue={initialProfile.country} maxLength={80} />
           </label>
           <button type="submit" disabled={profilePending}>
-            {profilePending ? "..." : translate(locale, "profile.save")}
+            {profilePending ? translate(locale, "common.saving") : translate(locale, "profile.save")}
           </button>
         </form>
       </section>
@@ -80,7 +80,7 @@ export function ProfileForms({ locale, initialProfile }: ProfileFormsProps) {
             <input type="password" name="confirmPassword" required autoComplete="new-password" />
           </label>
           <button type="submit" disabled={passwordPending}>
-            {passwordPending ? "..." : translate(locale, "profile.updatePassword")}
+            {passwordPending ? translate(locale, "common.updating") : translate(locale, "profile.updatePassword")}
           </button>
         </form>
       </section>

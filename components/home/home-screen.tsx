@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
+import { UserAvatar } from "@/components/user/user-avatar";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import { signOutAction } from "@/lib/auth/actions";
 import { MediaRail } from "./media-rail";
@@ -26,13 +27,17 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
       <div className={styles.bgOrbTwo} />
 
       <header className={styles.topBar}>
-        <Link className={styles.logo} href="/" aria-label="KinoVibe home">
+        <Link className={styles.logo} href="/" aria-label={translate(locale, "home.logoAria")}>
           KinoVibe
         </Link>
         <div className={styles.actions}>
           <form action="/search" method="get" className={styles.searchWrap}>
-            <span className={styles.searchLabel}>Search movies</span>
-            <input name="q" type="search" placeholder="Find by title, actor, or genre" />
+            <span className={styles.searchLabel}>{translate(locale, "home.searchLabel")}</span>
+            <input
+              name="q"
+              type="search"
+              placeholder={translate(locale, "home.searchPlaceholder")}
+            />
           </form>
           <Link href="/watchlist" className={styles.navPill}>
             {translate(locale, "nav.watchlist")}
@@ -42,8 +47,8 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
               {translate(locale, "nav.profile")}
             </Link>
           ) : null}
-          <LanguageToggle className={styles.themeButton} />
-          <ThemeToggle />
+          <LanguageToggle className={styles.navPill} />
+          <ThemeToggle locale={locale} />
           {session.isAuthenticated ? (
             <>
               <form action={signOutAction}>
@@ -51,17 +56,27 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
                   {translate(locale, "nav.signOut")}
                 </button>
               </form>
-              <Link href="/watchlist" className={styles.avatarButton} aria-label="Open watchlist">
-                {session.email?.slice(0, 1).toUpperCase() || "U"}
+              <Link
+                href="/watchlist"
+                className={styles.avatarButton}
+                aria-label={translate(locale, "home.openWatchlistAria")}
+              >
+                <UserAvatar
+                  size="sm"
+                  email={session.email}
+                  firstName={session.firstName}
+                  lastName={session.lastName}
+                  avatarUrl={session.avatarUrl}
+                />
               </Link>
             </>
           ) : (
             <Link
               href="/auth?next=/watchlist"
               className={styles.avatarButton}
-              aria-label="Sign in to KinoVibe"
+              aria-label={translate(locale, "home.signInAria")}
             >
-              In
+              <UserAvatar size="sm" email="guest@kinovibe.app" />
             </Link>
           )}
         </div>
@@ -78,12 +93,12 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
           <p className={styles.heroEyebrow}>{translate(locale, "home.featuredTonight")}</p>
           <h1>{featured?.title ?? "KinoVibe"}</h1>
           <p className={styles.heroMeta}>
-            {featured?.genre ?? "Cinema"} · {featured?.year ?? new Date().getUTCFullYear()} ·{" "}
-            {featured?.runtime ?? "Runtime TBD"} · {(featured?.rating ?? 0).toFixed(1)}
+            {featured?.genre ?? translate(locale, "home.defaultGenre")} · {featured?.year ?? new Date().getUTCFullYear()} ·{" "}
+            {featured?.runtime ?? translate(locale, "home.runtimeTbd")} · {(featured?.rating ?? 0).toFixed(1)}
           </p>
           <p className={styles.heroCopy}>
             {featured?.overview ??
-              "Discover trending films, save your picks, and build a cinematic watch rhythm tailored to your taste."}
+              translate(locale, "home.fallbackOverview")}
           </p>
           <div className={styles.heroButtons}>
             {featured ? (
@@ -119,7 +134,7 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
               key={genre}
               href={`/search?q=${encodeURIComponent(genre)}`}
               className={`${styles.genreChip} ${index === 0 ? styles.genreChipActive : ""}`}
-              aria-label={`Browse ${genre} movies`}
+              aria-label={translate(locale, "home.browseGenreAria", { genre })}
             >
               {genre}
             </Link>
@@ -128,31 +143,34 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
       </section>
 
       <MediaRail
-        title="Trending now"
-        caption="Fresh picks from the community this week"
+        title={translate(locale, "home.trendingNow")}
+        caption={translate(locale, "home.trendingCaption")}
+        locale={locale}
         items={data.trendingNow}
-        emptyMessage="Trending titles are temporarily unavailable."
+        emptyMessage={translate(locale, "home.trendingEmpty")}
       />
       <MediaRail
-        title="Continue watching"
+        title={translate(locale, "home.continueWatching")}
         caption={data.continueWatchingCaption}
+        locale={locale}
         items={data.continueWatching}
         showProgress
-        emptyMessage="Sign in to sync your watch progress."
+        emptyMessage={translate(locale, "home.progressEmpty")}
       />
       <MediaRail
-        title="Top picks for you"
-        caption="From top-rated titles and your library preferences"
+        title={translate(locale, "home.topPicks")}
+        caption={translate(locale, "home.topPicksCaption")}
+        locale={locale}
         items={data.topPicks}
-        emptyMessage="Top picks will appear after data sync."
+        emptyMessage={translate(locale, "home.topPicksEmpty")}
       />
 
-      <nav className={styles.mobileNav} aria-label="Bottom navigation">
+      <nav className={styles.mobileNav} aria-label={translate(locale, "home.mobileNavAria")}>
         <Link href="/" className={styles.mobileNavActive}>
-          Home
+          {translate(locale, "nav.home")}
         </Link>
-        <Link href="/search">Search</Link>
-        <Link href="/watchlist">Watchlist</Link>
+        <Link href="/search">{translate(locale, "nav.search")}</Link>
+        <Link href="/watchlist">{translate(locale, "nav.watchlist")}</Link>
         <Link href={session.isAuthenticated ? "/watchlist" : "/auth?next=/watchlist"}>
           {session.isAuthenticated ? translate(locale, "nav.profile") : translate(locale, "nav.signIn")}
         </Link>

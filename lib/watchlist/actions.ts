@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { recordSiteEvent } from "@/lib/analytics/events";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureMovieRecord, parseRuntimeToMinutes } from "./server";
@@ -79,6 +81,7 @@ export async function watchlistAction(
   previousState: WatchlistUiState,
   formData: FormData
 ): Promise<WatchlistUiState> {
+  const locale = await getRequestLocale();
   const operation = asString(formData.get("operation")) as WatchlistOperation;
   const payload = parseMoviePayload(formData);
 
@@ -86,7 +89,7 @@ export async function watchlistAction(
     return {
       ...previousState,
       ok: false,
-      message: "Movie payload is incomplete."
+      message: translate(locale, "watchlist.errorPayloadIncomplete")
     };
   }
 
@@ -95,7 +98,7 @@ export async function watchlistAction(
     return {
       ...WATCHLIST_DEFAULT_STATE,
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "watchlist.errorSupabase")
     };
   }
 
@@ -105,7 +108,7 @@ export async function watchlistAction(
     return {
       ...WATCHLIST_DEFAULT_STATE,
       ok: false,
-      message: "Sign in to use your watchlist."
+      message: translate(locale, "watchlist.errorSignIn")
     };
   }
 
@@ -115,7 +118,7 @@ export async function watchlistAction(
       ...previousState,
       ok: false,
       authenticated: true,
-      message: ensuredMovie.errorMessage ?? "Could not prepare movie record."
+      message: ensuredMovie.errorMessage ?? translate(locale, "watchlist.errorPrepareMovie")
     };
   }
 
@@ -139,7 +142,7 @@ export async function watchlistAction(
         ...previousState,
         ok: false,
         authenticated: true,
-        message: "Could not remove this title from your watchlist."
+        message: translate(locale, "watchlist.errorRemove")
       };
     }
 
@@ -149,7 +152,7 @@ export async function watchlistAction(
 
     return {
       ok: true,
-      message: "Removed from watchlist.",
+      message: translate(locale, "watchlist.removed"),
       authenticated: true,
       inWatchlist: false,
       status: "to_watch",
@@ -198,7 +201,7 @@ export async function watchlistAction(
       ...previousState,
       ok: false,
       authenticated: true,
-      message: "Could not update your watchlist."
+      message: translate(locale, "watchlist.errorUpdate")
     };
   }
 
@@ -224,7 +227,7 @@ export async function watchlistAction(
 
   return {
     ok: true,
-    message: "Watchlist updated.",
+    message: translate(locale, "watchlist.updated"),
     authenticated: true,
     inWatchlist: true,
     status,

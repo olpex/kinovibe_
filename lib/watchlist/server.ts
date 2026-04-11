@@ -1,4 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import {
   WATCHLIST_DEFAULT_STATE,
   WatchlistMoviePayload,
@@ -42,11 +44,12 @@ export function parseRuntimeToMinutes(runtimeLabel: string): number | null {
 }
 
 export async function getUserMovieWatchlistState(tmdbId: number): Promise<WatchlistUiState> {
+  const locale = await getRequestLocale();
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
       ...WATCHLIST_DEFAULT_STATE,
-      message: "Supabase is not configured yet."
+      message: translate(locale, "watchlist.errorSupabase")
     };
   }
 
@@ -55,7 +58,7 @@ export async function getUserMovieWatchlistState(tmdbId: number): Promise<Watchl
   if (!userId) {
     return {
       ...WATCHLIST_DEFAULT_STATE,
-      message: "Sign in to use your watchlist."
+      message: translate(locale, "watchlist.errorSignIn")
     };
   }
 
@@ -69,7 +72,7 @@ export async function getUserMovieWatchlistState(tmdbId: number): Promise<Watchl
     return {
       ...WATCHLIST_DEFAULT_STATE,
       authenticated: true,
-      message: "Add this title to start tracking progress."
+      message: translate(locale, "watchlist.addToTrack")
     };
   }
 
@@ -84,13 +87,13 @@ export async function getUserMovieWatchlistState(tmdbId: number): Promise<Watchl
     return {
       ...WATCHLIST_DEFAULT_STATE,
       authenticated: true,
-      message: "Add this title to start tracking progress."
+      message: translate(locale, "watchlist.addToTrack")
     };
   }
 
   return {
     ok: true,
-    message: "Synced with your watchlist.",
+    message: translate(locale, "watchlist.synced"),
     authenticated: true,
     inWatchlist: true,
     status: normalizeStatus(watchlistRow.status),
@@ -101,11 +104,12 @@ export async function getUserMovieWatchlistState(tmdbId: number): Promise<Watchl
 export async function ensureMovieRecord(
   payload: WatchlistMoviePayload
 ): Promise<{ movieId: number; errorMessage?: string }> {
+  const locale = await getRequestLocale();
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
       movieId: 0,
-      errorMessage: "Supabase is not configured."
+      errorMessage: translate(locale, "watchlist.errorSupabase")
     };
   }
 
@@ -137,7 +141,7 @@ export async function ensureMovieRecord(
   if (error || !insertedMovie?.id) {
     return {
       movieId: 0,
-      errorMessage: "Could not create movie record in Supabase."
+      errorMessage: translate(locale, "watchlist.errorPrepareMovie")
     };
   }
 

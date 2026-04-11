@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { parseRetentionDays, purgeAuditLogsByDays } from "@/lib/audit/retention";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -20,11 +22,12 @@ export async function purgeAuditLogsByRetentionAction(
   _previousState: RetentionActionState,
   formData: FormData
 ): Promise<RetentionActionState> {
+  const locale = await getRequestLocale();
   const days = parseRetentionDays(String(formData.get("retentionDays") ?? ""));
   if (!days) {
     return {
       ok: false,
-      message: "Retention must be between 1 and 3650 days."
+      message: translate(locale, "admin.retentionRange")
     };
   }
 
@@ -32,7 +35,7 @@ export async function purgeAuditLogsByRetentionAction(
   if (!serverClient) {
     return {
       ok: false,
-      message: "Supabase is not configured."
+      message: translate(locale, "profile.supabaseMissing")
     };
   }
 
@@ -41,14 +44,14 @@ export async function purgeAuditLogsByRetentionAction(
   if (authError || !user) {
     return {
       ok: false,
-      message: "Unauthorized."
+      message: translate(locale, "profile.unauthorized")
     };
   }
 
   if (!isAdminEmail(user.email ?? undefined)) {
     return {
       ok: false,
-      message: "Admin access required."
+      message: translate(locale, "admin.adminRequired")
     };
   }
 
@@ -58,16 +61,25 @@ export async function purgeAuditLogsByRetentionAction(
   if (!result.ok) {
     return {
       ok: false,
-      message: `Retention cleanup failed: ${result.message ?? "unknown error"}`
+      message: translate(locale, "admin.retentionFailed", {
+        reason: result.message ?? translate(locale, "admin.unknownError")
+      })
     };
   }
 
   revalidatePath("/admin/audit-logs");
   const deletedSummary =
-    result.deletedCount === null ? "" : ` Deleted ${result.deletedCount.toLocaleString("en-US")} row(s).`;
+    result.deletedCount === null
+      ? ""
+      : translate(locale, "admin.deletedRows", {
+          count: result.deletedCount.toLocaleString(toIntlLocale(locale))
+        });
 
   return {
     ok: true,
-    message: `Retention cleanup complete for logs older than ${days} day(s).${deletedSummary}`
+    message: translate(locale, "admin.retentionComplete", {
+      days,
+      deleted: deletedSummary
+    })
   };
 }

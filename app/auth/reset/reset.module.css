@@ -25,6 +25,12 @@
   letter-spacing: 0.03em;
 }
 
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .linkPill {
   border: 1px solid var(--color-border);
   border-radius: 10px;

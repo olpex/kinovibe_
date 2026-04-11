@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./home-screen.module.css";
 
 const STORAGE_KEY = "kinovibe-theme";
 
 type Theme = "dark" | "light";
 
-export function ThemeToggle() {
+type ThemeToggleProps = {
+  locale: Locale;
+};
+
+export function ThemeToggle({ locale }: ThemeToggleProps) {
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
@@ -28,10 +33,14 @@ export function ThemeToggle() {
     <button
       type="button"
       className={styles.themeButton}
-      aria-label={`Switch to ${nextTheme} theme`}
+      aria-label={
+        nextTheme === "light"
+          ? translate(locale, "theme.switchToLight")
+          : translate(locale, "theme.switchToDark")
+      }
       onClick={() => setTheme(nextTheme)}
     >
-      {theme === "dark" ? "Light" : "Dark"} mode
+      {theme === "dark" ? translate(locale, "theme.lightMode") : translate(locale, "theme.darkMode")}
     </button>
   );
 }

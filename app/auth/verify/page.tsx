@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import { VerifyEmailForm } from "./verify-form";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "./verify.module.css";
@@ -31,7 +34,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
   const params = await searchParams;
   const email = (params.email ?? "").trim();
   const nextPath = safeNextPath(params.next);
-  const sessionUser = await getSessionUser();
+  const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
 
   if (sessionUser.isAuthenticated) {
     redirect(nextPath);
@@ -43,19 +46,22 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
         <Link href="/" className={styles.logo}>
           KinoVibe
         </Link>
-        <Link href={`/auth?next=${encodeURIComponent(nextPath)}`} className={styles.backLink}>
-          Back to sign in
-        </Link>
+        <div className={styles.actions}>
+          <LanguageToggle className={styles.backLink} />
+          <Link href={`/auth?next=${encodeURIComponent(nextPath)}`} className={styles.backLink}>
+            {translate(locale, "auth.verifyBack")}
+          </Link>
+        </div>
       </header>
 
       <section className={styles.hero}>
-        <h1>Check your inbox</h1>
+        <h1>{translate(locale, "auth.verifyInboxTitle")}</h1>
         <p>
-          Verification emails can take a minute. Also check spam/promotions if you do not see it.
+          {translate(locale, "auth.verifyInboxHint")}
         </p>
       </section>
 
-      <VerifyEmailForm email={email} nextPath={nextPath} />
+      <VerifyEmailForm email={email} nextPath={nextPath} locale={locale} />
     </main>
   );
 }

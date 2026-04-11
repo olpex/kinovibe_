@@ -58,19 +58,18 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
       </header>
 
       <section className={styles.hero}>
-        <h1>Welcome to KinoVibe</h1>
+        <h1>{translate(locale, "auth.welcome")}</h1>
         <p>
-          Sign in to sync your watchlist, update progress, and unlock personalized rails based on
-          your activity.
+          {translate(locale, "auth.welcomeSubtitle")}
         </p>
         {hasCallbackError ? (
           <p className={styles.heroError}>
-            The auth callback failed or expired. Try signing in again.
+            {translate(locale, "auth.callbackFailed")}
           </p>
         ) : null}
         {hasConfigError ? (
           <p className={styles.heroError}>
-            Supabase auth is not configured for this environment.
+            {translate(locale, "auth.configMissing")}
           </p>
         ) : null}
       </section>
