@@ -1,0 +1,146 @@
+.sidebar {
+  border: 1px solid var(--color-border);
+  border-radius: 0.95rem;
+  background: rgba(11, 15, 20, 0.58);
+  padding: 0.85rem;
+  display: grid;
+  gap: 0.75rem;
+  align-self: start;
+}
+
+.header {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.02rem;
+  font-family: var(--font-heading);
+}
+
+.header p {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.82rem;
+}
+
+.form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.group {
+  display: grid;
+  gap: 0.32rem;
+}
+
+.group label {
+  font-size: 0.84rem;
+  color: var(--color-text-soft);
+}
+
+.group input,
+.group select {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0.62rem;
+  padding: 0.5rem 0.56rem;
+  background: rgba(26, 34, 48, 0.75);
+  color: var(--color-text);
+}
+
+.toggleGroup {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.toggleGroup label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.46rem;
+  font-size: 0.84rem;
+  color: var(--color-text-soft);
+}
+
+.toggleGroup input {
+  accent-color: var(--color-accent, #00b4d8);
+}
+
+.row {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.genreGroup {
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  padding: 0.55rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.genreGroup legend {
+  padding: 0 0.25rem;
+  font-size: 0.84rem;
+  color: var(--color-text-soft);
+}
+
+.genreGrid {
+  display: grid;
+  gap: 0.42rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-height: 10.8rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.genreGrid label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.79rem;
+  color: var(--color-text);
+}
+
+.genreGrid input {
+  accent-color: var(--color-accent, #00b4d8);
+}
+
+.actions {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.actions button,
+.actions a {
+  border: 1px solid var(--color-border);
+  border-radius: 0.65rem;
+  background: rgba(26, 34, 48, 0.8);
+  color: var(--color-text);
+  min-height: 2.15rem;
+  padding: 0.45rem 0.62rem;
+  font-size: 0.84rem;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actions button {
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .genreGrid {
+    grid-template-columns: 1fr;
+    max-height: 9rem;
+  }
+}

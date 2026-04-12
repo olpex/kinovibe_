@@ -1,11 +1,10 @@
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
+import type { CatalogSearchParams } from "@/lib/tmdb/movie-filters";
 import { MovieCatalogView } from "../catalog-view";
 
 type PageProps = {
-  searchParams: Promise<{
-    page?: string;
-  }>;
+  searchParams: Promise<CatalogSearchParams>;
 };
 
 export default async function MoviesTopRatedPage({ searchParams }: PageProps) {

@@ -22,6 +22,10 @@ import {
   TmdbTvResponse,
   TmdbTvVideosResponse
 } from "./types";
+import {
+  movieDiscoverFiltersToTmdbParams,
+  type MovieDiscoverFilters
+} from "./movie-filters";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
@@ -422,6 +426,11 @@ export type TmdbPagedCards = {
   items: HomeMovie[];
 };
 
+export type MovieGenreOption = {
+  id: number;
+  name: string;
+};
+
 export type MovieMenuCategory = "popular" | "now_playing" | "upcoming" | "top_rated" | "thriller";
 export type TvMenuCategory = "popular" | "airing_today" | "on_the_air" | "top_rated";
 
@@ -462,6 +471,41 @@ export async function getTmdbMovieCatalogPage(
   const response = await fetchTmdb<TmdbMoviesResponse>(
     config.path,
     { language, page: String(safePage), ...(config.params ?? {}) },
+    900
+  );
+
+  return {
+    page: response.page,
+    totalPages: response.total_pages,
+    totalResults: response.total_results,
+    items: await Promise.all(
+      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap), locale))
+    )
+  };
+}
+
+export const getTmdbMovieGenres = cache(
+  async (locale: Locale = "en"): Promise<MovieGenreOption[]> => {
+    const genresMap = await getGenresMap(locale);
+    return Array.from(genresMap.entries()).map(([id, name]) => ({ id, name }));
+  }
+);
+
+export async function discoverTmdbMovieCatalogPage(
+  filters: MovieDiscoverFilters,
+  locale: Locale = "en",
+  page = 1
+): Promise<TmdbPagedCards> {
+  const safePage = Math.max(1, Math.min(page, 500));
+  const language = toTmdbLanguage(locale);
+  const genresMap = await getGenresMap(locale);
+  const response = await fetchTmdb<TmdbMoviesResponse>(
+    "/discover/movie",
+    {
+      language,
+      page: String(safePage),
+      ...movieDiscoverFiltersToTmdbParams(filters)
+    },
     900
   );
 

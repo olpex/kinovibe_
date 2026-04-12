@@ -7,13 +7,15 @@ type CatalogPaginationProps = {
   basePath: string;
   page: number;
   totalPages: number;
+  query?: Record<string, string>;
 };
 
 export function CatalogPagination({
   locale,
   basePath,
   page,
-  totalPages
+  totalPages,
+  query
 }: CatalogPaginationProps) {
   if (totalPages <= 1) {
     return null;
@@ -23,10 +25,26 @@ export function CatalogPagination({
   const hasNext = page < totalPages;
   const safeTotal = Math.min(totalPages, 500);
 
+  const buildHref = (nextPage: number): string => {
+    const params = new URLSearchParams();
+    if (query) {
+      Object.entries(query).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, value);
+        }
+      });
+    }
+    if (nextPage > 1) {
+      params.set("page", String(nextPage));
+    }
+    const serialized = params.toString();
+    return serialized ? `${basePath}?${serialized}` : basePath;
+  };
+
   return (
     <nav className={styles.pagination} aria-label={translate(locale, "search.paginationAria")}>
       {hasPrev ? (
-        <Link href={`${basePath}?page=${page - 1}`}>{translate(locale, "common.previous")}</Link>
+        <Link href={buildHref(page - 1)}>{translate(locale, "common.previous")}</Link>
       ) : (
         <span className={styles.paginationDisabled}>{translate(locale, "common.previous")}</span>
       )}
@@ -35,7 +53,7 @@ export function CatalogPagination({
         {safeTotal.toLocaleString(toIntlLocale(locale))}
       </span>
       {hasNext ? (
-        <Link href={`${basePath}?page=${page + 1}`}>{translate(locale, "common.next")}</Link>
+        <Link href={buildHref(page + 1)}>{translate(locale, "common.next")}</Link>
       ) : (
         <span className={styles.paginationDisabled}>{translate(locale, "common.next")}</span>
       )}
