@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { DiscussionPanel } from "@/components/discussions/discussion-panel";
+import { MovieVotePanel } from "@/components/discussions/movie-vote-panel";
 import { SiteHeader } from "@/components/navigation/site-header";
 import { WatchlistControls } from "@/components/watchlist/watchlist-controls";
 import { getMediaDiscussions } from "@/lib/discussions/server";
@@ -10,6 +11,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbMovieDetails } from "@/lib/tmdb/client";
+import { getMediaVoteSummary } from "@/lib/votes/server";
 import { getUserMovieWatchlistState } from "@/lib/watchlist/server";
 import { WATCHLIST_DEFAULT_STATE } from "@/lib/watchlist/types";
 import styles from "./movie.module.css";
@@ -65,11 +67,19 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   let movie: Awaited<ReturnType<typeof getTmdbMovieDetails>> | null = null;
   let watchlistState = WATCHLIST_DEFAULT_STATE;
   let discussions: Awaited<ReturnType<typeof getMediaDiscussions>> = [];
+  let voteSummary: Awaited<ReturnType<typeof getMediaVoteSummary>> = {
+    mediaType: "movie",
+    mediaTmdbId: movieId,
+    upvotes: 0,
+    downvotes: 0,
+    userVote: 0
+  };
   try {
-    [movie, watchlistState, discussions] = await Promise.all([
+    [movie, watchlistState, discussions, voteSummary] = await Promise.all([
       getTmdbMovieDetails(movieId, locale),
       getUserMovieWatchlistState(movieId),
-      getMediaDiscussions("movie", movieId)
+      getMediaDiscussions("movie", movieId),
+      getMediaVoteSummary("movie", movieId)
     ]);
   } catch {
     movie = null;
@@ -156,6 +166,21 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
               posterUrl: movie.posterUrl,
               overview: movie.overview,
               voteAverage: movie.rating
+            }}
+          />
+          <MovieVotePanel
+            locale={locale}
+            session={sessionUser}
+            tmdbId={movie.id}
+            nextPath={`/movie/${movie.id}`}
+            initialState={{
+              ok: true,
+              authenticated: sessionUser.isAuthenticated,
+              message: "",
+              upvotes: voteSummary.upvotes,
+              downvotes: voteSummary.downvotes,
+              userVote: voteSummary.userVote,
+              refreshKey: 0
             }}
           />
         </div>

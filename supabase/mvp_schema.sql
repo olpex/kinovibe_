@@ -84,6 +84,19 @@ create table if not exists public.media_discussions (
   constraint media_discussions_body_check check (char_length(trim(body)) between 1 and 4000)
 );
 
+create table if not exists public.media_votes (
+  id bigint generated always as identity primary key,
+  media_type text not null,
+  media_tmdb_id bigint not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  vote_value smallint not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint media_votes_type_check check (media_type in ('movie', 'tv', 'person')),
+  constraint media_votes_value_check check (vote_value in (-1, 1)),
+  constraint media_votes_unique_user_media unique (media_type, media_tmdb_id, user_id)
+);
+
 create index if not exists movies_tmdb_id_idx on public.movies (tmdb_id);
 create index if not exists watchlist_user_idx on public.watchlist_items (user_id);
 create index if not exists watchlist_movie_idx on public.watchlist_items (movie_id);
@@ -98,6 +111,9 @@ create index if not exists site_events_ip_idx on public.site_events (ip_address)
 create index if not exists media_discussions_media_idx
   on public.media_discussions (media_type, media_tmdb_id, created_at desc);
 create index if not exists media_discussions_user_idx on public.media_discussions (user_id);
+create index if not exists media_votes_media_idx
+  on public.media_votes (media_type, media_tmdb_id, vote_value);
+create index if not exists media_votes_user_idx on public.media_votes (user_id);
 
 alter table public.profiles enable row level security;
 alter table public.movies enable row level security;
@@ -105,6 +121,7 @@ alter table public.watchlist_items enable row level security;
 alter table public.api_audit_logs enable row level security;
 alter table public.site_events enable row level security;
 alter table public.media_discussions enable row level security;
+alter table public.media_votes enable row level security;
 
 drop policy if exists "Profiles are readable by owner" on public.profiles;
 create policy "Profiles are readable by owner"
@@ -216,5 +233,31 @@ create policy "Media discussions are editable by owner"
 drop policy if exists "Media discussions are deletable by owner" on public.media_discussions;
 create policy "Media discussions are deletable by owner"
   on public.media_discussions
+  for delete
+  using (auth.uid() = user_id);
+
+drop policy if exists "Media votes are readable by everyone" on public.media_votes;
+create policy "Media votes are readable by everyone"
+  on public.media_votes
+  for select
+  using (true);
+
+drop policy if exists "Media votes are insertable by authenticated users" on public.media_votes;
+create policy "Media votes are insertable by authenticated users"
+  on public.media_votes
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Media votes are editable by owner" on public.media_votes;
+create policy "Media votes are editable by owner"
+  on public.media_votes
+  for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Media votes are deletable by owner" on public.media_votes;
+create policy "Media votes are deletable by owner"
+  on public.media_votes
   for delete
   using (auth.uid() = user_id);

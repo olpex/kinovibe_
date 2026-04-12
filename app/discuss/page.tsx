@@ -3,11 +3,7 @@ import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
-import {
-  getTmdbMovieCatalogPage,
-  getTmdbPopularPeople,
-  getTmdbTvCatalogPage
-} from "@/lib/tmdb/client";
+import { getDiscussionThreadsByCategory } from "@/lib/discussions/server";
 import styles from "./discuss-page.module.css";
 
 type DiscussCategory = "movies" | "people" | "tv";
@@ -48,12 +44,12 @@ function formatCompactCount(locale: Locale, value: number): string {
   }).format(value);
 }
 
-function getRepliesCount(seed: number, score: number): number {
-  return Math.max(3, Math.round(score * 14 + (seed % 31)));
-}
-
-function getActiveHours(seed: number): number {
-  return (seed % 72) + 1;
+function formatActiveHours(isoDate: string): number {
+  const ageMs = Date.now() - new Date(isoDate).getTime();
+  if (Number.isNaN(ageMs) || ageMs <= 0) {
+    return 0;
+  }
+  return Math.max(1, Math.round(ageMs / (1000 * 60 * 60)));
 }
 
 export default async function DiscussPage({ searchParams }: PageProps) {
@@ -61,63 +57,58 @@ export default async function DiscussPage({ searchParams }: PageProps) {
   const category = parseCategory(resolvedSearchParams.category);
   const [locale, session] = await Promise.all([getRequestLocale(), getSessionUser()]);
   const [moviesResult, peopleResult, tvResult] = await Promise.allSettled([
-    getTmdbMovieCatalogPage("popular", locale, 1),
-    getTmdbPopularPeople(locale, 1),
-    getTmdbTvCatalogPage("popular", locale, 1)
+    getDiscussionThreadsByCategory("movie"),
+    getDiscussionThreadsByCategory("person"),
+    getDiscussionThreadsByCategory("tv")
   ]);
 
-  const movies = moviesResult.status === "fulfilled" ? moviesResult.value : null;
-  const people = peopleResult.status === "fulfilled" ? peopleResult.value : null;
-  const tv = tvResult.status === "fulfilled" ? tvResult.value : null;
-  const actorItemsBase = people?.items ?? [];
-  const actorOnlyItems = actorItemsBase.filter((entry) => /act/i.test(entry.department));
-  const actorItems = actorOnlyItems.length > 0 ? actorOnlyItems : actorItemsBase;
+  const movieThreads = moviesResult.status === "fulfilled" ? moviesResult.value : [];
+  const peopleThreads = peopleResult.status === "fulfilled" ? peopleResult.value : [];
+  const tvThreads = tvResult.status === "fulfilled" ? tvResult.value : [];
 
   const hubs: Record<DiscussCategory, { total: number; threads: DiscussThread[] }> = {
     movies: {
-      total: movies?.totalResults ?? 0,
-      threads:
-        movies?.items.slice(0, 14).map((item) => ({
-          id: `movie-${item.id}`,
-          href: `/movie/${item.id}`,
-          title: item.title,
-          summary: item.overview || translate(locale, "menu.discussMovieFallback", { title: item.title }),
-          label: item.genre,
-          primaryMeta: `${item.year} · ${item.runtime}`,
-          secondaryMeta: `TMDB ${item.rating.toFixed(1)}`,
-          replies: getRepliesCount(item.id, item.rating),
-          activeHours: getActiveHours(item.id)
-        })) ?? []
+      total: movieThreads.length,
+      threads: movieThreads.map((thread) => ({
+        id: thread.key,
+        href: `/movie/${thread.mediaTmdbId}`,
+        title: thread.mediaTitle,
+        summary: thread.latestBody || translate(locale, "menu.discussMovieFallback", { title: thread.mediaTitle }),
+        label: translate(locale, "nav.movies"),
+        primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
+        secondaryMeta: `TMDB #${thread.mediaTmdbId}`,
+        replies: thread.messagesCount,
+        activeHours: formatActiveHours(thread.latestCreatedAt)
+      }))
     },
     people: {
-      total: people?.totalResults ?? 0,
-      threads:
-        actorItems.slice(0, 14).map((item) => ({
-          id: `person-${item.id}`,
-          href: `/person/${item.id}`,
-          title: item.name,
-          summary: item.knownFor || translate(locale, "menu.discussPersonFallback", { name: item.name }),
-          label: item.department,
-          primaryMeta: `${translate(locale, "nav.people")} · TMDB`,
-          secondaryMeta: `${item.popularity.toFixed(1)} pop.`,
-          replies: getRepliesCount(item.id, item.popularity / 8),
-          activeHours: getActiveHours(item.id)
-        })) ?? []
+      total: peopleThreads.length,
+      threads: peopleThreads.map((thread) => ({
+        id: thread.key,
+        href: `/person/${thread.mediaTmdbId}`,
+        title: thread.mediaTitle,
+        summary:
+          thread.latestBody || translate(locale, "menu.discussPersonFallback", { name: thread.mediaTitle }),
+        label: translate(locale, "menu.discussActors"),
+        primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
+        secondaryMeta: `TMDB #${thread.mediaTmdbId}`,
+        replies: thread.messagesCount,
+        activeHours: formatActiveHours(thread.latestCreatedAt)
+      }))
     },
     tv: {
-      total: tv?.totalResults ?? 0,
-      threads:
-        tv?.items.slice(0, 14).map((item) => ({
-          id: `tv-${item.id}`,
-          href: `/tv/${item.id}`,
-          title: item.title,
-          summary: item.overview || translate(locale, "menu.discussTvFallback", { title: item.title }),
-          label: item.genre,
-          primaryMeta: `${item.year} · ${item.runtime}`,
-          secondaryMeta: `TMDB ${item.rating.toFixed(1)}`,
-          replies: getRepliesCount(item.id, item.rating),
-          activeHours: getActiveHours(item.id)
-        })) ?? []
+      total: tvThreads.length,
+      threads: tvThreads.map((thread) => ({
+        id: thread.key,
+        href: `/tv/${thread.mediaTmdbId}`,
+        title: thread.mediaTitle,
+        summary: thread.latestBody || translate(locale, "menu.discussTvFallback", { title: thread.mediaTitle }),
+        label: translate(locale, "menu.discussTvShows"),
+        primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
+        secondaryMeta: `TMDB #${thread.mediaTmdbId}`,
+        replies: thread.messagesCount,
+        activeHours: formatActiveHours(thread.latestCreatedAt)
+      }))
     }
   };
 
@@ -158,7 +149,7 @@ export default async function DiscussPage({ searchParams }: PageProps) {
       {selectedHub.threads.length === 0 ? (
         <section className={styles.emptyState}>
           <h2>{translate(locale, "menu.discussEmptyCategory")}</h2>
-          <p>{translate(locale, "movie.tmdbMissing")}</p>
+          <p>{translate(locale, "discussion.onlyStartedAppear")}</p>
           <div className={styles.emptyLinks}>
             <Link href="/movie">{translate(locale, "nav.movies")}</Link>
             <Link href="/person">{translate(locale, "nav.people")}</Link>

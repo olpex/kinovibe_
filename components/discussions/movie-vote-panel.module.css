@@ -1,0 +1,78 @@
+.panel {
+  margin-top: 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-surface-soft) 85%, transparent);
+  padding: 0.72rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.header {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 0.94rem;
+}
+
+.header p {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.8rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  flex-wrap: wrap;
+}
+
+.inlineForm {
+  margin: 0;
+}
+
+.inlineForm button {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: rgba(26, 34, 48, 0.8);
+  color: var(--color-text);
+  padding: 0.44rem 0.66rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.inlineForm button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.activeUp {
+  border-color: color-mix(in srgb, var(--color-success) 60%, var(--color-border)) !important;
+}
+
+.activeDown {
+  border-color: color-mix(in srgb, var(--color-primary) 58%, var(--color-border)) !important;
+}
+
+.feedback {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.78rem;
+}
+
+.authHint {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.8rem;
+}
+
+.authHint a {
+  color: var(--color-secondary);
+}
+

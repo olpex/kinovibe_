@@ -10,6 +10,17 @@ export type DiscussionEntry = {
   createdAt: string;
 };
 
+export type DiscussionThreadSummary = {
+  key: string;
+  mediaType: DiscussionMediaType;
+  mediaTmdbId: number;
+  mediaTitle: string;
+  latestBody: string;
+  latestAuthorName: string;
+  latestCreatedAt: string;
+  messagesCount: number;
+};
+
 export type DiscussionUiState = {
   ok: boolean;
   authenticated: boolean;
@@ -23,4 +34,3 @@ export const DISCUSSION_DEFAULT_STATE: DiscussionUiState = {
   message: "",
   refreshKey: 0
 };
-
