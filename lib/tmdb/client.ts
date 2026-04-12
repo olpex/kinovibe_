@@ -33,6 +33,8 @@ const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 const FALLBACK_BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w780";
 const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION ?? "US";
+const HOME_GENRE_LIMIT = 12;
+const REQUIRED_HOME_GENRE_IDS = [28, 35, 18, 53] as const;
 
 const PALETTE = [
   ["#3A0CA3", "#4CC9F0"],
@@ -150,6 +152,42 @@ function genreLabel(genreIds: number[], genresMap: Map<number, string>): string 
     }
   }
   return "Cinema";
+}
+
+function pickHomeGenres(genresMap: Map<number, string>): string[] {
+  const baseGenreIds = Array.from(genresMap.keys()).slice(0, HOME_GENRE_LIMIT);
+  const requiredGenreIds = REQUIRED_HOME_GENRE_IDS.filter((id) => genresMap.has(id));
+
+  if (requiredGenreIds.length === 0) {
+    return baseGenreIds.map((id) => genresMap.get(id)).filter((name): name is string => Boolean(name));
+  }
+
+  const requiredSet = new Set<number>(requiredGenreIds);
+  let replacementIndex = baseGenreIds.length - 1;
+
+  for (const requiredGenreId of requiredGenreIds) {
+    if (baseGenreIds.includes(requiredGenreId)) {
+      continue;
+    }
+
+    if (baseGenreIds.length < HOME_GENRE_LIMIT) {
+      baseGenreIds.push(requiredGenreId);
+      continue;
+    }
+
+    while (replacementIndex >= 0 && requiredSet.has(baseGenreIds[replacementIndex])) {
+      replacementIndex -= 1;
+    }
+
+    if (replacementIndex < 0) {
+      break;
+    }
+
+    baseGenreIds[replacementIndex] = requiredGenreId;
+    replacementIndex -= 1;
+  }
+
+  return baseGenreIds.map((id) => genresMap.get(id)).filter((name): name is string => Boolean(name));
 }
 
 function releaseTypePriority(type: string): number {
@@ -411,7 +449,7 @@ export async function getTmdbHomeCatalog(locale: Locale = "en"): Promise<TmdbHom
     Promise.all(topRated.map((movie) => localizeCard(movie, locale)))
   ]);
 
-  const genres = Array.from(genresMap.values()).slice(0, 12);
+  const genres = pickHomeGenres(genresMap);
 
   return {
     genres,
