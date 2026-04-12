@@ -1,0 +1,161 @@
+.hint {
+  margin: 0;
+  color: var(--color-text-soft);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.tab {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: rgba(26, 34, 48, 0.78);
+  color: var(--color-text);
+  padding: 0.46rem 0.7rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.48rem;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.tab:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+}
+
+.tabActive {
+  background: color-mix(in srgb, var(--color-primary) 70%, rgba(26, 34, 48, 0.88));
+  border-color: color-mix(in srgb, var(--color-primary) 65%, var(--color-border));
+}
+
+.tabCount {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 0.12rem 0.4rem;
+  font-size: 0.76rem;
+  color: var(--color-text-soft);
+}
+
+.threadList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.72rem;
+}
+
+.threadCard {
+  border: 1px solid var(--color-border);
+  border-radius: 0.95rem;
+  background: rgba(11, 15, 20, 0.5);
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.threadHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.threadLabel {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: rgba(26, 34, 48, 0.75);
+  color: var(--color-text);
+  padding: 0.18rem 0.52rem;
+  font-size: 0.8rem;
+}
+
+.threadActivity {
+  color: var(--color-text-soft);
+  font-size: 0.84rem;
+}
+
+.threadTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-family: var(--font-heading);
+}
+
+.threadTitle a {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.threadTitle a:hover {
+  text-decoration: underline;
+}
+
+.threadSummary {
+  margin: 0;
+  color: var(--color-text-soft);
+  line-height: 1.35;
+}
+
+.threadMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+}
+
+.openThread {
+  margin-left: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  padding: 0.32rem 0.62rem;
+  color: var(--color-text);
+  text-decoration: none;
+  background: rgba(26, 34, 48, 0.75);
+}
+
+.openThread:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+}
+
+.emptyState {
+  border: 1px dashed var(--color-border);
+  border-radius: 0.95rem;
+  background: rgba(11, 15, 20, 0.45);
+  padding: 1rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.emptyState h2 {
+  margin: 0;
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--color-text-soft);
+}
+
+.emptyLinks {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.emptyLinks a {
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  padding: 0.35rem 0.62rem;
+  color: var(--color-text);
+  text-decoration: none;
+  background: rgba(26, 34, 48, 0.75);
+}
+
