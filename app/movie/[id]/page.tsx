@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
+import { DiscussionPanel } from "@/components/discussions/discussion-panel";
 import { SiteHeader } from "@/components/navigation/site-header";
 import { WatchlistControls } from "@/components/watchlist/watchlist-controls";
+import { getMediaDiscussions } from "@/lib/discussions/server";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
@@ -62,10 +64,12 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
 
   let movie: Awaited<ReturnType<typeof getTmdbMovieDetails>> | null = null;
   let watchlistState = WATCHLIST_DEFAULT_STATE;
+  let discussions: Awaited<ReturnType<typeof getMediaDiscussions>> = [];
   try {
-    [movie, watchlistState] = await Promise.all([
+    [movie, watchlistState, discussions] = await Promise.all([
       getTmdbMovieDetails(movieId, locale),
-      getUserMovieWatchlistState(movieId)
+      getUserMovieWatchlistState(movieId),
+      getMediaDiscussions("movie", movieId)
     ]);
   } catch {
     movie = null;
@@ -156,6 +160,16 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           />
         </div>
       </section>
+
+      <DiscussionPanel
+        locale={locale}
+        session={sessionUser}
+        mediaType="movie"
+        tmdbId={movie.id}
+        mediaTitle={movie.title}
+        nextPath={`/movie/${movie.id}`}
+        entries={discussions}
+      />
 
       <section className={styles.section}>
         <h2>{translate(locale, "movie.whereToWatch")} ({movie.watchProviders.region})</h2>

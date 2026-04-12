@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DiscussionPanel } from "@/components/discussions/discussion-panel";
 import { SiteHeader } from "@/components/navigation/site-header";
+import { getMediaDiscussions } from "@/lib/discussions/server";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
@@ -29,8 +31,12 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
   const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
 
   let tv: Awaited<ReturnType<typeof getTmdbTvDetails>> | null = null;
+  let discussions: Awaited<ReturnType<typeof getMediaDiscussions>> = [];
   try {
-    tv = await getTmdbTvDetails(tvId, locale);
+    [tv, discussions] = await Promise.all([
+      getTmdbTvDetails(tvId, locale),
+      getMediaDiscussions("tv", tvId)
+    ]);
   } catch {
     tv = null;
   }
@@ -99,6 +105,16 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
             </div>
           </div>
         </section>
+
+        <DiscussionPanel
+          locale={locale}
+          session={sessionUser}
+          mediaType="tv"
+          tmdbId={tv.id}
+          mediaTitle={tv.title}
+          nextPath={`/tv/${tv.id}`}
+          entries={discussions}
+        />
 
         <section className={styles.section}>
           <h2>{translate(locale, "movie.whereToWatch")} ({tv.watchProviders.region})</h2>

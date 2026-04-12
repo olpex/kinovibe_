@@ -70,6 +70,20 @@ create table if not exists public.site_events (
   constraint site_events_type_check check (event_type in ('page_view', 'click', 'movie_added'))
 );
 
+create table if not exists public.media_discussions (
+  id bigint generated always as identity primary key,
+  media_type text not null,
+  media_tmdb_id bigint not null,
+  media_title text not null default '',
+  user_id uuid not null references auth.users(id) on delete cascade,
+  author_name text not null,
+  body text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint media_discussions_type_check check (media_type in ('movie', 'tv', 'person')),
+  constraint media_discussions_body_check check (char_length(trim(body)) between 1 and 4000)
+);
+
 create index if not exists movies_tmdb_id_idx on public.movies (tmdb_id);
 create index if not exists watchlist_user_idx on public.watchlist_items (user_id);
 create index if not exists watchlist_movie_idx on public.watchlist_items (movie_id);
@@ -81,12 +95,16 @@ create index if not exists site_events_type_idx on public.site_events (event_typ
 create index if not exists site_events_created_idx on public.site_events (created_at desc);
 create index if not exists site_events_country_idx on public.site_events (country_code);
 create index if not exists site_events_ip_idx on public.site_events (ip_address);
+create index if not exists media_discussions_media_idx
+  on public.media_discussions (media_type, media_tmdb_id, created_at desc);
+create index if not exists media_discussions_user_idx on public.media_discussions (user_id);
 
 alter table public.profiles enable row level security;
 alter table public.movies enable row level security;
 alter table public.watchlist_items enable row level security;
 alter table public.api_audit_logs enable row level security;
 alter table public.site_events enable row level security;
+alter table public.media_discussions enable row level security;
 
 drop policy if exists "Profiles are readable by owner" on public.profiles;
 create policy "Profiles are readable by owner"
@@ -174,3 +192,29 @@ create policy "Site events are insertable"
   on public.site_events
   for insert
   with check (true);
+
+drop policy if exists "Media discussions are readable by everyone" on public.media_discussions;
+create policy "Media discussions are readable by everyone"
+  on public.media_discussions
+  for select
+  using (true);
+
+drop policy if exists "Media discussions are insertable by authenticated users" on public.media_discussions;
+create policy "Media discussions are insertable by authenticated users"
+  on public.media_discussions
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Media discussions are editable by owner" on public.media_discussions;
+create policy "Media discussions are editable by owner"
+  on public.media_discussions
+  for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Media discussions are deletable by owner" on public.media_discussions;
+create policy "Media discussions are deletable by owner"
+  on public.media_discussions
+  for delete
+  using (auth.uid() = user_id);

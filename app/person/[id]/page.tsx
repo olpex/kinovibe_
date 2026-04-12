@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DiscussionPanel } from "@/components/discussions/discussion-panel";
 import { SiteHeader } from "@/components/navigation/site-header";
+import { getMediaDiscussions } from "@/lib/discussions/server";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
@@ -30,8 +32,12 @@ export default async function PersonDetailsPage({ params }: PageProps) {
   const session = await getSessionUser();
 
   let person: Awaited<ReturnType<typeof getTmdbPersonDetails>> | null = null;
+  let discussions: Awaited<ReturnType<typeof getMediaDiscussions>> = [];
   try {
-    person = await getTmdbPersonDetails(personId, locale);
+    [person, discussions] = await Promise.all([
+      getTmdbPersonDetails(personId, locale),
+      getMediaDiscussions("person", personId)
+    ]);
   } catch {
     person = null;
   }
@@ -92,6 +98,16 @@ export default async function PersonDetailsPage({ params }: PageProps) {
             ) : null}
           </div>
         </section>
+
+        <DiscussionPanel
+          locale={locale}
+          session={session}
+          mediaType="person"
+          tmdbId={person.id}
+          mediaTitle={person.name}
+          nextPath={`/person/${person.id}`}
+          entries={discussions}
+        />
 
         {person.aka.length > 0 ? (
           <section className={styles.section}>
