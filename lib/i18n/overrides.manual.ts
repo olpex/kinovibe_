@@ -91,5 +91,49 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Folosește rutele acestei aplicații pentru verificări UI după fiecare deploy.",
     "home.browseGenreAria": "Răsfoiește filme din genul {genre}",
     "movie.detailsUnavailable": "Detalii indisponibile"
+  },
+  it: {
+    "meta.siteDescription": "Esperienza di scoperta film pensata per chi ama il cinema.",
+    "menu.discussTitle": "Discussioni",
+    "menu.tvDetails": "Dettagli della serie",
+    "home.progressAria": "{progress}% visto",
+    "home.browseGenreAria": "Esplora i film {genre}",
+    "menu.leaderboardHint":
+      "Classifica di esempio per la modalità MVP. Collega il punteggio completo degli eventi per mostrare la classifica in tempo reale.",
+    "menu.supportWatchlistText":
+      "Verifica che le tabelle dei film e della watchlist siano configurate correttamente.",
+    "menu.docsProjectRoutesText":
+      "Usa le route di questa app per i controlli UI dopo ogni deploy.",
+    "movie.detailsUnavailable": "Dettagli non disponibili"
+  },
+  sv: {
+    "meta.siteDescription": "En cinemainspirerad tjänst för att upptäcka film.",
+    "menu.discussTitle": "Diskussioner",
+    "menu.tvDetails": "Seriedetaljer",
+    "menu.seasons": "Säsonger",
+    "home.progressAria": "{progress}% sett",
+    "menu.leaderboardHint":
+      "Exempelranking för MVP-läget. Koppla in full händelsepoäng för att visa live-ranking.",
+    "menu.supportWatchlistText":
+      "Kontrollera att tabellerna för filmer och bevakningslista är korrekt konfigurerade.",
+    "menu.docsProjectRoutesText":
+      "Använd appens rutter för UI-kontroller efter varje driftsättning.",
+    "movie.detailsUnavailable": "Detaljer inte tillgängliga"
+  },
+  fi: {
+    "meta.siteDescription": "Cinefiileille suunniteltu palvelu elokuvien löytämiseen.",
+    "menu.discussTitle": "Keskustelut",
+    "nav.search": "Hae",
+    "menu.apiBusinessTitle": "API yrityksille",
+    "menu.tvDetails": "Sarjan tiedot",
+    "menu.seasons": "Kaudet",
+    "home.progressAria": "{progress}% katsottu",
+    "menu.leaderboardHint":
+      "Esimerkkisijoitus MVP-tilalle. Kytke tapahtumien täysi pisteytys näyttääksesi live-sijoituksen.",
+    "menu.supportWatchlistText":
+      "Tarkista, että elokuva- ja katselulistataulut on määritetty oikein.",
+    "menu.docsProjectRoutesText":
+      "Käytä tämän sovelluksen reittejä käyttöliittymän tarkistuksiin jokaisen deployn jälkeen.",
+    "movie.detailsUnavailable": "Tiedot eivät ole saatavilla"
   }
 };
