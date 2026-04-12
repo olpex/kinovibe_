@@ -32,7 +32,11 @@ export function MediaRail({
         ) : null}
         {items.map((item) => (
           <li key={item.id} className={styles.railItem}>
-            <article className={styles.posterCard}>
+            <Link
+              href={`/movie/${item.id}`}
+              className={`${styles.posterCard} ${styles.posterCardLink}`}
+              aria-label={translate(locale, "home.details")}
+            >
               <div
                 className={styles.poster}
                 style={{
@@ -50,9 +54,7 @@ export function MediaRail({
                 </p>
                 <div className={styles.metaRow}>
                   <span className={styles.rating}>{item.rating.toFixed(1)}</span>
-                  <Link href={`/movie/${item.id}`} className={styles.inlineCta}>
-                    {translate(locale, "home.details")}
-                  </Link>
+                  <span className={styles.inlineCta}>{translate(locale, "home.details")}</span>
                 </div>
                 {showProgress && typeof item.progress === "number" ? (
                   <div
@@ -66,7 +68,7 @@ export function MediaRail({
                   </div>
                 ) : null}
               </div>
-            </article>
+            </Link>
           </li>
         ))}
       </ul>
