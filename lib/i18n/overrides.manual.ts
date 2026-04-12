@@ -23,6 +23,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
   de: {
     "meta.siteDescription": "Film-Entdeckung mit Kino-Feeling.",
     "menu.discussTitle": "Diskussion",
+    "menu.supportTitle": "Hilfezentrum",
     "menu.tvDetails": "Seriendetails",
     "menu.seasons": "Staffeln",
     "menu.leaderboardHint":

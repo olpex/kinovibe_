@@ -776,6 +776,189 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
   }
 };
 
+const AWARDS_UI_OVERRIDES: Record<Locale, Record<string, string>> = {
+  en: {
+    "menu.awardsPopularTitle": "Awards Spotlight",
+    "menu.awardsPopularSubtitle": "Featured award-related highlights.",
+    "menu.awardsUpcomingTitle": "Upcoming Awards",
+    "menu.awardsUpcomingSubtitle": "Upcoming events and award-season picks.",
+    "menu.awardsHint": "Awards data source depends on TMDB endpoint availability.",
+    "award.editorialSpotlight": "Editorial spotlight",
+    "menu.openPoster": "Open poster"
+  },
+  uk: {
+    "menu.awardsPopularTitle": "Нагороди у фокусі",
+    "menu.awardsPopularSubtitle": "Добірка яскравих матеріалів про нагороди.",
+    "menu.awardsUpcomingTitle": "Майбутні нагороди",
+    "menu.awardsUpcomingSubtitle": "Найближчі події та фаворити нагородного сезону.",
+    "menu.awardsHint": "Джерело даних про нагороди залежить від доступності TMDB endpoint.",
+    "award.editorialSpotlight": "Редакційний фокус",
+    "menu.openPoster": "Відкрити постер"
+  },
+  de: {
+    "menu.awardsPopularTitle": "Auszeichnungen im Fokus",
+    "menu.awardsPopularSubtitle": "Ausgewählte Highlights rund um Auszeichnungen.",
+    "menu.awardsUpcomingTitle": "Kommende Auszeichnungen",
+    "menu.awardsUpcomingSubtitle": "Bevorstehende Events und Empfehlungen zur Award-Saison.",
+    "menu.awardsHint": "Die Awards-Datenquelle hängt von der Verfügbarkeit der TMDB-Endpunkte ab.",
+    "award.editorialSpotlight": "Redaktioneller Fokus",
+    "menu.openPoster": "Poster öffnen"
+  },
+  fr: {
+    "menu.awardsPopularTitle": "Récompenses en vedette",
+    "menu.awardsPopularSubtitle": "Sélection de moments forts liés aux récompenses.",
+    "menu.awardsUpcomingTitle": "Récompenses à venir",
+    "menu.awardsUpcomingSubtitle": "Événements à venir et sélections de la saison des récompenses.",
+    "menu.awardsHint": "La source des données de récompenses dépend de la disponibilité des endpoints TMDB.",
+    "award.editorialSpotlight": "Sélection éditoriale",
+    "menu.openPoster": "Ouvrir l'affiche"
+  },
+  it: {
+    "menu.awardsPopularTitle": "Premi in evidenza",
+    "menu.awardsPopularSubtitle": "Selezione di contenuti in evidenza legati ai premi.",
+    "menu.awardsUpcomingTitle": "Premi in arrivo",
+    "menu.awardsUpcomingSubtitle": "Eventi in arrivo e scelte della stagione dei premi.",
+    "menu.awardsHint": "La fonte dati dei premi dipende dalla disponibilità degli endpoint TMDB.",
+    "award.editorialSpotlight": "In evidenza redazionale",
+    "menu.openPoster": "Apri poster"
+  },
+  es: {
+    "menu.awardsPopularTitle": "Premios destacados",
+    "menu.awardsPopularSubtitle": "Selección de destacados relacionados con premios.",
+    "menu.awardsUpcomingTitle": "Próximos premios",
+    "menu.awardsUpcomingSubtitle": "Próximos eventos y selecciones de la temporada de premios.",
+    "menu.awardsHint": "La fuente de datos de premios depende de la disponibilidad de los endpoints de TMDB.",
+    "award.editorialSpotlight": "Destacado editorial",
+    "menu.openPoster": "Abrir póster"
+  },
+  pt: {
+    "menu.awardsPopularTitle": "Prémios em destaque",
+    "menu.awardsPopularSubtitle": "Seleção de destaques relacionados com prémios.",
+    "menu.awardsUpcomingTitle": "Próximos prémios",
+    "menu.awardsUpcomingSubtitle": "Próximos eventos e destaques da temporada de prémios.",
+    "menu.awardsHint": "A fonte de dados de prémios depende da disponibilidade dos endpoints da TMDB.",
+    "award.editorialSpotlight": "Destaque editorial",
+    "menu.openPoster": "Abrir cartaz"
+  },
+  nl: {
+    "menu.awardsPopularTitle": "Prijzen in de spotlight",
+    "menu.awardsPopularSubtitle": "Uitgelichte highlights rond prijzen.",
+    "menu.awardsUpcomingTitle": "Aankomende prijzen",
+    "menu.awardsUpcomingSubtitle": "Aankomende evenementen en keuzes voor het prijsseizoen.",
+    "menu.awardsHint": "De gegevensbron voor prijzen hangt af van de beschikbaarheid van TMDB-endpoints.",
+    "award.editorialSpotlight": "Redactionele spotlight",
+    "menu.openPoster": "Poster openen"
+  },
+  sv: {
+    "menu.awardsPopularTitle": "Prisfokus",
+    "menu.awardsPopularSubtitle": "Utvalda höjdpunkter relaterade till priser.",
+    "menu.awardsUpcomingTitle": "Kommande priser",
+    "menu.awardsUpcomingSubtitle": "Kommande evenemang och urval för prissäsongen.",
+    "menu.awardsHint": "Datakällan för priser beror på tillgängligheten i TMDB-endpoints.",
+    "award.editorialSpotlight": "Redaktionell spotlight",
+    "menu.openPoster": "Öppna affisch"
+  },
+  fi: {
+    "menu.awardsPopularTitle": "Palkinnot valokeilassa",
+    "menu.awardsPopularSubtitle": "Poimintoja palkintoihin liittyvistä kohokohdista.",
+    "menu.awardsUpcomingTitle": "Tulevat palkinnot",
+    "menu.awardsUpcomingSubtitle": "Tulevat tapahtumat ja palkintokauden poiminnat.",
+    "menu.awardsHint": "Palkintotietojen lähde riippuu TMDB-päätepisteiden saatavuudesta.",
+    "award.editorialSpotlight": "Toimituksen nosto",
+    "menu.openPoster": "Avaa juliste"
+  },
+  no: {
+    "menu.awardsPopularTitle": "Priser i fokus",
+    "menu.awardsPopularSubtitle": "Utvalgte høydepunkter relatert til priser.",
+    "menu.awardsUpcomingTitle": "Kommende priser",
+    "menu.awardsUpcomingSubtitle": "Kommende arrangementer og anbefalinger for prissesongen.",
+    "menu.awardsHint": "Datakilden for priser avhenger av tilgjengeligheten til TMDB-endepunkter.",
+    "award.editorialSpotlight": "Redaksjonelt fokus",
+    "menu.openPoster": "Åpne plakat"
+  },
+  da: {
+    "menu.awardsPopularTitle": "Priser i fokus",
+    "menu.awardsPopularSubtitle": "Udvalgte højdepunkter relateret til priser.",
+    "menu.awardsUpcomingTitle": "Kommende priser",
+    "menu.awardsUpcomingSubtitle": "Kommende events og udvalgte titler i prissæsonen.",
+    "menu.awardsHint": "Datakilden for priser afhænger af tilgængeligheden af TMDB-endpoints.",
+    "award.editorialSpotlight": "Redaktionelt fokus",
+    "menu.openPoster": "Åbn plakat"
+  },
+  cs: {
+    "menu.awardsPopularTitle": "Ocenění v centru pozornosti",
+    "menu.awardsPopularSubtitle": "Výběr nejzajímavějších momentů souvisejících s oceněními.",
+    "menu.awardsUpcomingTitle": "Nadcházející ocenění",
+    "menu.awardsUpcomingSubtitle": "Nadcházející události a tipy pro sezónu ocenění.",
+    "menu.awardsHint": "Zdroj dat o oceněních závisí na dostupnosti TMDB endpointů.",
+    "award.editorialSpotlight": "Redakční výběr",
+    "menu.openPoster": "Otevřít plakát"
+  },
+  pl: {
+    "menu.awardsPopularTitle": "Nagrody w centrum uwagi",
+    "menu.awardsPopularSubtitle": "Wybrane wyróżnione materiały związane z nagrodami.",
+    "menu.awardsUpcomingTitle": "Nadchodzące nagrody",
+    "menu.awardsUpcomingSubtitle": "Nadchodzące wydarzenia i wybory sezonu nagród.",
+    "menu.awardsHint": "Źródło danych o nagrodach zależy od dostępności endpointów TMDB.",
+    "award.editorialSpotlight": "Wyróżnienie redakcyjne",
+    "menu.openPoster": "Otwórz plakat"
+  },
+  sk: {
+    "menu.awardsPopularTitle": "Ocenenia v centre pozornosti",
+    "menu.awardsPopularSubtitle": "Výber najzaujímavejších momentov spojených s oceneniami.",
+    "menu.awardsUpcomingTitle": "Nadchádzajúce ocenenia",
+    "menu.awardsUpcomingSubtitle": "Nadchádzajúce podujatia a tipy na sezónu ocenení.",
+    "menu.awardsHint": "Zdroj údajov o oceneniach závisí od dostupnosti TMDB endpointov.",
+    "award.editorialSpotlight": "Redakčný výber",
+    "menu.openPoster": "Otvoriť plagát"
+  },
+  hu: {
+    "menu.awardsPopularTitle": "Díjak reflektorfényben",
+    "menu.awardsPopularSubtitle": "Válogatott díjakkal kapcsolatos kiemelések.",
+    "menu.awardsUpcomingTitle": "Közelgő díjak",
+    "menu.awardsUpcomingSubtitle": "Közelgő események és válogatások a díjszezonra.",
+    "menu.awardsHint": "A díjadatok forrása a TMDB végpontok elérhetőségétől függ.",
+    "award.editorialSpotlight": "Szerkesztői kiemelés",
+    "menu.openPoster": "Poszter megnyitása"
+  },
+  ro: {
+    "menu.awardsPopularTitle": "Premii în prim-plan",
+    "menu.awardsPopularSubtitle": "Selecție de momente evidențiate legate de premii.",
+    "menu.awardsUpcomingTitle": "Premii viitoare",
+    "menu.awardsUpcomingSubtitle": "Evenimente viitoare și selecții pentru sezonul premiilor.",
+    "menu.awardsHint": "Sursa datelor despre premii depinde de disponibilitatea endpoint-urilor TMDB.",
+    "award.editorialSpotlight": "Evidențiere editorială",
+    "menu.openPoster": "Deschide posterul"
+  },
+  el: {
+    "menu.awardsPopularTitle": "Βραβεία στο προσκήνιο",
+    "menu.awardsPopularSubtitle": "Επιλεγμένες επισημάνσεις σχετικές με βραβεία.",
+    "menu.awardsUpcomingTitle": "Επερχόμενα βραβεία",
+    "menu.awardsUpcomingSubtitle": "Επερχόμενες εκδηλώσεις και επιλογές για την περίοδο βραβείων.",
+    "menu.awardsHint": "Η πηγή δεδομένων βραβείων εξαρτάται από τη διαθεσιμότητα των TMDB endpoints.",
+    "award.editorialSpotlight": "Συντακτική επισήμανση",
+    "menu.openPoster": "Άνοιγμα αφίσας"
+  },
+  hr: {
+    "menu.awardsPopularTitle": "Nagrade u fokusu",
+    "menu.awardsPopularSubtitle": "Odabrani istaknuti sadržaji vezani uz nagrade.",
+    "menu.awardsUpcomingTitle": "Nadolazeće nagrade",
+    "menu.awardsUpcomingSubtitle": "Nadolazeći događaji i izbori za sezonu nagrada.",
+    "menu.awardsHint": "Izvor podataka o nagradama ovisi o dostupnosti TMDB endpointa.",
+    "award.editorialSpotlight": "Urednički izbor",
+    "menu.openPoster": "Otvori poster"
+  },
+  me: {
+    "menu.awardsPopularTitle": "Награде у фокусу",
+    "menu.awardsPopularSubtitle": "Изабрани истакнути садржаји повезани са наградама.",
+    "menu.awardsUpcomingTitle": "Предстојеће награде",
+    "menu.awardsUpcomingSubtitle": "Предстојећи догађаји и избори за сезону награда.",
+    "menu.awardsHint": "Извор података о наградама зависи од доступности TMDB endpoint-а.",
+    "award.editorialSpotlight": "Уреднички фокус",
+    "menu.openPoster": "Отвори постер"
+  }
+};
+
 const I18N_OVERRIDES_BY_LOCALE = I18N_OVERRIDE_TRANSLATIONS as Record<string, Record<string, string>>;
 const I18N_MANUAL_OVERRIDES_BY_LOCALE =
   MANUAL_TRANSLATION_OVERRIDES as Record<string, Record<string, string>>;
@@ -787,9 +970,10 @@ function buildLocaleMessages(
   return {
     ...BASE_MESSAGES,
     ...(AUTO_TRANSLATIONS[locale] ?? {}),
-    ...(CORE_NAV_MENU_OVERRIDES[locale] ?? {}),
     ...(extraOverrides ?? {}),
     ...(I18N_OVERRIDES_BY_LOCALE[locale] ?? {}),
+    ...(CORE_NAV_MENU_OVERRIDES[locale] ?? {}),
+    ...(AWARDS_UI_OVERRIDES[locale] ?? {}),
     ...(I18N_MANUAL_OVERRIDES_BY_LOCALE[locale] ?? {})
   };
 }
