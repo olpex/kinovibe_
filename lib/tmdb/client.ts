@@ -115,6 +115,15 @@ function parseDisplayYear(releaseDate: string | null): string {
   return Number.isNaN(year) ? "TBA" : String(year);
 }
 
+function parseOptionalYear(releaseDate: string | null | undefined): number | undefined {
+  if (!releaseDate) {
+    return undefined;
+  }
+
+  const year = Number(releaseDate.slice(0, 4));
+  return Number.isNaN(year) ? undefined : year;
+}
+
 function formatRuntime(minutes: number | null | undefined, id: number): string {
   if (typeof minutes === "number" && minutes > 0) {
     const hours = Math.floor(minutes / 60);
@@ -188,6 +197,87 @@ function pickHomeGenres(genresMap: Map<number, string>): string[] {
   }
 
   return baseGenreIds.map((id) => genresMap.get(id)).filter((name): name is string => Boolean(name));
+}
+
+type TmdbVideoItem = TmdbMovieVideosResponse["results"][number] | TmdbTvVideosResponse["results"][number];
+
+function buildVideoUrl(video: TmdbVideoItem | undefined): string | undefined {
+  if (!video) {
+    return undefined;
+  }
+
+  if (video.site === "YouTube") {
+    return `https://www.youtube.com/watch?v=${video.key}`;
+  }
+
+  if (video.site === "Vimeo") {
+    return `https://vimeo.com/${video.key}`;
+  }
+
+  return undefined;
+}
+
+function buildYoutubeTrailerSearchUrl(title: string, year?: number): string {
+  const query = [title, year ? String(year) : "", "official trailer"].filter(Boolean).join(" ");
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+}
+
+function videoTypePriority(type: string): number {
+  switch (type) {
+    case "Trailer":
+      return 4;
+    case "Teaser":
+      return 3;
+    case "Clip":
+      return 2;
+    case "Featurette":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function videoSitePriority(site: string): number {
+  if (site === "YouTube") {
+    return 2;
+  }
+  if (site === "Vimeo") {
+    return 1;
+  }
+  return 0;
+}
+
+function selectBestTrailer(videos: TmdbVideoItem[]): TmdbVideoItem | undefined {
+  if (videos.length === 0) {
+    return undefined;
+  }
+
+  return [...videos]
+    .filter((video) => videoSitePriority(video.site) > 0)
+    .sort((left, right) => {
+      const siteDiff = videoSitePriority(right.site) - videoSitePriority(left.site);
+      if (siteDiff !== 0) {
+        return siteDiff;
+      }
+
+      const typeDiff = videoTypePriority(right.type) - videoTypePriority(left.type);
+      if (typeDiff !== 0) {
+        return typeDiff;
+      }
+
+      const officialDiff = Number(Boolean(right.official)) - Number(Boolean(left.official));
+      if (officialDiff !== 0) {
+        return officialDiff;
+      }
+
+      const rightPublished = Date.parse(right.published_at || "");
+      const leftPublished = Date.parse(left.published_at || "");
+      if (!Number.isNaN(rightPublished) && !Number.isNaN(leftPublished)) {
+        return rightPublished - leftPublished;
+      }
+
+      return 0;
+    })[0];
 }
 
 function releaseTypePriority(type: string): number {
@@ -316,6 +406,82 @@ async function fetchTmdb<T>(
   }
 
   return (await response.json()) as T;
+}
+
+async function fetchMovieVideosWithFallback(
+  movieId: number,
+  language: string
+): Promise<TmdbMovieVideosResponse["results"]> {
+  try {
+    const localized = await fetchTmdb<TmdbMovieVideosResponse>(
+      `/movie/${movieId}/videos`,
+      { language },
+      3600
+    );
+    if (localized.results.length > 0) {
+      return localized.results;
+    }
+  } catch {
+    // fallback requests below
+  }
+
+  if (language !== "en-US") {
+    try {
+      const english = await fetchTmdb<TmdbMovieVideosResponse>(
+        `/movie/${movieId}/videos`,
+        { language: "en-US" },
+        3600
+      );
+      if (english.results.length > 0) {
+        return english.results;
+      }
+    } catch {
+      // final fallback below
+    }
+  }
+
+  try {
+    const neutral = await fetchTmdb<TmdbMovieVideosResponse>(`/movie/${movieId}/videos`, {}, 3600);
+    return neutral.results;
+  } catch {
+    return [];
+  }
+}
+
+async function fetchTvVideosWithFallback(
+  tvId: number,
+  language: string
+): Promise<TmdbTvVideosResponse["results"]> {
+  try {
+    const localized = await fetchTmdb<TmdbTvVideosResponse>(`/tv/${tvId}/videos`, { language }, 3600);
+    if (localized.results.length > 0) {
+      return localized.results;
+    }
+  } catch {
+    // fallback requests below
+  }
+
+  if (language !== "en-US") {
+    try {
+      const english = await fetchTmdb<TmdbTvVideosResponse>(
+        `/tv/${tvId}/videos`,
+        { language: "en-US" },
+        3600
+      );
+      if (english.results.length > 0) {
+        return english.results;
+      }
+    } catch {
+      // final fallback below
+    }
+  }
+
+  try {
+    const neutral = await fetchTmdb<TmdbTvVideosResponse>(`/tv/${tvId}/videos`, {}, 3600);
+    return neutral.results;
+  } catch {
+    return [];
+  }
 }
 
 const getGenresMap = cache(async (locale: Locale): Promise<Map<number, string>> => {
@@ -895,25 +1061,18 @@ function toUniqueProviderNames(
 export const getTmdbMovieDetails = cache(
   async (movieId: number, locale: Locale = "en"): Promise<MovieDetailsView> => {
     const language = toTmdbLanguage(locale);
-    const [details, detailsInEnglish, credits, videos, similar, providers] = await Promise.all([
+    const [details, detailsInEnglish, credits, videoResults, similar, providers] = await Promise.all([
       fetchTmdb<TmdbMovieDetailsResponse>(`/movie/${movieId}`, { language }, 3600),
       locale === "en"
         ? Promise.resolve(null)
         : fetchTmdb<TmdbMovieDetailsResponse>(`/movie/${movieId}`, { language: "en-US" }, 3600),
       fetchTmdb<TmdbMovieCreditsResponse>(`/movie/${movieId}/credits`, { language }, 3600),
-      fetchTmdb<TmdbMovieVideosResponse>(`/movie/${movieId}/videos`, { language }, 3600),
+      fetchMovieVideosWithFallback(movieId, language),
       fetchTmdb<TmdbMoviesResponse>(`/movie/${movieId}/similar`, { language, page: "1" }, 3600),
       fetchTmdb<TmdbMovieWatchProvidersResponse>(`/movie/${movieId}/watch/providers`, {}, 3600)
     ]);
 
-    const preferredTrailer = videos.results.find(
-      (video) =>
-        video.site === "YouTube" && video.type === "Trailer" && Boolean(video.official)
-    );
-    const fallbackTrailer = videos.results.find(
-      (video) => video.site === "YouTube" && (video.type === "Trailer" || video.type === "Teaser")
-    );
-    const trailer = preferredTrailer ?? fallbackTrailer;
+    const trailer = selectBestTrailer(videoResults);
 
     const providerRegionCode =
       providers.results[DEFAULT_REGION]
@@ -945,6 +1104,9 @@ export const getTmdbMovieDetails = cache(
         : [details.overview, details.tagline, details.status];
 
     const releaseTitle = await getRegionalReleaseTitle(movieId, locale);
+    const trailerUrl =
+      buildVideoUrl(trailer) ??
+      buildYoutubeTrailerSearchUrl(releaseTitle ?? details.title, parseOptionalYear(details.release_date));
 
     return {
       id: details.id,
@@ -959,7 +1121,7 @@ export const getTmdbMovieDetails = cache(
       genres: details.genres.map((genre) => genre.name),
       posterUrl: posterUrl(details.poster_path),
       backdropUrl: backdropUrl(details.backdrop_path),
-      trailerUrl: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : undefined,
+      trailerUrl,
       trailerName: trailer?.name,
       cast: credits.cast.slice(0, 12).map((person) => ({
         id: person.id,
@@ -1015,25 +1177,18 @@ export type TvDetailsView = {
 export const getTmdbTvDetails = cache(
   async (tvId: number, locale: Locale = "en"): Promise<TvDetailsView> => {
     const language = toTmdbLanguage(locale);
-    const [details, detailsInEnglish, credits, videos, similar, providers] = await Promise.all([
+    const [details, detailsInEnglish, credits, videoResults, similar, providers] = await Promise.all([
       fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language }, 3600),
       locale === "en"
         ? Promise.resolve(null)
         : fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language: "en-US" }, 3600),
       fetchTmdb<TmdbTvCreditsResponse>(`/tv/${tvId}/credits`, { language }, 3600),
-      fetchTmdb<TmdbTvVideosResponse>(`/tv/${tvId}/videos`, { language }, 3600),
+      fetchTvVideosWithFallback(tvId, language),
       fetchTmdb<TmdbTvResponse>(`/tv/${tvId}/similar`, { language, page: "1" }, 3600),
       fetchTmdb<TmdbMovieWatchProvidersResponse>(`/tv/${tvId}/watch/providers`, {}, 3600)
     ]);
 
-    const preferredTrailer = videos.results.find(
-      (video) =>
-        video.site === "YouTube" && video.type === "Trailer" && Boolean(video.official)
-    );
-    const fallbackTrailer = videos.results.find(
-      (video) => video.site === "YouTube" && (video.type === "Trailer" || video.type === "Teaser")
-    );
-    const trailer = preferredTrailer ?? fallbackTrailer;
+    const trailer = selectBestTrailer(videoResults);
 
     const providerRegionCode =
       providers.results[DEFAULT_REGION]
@@ -1065,6 +1220,9 @@ export const getTmdbTvDetails = cache(
         : [details.overview, details.tagline, details.status];
 
     const regionalTitle = await getRegionalTvTitle(tvId, locale);
+    const trailerUrl =
+      buildVideoUrl(trailer) ??
+      buildYoutubeTrailerSearchUrl(regionalTitle ?? details.name, parseOptionalYear(details.first_air_date));
     const runtime = details.episode_run_time[0]
       ? formatRuntime(details.episode_run_time[0], tvId)
       : "Runtime TBD";
@@ -1084,7 +1242,7 @@ export const getTmdbTvDetails = cache(
       genres: details.genres.map((genre) => genre.name),
       posterUrl: posterUrl(details.poster_path),
       backdropUrl: backdropUrl(details.backdrop_path),
-      trailerUrl: trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : undefined,
+      trailerUrl,
       trailerName: trailer?.name,
       cast: credits.cast.slice(0, 12).map((person) => ({
         id: person.id,
