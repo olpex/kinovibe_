@@ -9,6 +9,8 @@ export type Locale =
   | "fr"
   | "it"
   | "es"
+  | "pt"
+  | "nl"
   | "sv"
   | "fi"
   | "no"
@@ -34,6 +36,8 @@ export const SUPPORTED_LOCALES: Array<{ value: Locale; label: string }> = [
   { value: "fr", label: "Français" },
   { value: "it", label: "Italiano" },
   { value: "es", label: "Español" },
+  { value: "pt", label: "Português" },
+  { value: "nl", label: "Nederlands" },
   { value: "sv", label: "Svenska" },
   { value: "fi", label: "Suomi" },
   { value: "no", label: "Norsk" },
@@ -553,6 +557,8 @@ const TRANSLATIONS: Record<Locale, Record<string, string>> = {
   fr: buildLocaleMessages("fr"),
   it: buildLocaleMessages("it"),
   es: buildLocaleMessages("es"),
+  pt: buildLocaleMessages("pt"),
+  nl: buildLocaleMessages("nl"),
   sv: buildLocaleMessages("sv"),
   fi: buildLocaleMessages("fi"),
   no: buildLocaleMessages("no"),
@@ -574,6 +580,8 @@ const TMDB_LANGUAGE_BY_LOCALE: Record<Locale, string> = {
   fr: "fr-FR",
   it: "it-IT",
   es: "es-ES",
+  pt: "pt-PT",
+  nl: "nl-NL",
   sv: "sv-SE",
   fi: "fi-FI",
   no: "no-NO",

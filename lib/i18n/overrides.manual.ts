@@ -135,5 +135,101 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "menu.docsProjectRoutesText":
       "Käytä tämän sovelluksen reittejä käyttöliittymän tarkistuksiin jokaisen deployn jälkeen.",
     "movie.detailsUnavailable": "Tiedot eivät ole saatavilla"
+  },
+  cs: {
+    "meta.siteDescription": "Filmová služba pro objevování titulů v kinovém stylu.",
+    "menu.discussTitle": "Diskuze",
+    "menu.discussSubtitle": "Komunitní diskuze a tematické okruhy.",
+    "menu.tvDetails": "Detaily seriálu",
+    "menu.seasons": "Sezóny",
+    "menu.leaderboardHint":
+      "Ukázkové pořadí pro režim MVP. Pro živé pořadí připojte plné bodování událostí.",
+    "menu.supportWatchlistText":
+      "Zkontrolujte, že tabulky filmů a watchlistu jsou správně nastavené.",
+    "menu.docsProjectRoutesText":
+      "Použijte trasy této aplikace pro kontrolu UI po každém nasazení.",
+    "home.progressAria": "{progress}% zhlédnuto",
+    "home.browseGenreAria": "Procházet filmy žánru {genre}",
+    "movie.detailsUnavailable": "Detaily nejsou k dispozici"
+  },
+  no: {
+    "meta.siteDescription": "Kinoinspirert tjeneste for å oppdage filmer.",
+    "menu.discussTitle": "Diskusjoner",
+    "menu.discussSubtitle": "Fellesskapstråder og tematiske samlingspunkter.",
+    "menu.tvDetails": "Seriedetaljer",
+    "menu.seasons": "Sesonger",
+    "menu.leaderboardHint":
+      "Eksempelrangering for MVP-modus. Koble til full hendelsesscore for å vise live-rangering.",
+    "menu.supportWatchlistText":
+      "Sjekk at tabellene for filmer og watchlist er riktig konfigurert.",
+    "menu.docsProjectRoutesText":
+      "Bruk appens ruter til UI-kontroller etter hver deploy.",
+    "home.progressAria": "{progress}% sett",
+    "home.browseGenreAria": "Bla gjennom filmer i sjangeren {genre}",
+    "movie.detailsUnavailable": "Detaljer er ikke tilgjengelige"
+  },
+  da: {
+    "meta.siteDescription": "Biografinspireret tjeneste til at opdage film.",
+    "menu.discussTitle": "Diskussioner",
+    "menu.discussSubtitle": "Fællesskabstråde og tematiske hubs.",
+    "menu.tvDetails": "Seriedetaljer",
+    "menu.seasons": "Sæsoner",
+    "menu.leaderboardHint":
+      "Eksempelrangering til MVP-tilstand. Tilslut fuld event-scoring for at vise live-rangering.",
+    "menu.supportWatchlistText":
+      "Tjek, at tabellerne for film og watchlist er konfigureret korrekt.",
+    "menu.docsProjectRoutesText":
+      "Brug appens ruter til UI-kontrol efter hver deploy.",
+    "home.progressAria": "{progress}% set",
+    "home.browseGenreAria": "Udforsk film i genren {genre}",
+    "movie.detailsUnavailable": "Detaljer er ikke tilgængelige"
+  },
+  pt: {
+    "meta.siteDescription": "Serviço cinéfilo para descobrir filmes.",
+    "meta.searchTitle": "Pesquisar | {site}",
+    "meta.searchDescription": "Pesquise filmes no catálogo do {site}.",
+    "menu.discussTitle": "Discussões",
+    "menu.discussSubtitle": "Tópicos da comunidade e hubs temáticos.",
+    "menu.supportTitle": "Centro de Suporte",
+    "menu.supportSubtitle": "Ajuda rápida para login, perfil e problemas da watchlist.",
+    "menu.apiDocsTitle": "Documentação da API",
+    "menu.apiDocsSubtitle": "Ligações de referência e notas de integração.",
+    "nav.search": "Pesquisar",
+    "menu.apiBusinessTitle": "API para Empresas",
+    "menu.tvDetails": "Detalhes da série",
+    "menu.seasons": "Temporadas",
+    "menu.leaderboardHint":
+      "Classificação de exemplo para o modo MVP. Ligue a pontuação completa de eventos para mostrar ranking em tempo real.",
+    "menu.supportWatchlistText":
+      "Verifique se as tabelas de filmes e da watchlist estão configuradas corretamente.",
+    "menu.docsProjectRoutesText":
+      "Use as rotas desta app para verificações de UI após cada deploy.",
+    "home.progressAria": "{progress}% visto",
+    "home.browseGenreAria": "Explorar filmes do género {genre}",
+    "movie.detailsUnavailable": "Detalhes indisponíveis"
+  },
+  nl: {
+    "meta.siteDescription": "Filmgerichte dienst om nieuwe titels te ontdekken.",
+    "meta.searchTitle": "Zoeken | {site}",
+    "meta.searchDescription": "Zoek films in de catalogus van {site}.",
+    "menu.discussTitle": "Discussies",
+    "menu.discussSubtitle": "Community-threads en thematische hubs.",
+    "menu.supportTitle": "Supportcentrum",
+    "menu.supportSubtitle": "Snelle hulp bij inloggen, profiel en watchlist-problemen.",
+    "menu.apiDocsTitle": "API-documentatie",
+    "menu.apiDocsSubtitle": "Referentielinks en integratienotities.",
+    "nav.search": "Zoeken",
+    "menu.apiBusinessTitle": "API voor Bedrijven",
+    "menu.tvDetails": "Seriedetails",
+    "menu.seasons": "Seizoenen",
+    "menu.leaderboardHint":
+      "Voorbeeldranglijst voor de MVP-modus. Koppel volledige event scoring om live-rangorde te tonen.",
+    "menu.supportWatchlistText":
+      "Controleer of de tabellen voor films en watchlist correct zijn ingesteld.",
+    "menu.docsProjectRoutesText":
+      "Gebruik de routes van deze app voor UI-checks na elke deploy.",
+    "home.progressAria": "{progress}% bekeken",
+    "home.browseGenreAria": "Bekijk films in het genre {genre}",
+    "movie.detailsUnavailable": "Details niet beschikbaar"
   }
 };
