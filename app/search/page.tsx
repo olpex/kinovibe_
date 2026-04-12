@@ -15,10 +15,14 @@ type SearchPageProps = {
   }>;
 };
 
-export const metadata: Metadata = {
-  title: "Search | KinoVibe",
-  description: "Search movies across the KinoVibe catalog."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  return {
+    title: translate(locale, "meta.searchTitle", { site }),
+    description: translate(locale, "meta.searchDescription", { site })
+  };
+}
 
 function parsePage(value: string | undefined): number {
   const parsed = Number(value);
@@ -33,10 +37,20 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const query = (params.q ?? "").trim();
   const page = parsePage(params.page);
   const locale = await getRequestLocale();
-  const [results, sessionUser] = await Promise.all([
-    searchTmdbMovies(query, page, locale),
-    getSessionUser()
-  ]);
+  const sessionUser = await getSessionUser();
+  let searchFailed = false;
+  let results: Awaited<ReturnType<typeof searchTmdbMovies>> = {
+    query,
+    page,
+    totalPages: 0,
+    totalResults: 0,
+    items: []
+  };
+  try {
+    results = await searchTmdbMovies(query, page, locale);
+  } catch {
+    searchFailed = true;
+  }
 
   const hasPrev = results.page > 1;
   const hasNext = results.page < results.totalPages;
@@ -66,36 +80,45 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         )}
       </section>
 
-      {query && results.items.length === 0 ? (
+      {searchFailed ? (
+        <section className={styles.emptyState}>
+          <h2>{translate(locale, "movie.detailsUnavailable")}</h2>
+          <p>{translate(locale, "movie.tmdbMissing")}</p>
+        </section>
+      ) : null}
+
+      {query && !searchFailed && results.items.length === 0 ? (
         <section className={styles.emptyState}>
           <h2>{translate(locale, "search.noMatches")}</h2>
           <p>{translate(locale, "search.noMatchesHint")}</p>
         </section>
       ) : null}
 
-      <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
-        {results.items.map((movie) => (
-          <Link key={movie.id} href={`/movie/${movie.id}`} className={styles.movieCard}>
-            <div
-              className={styles.poster}
-              style={{
-                background: movie.posterUrl
-                  ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), url(${movie.posterUrl}) center / cover no-repeat`
-                  : `linear-gradient(145deg, ${movie.gradient[0]} 0%, ${movie.gradient[1]} 100%)`
-              }}
-            />
-            <div className={styles.cardBody}>
-              <h2>{movie.title}</h2>
-              <p>
-                {movie.genre} · {movie.year}
-              </p>
-              <span>{movie.rating.toFixed(1)}</span>
-            </div>
-          </Link>
-        ))}
-      </section>
+      {!searchFailed ? (
+        <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
+          {results.items.map((movie) => (
+            <Link key={movie.id} href={`/movie/${movie.id}`} className={styles.movieCard}>
+              <div
+                className={styles.poster}
+                style={{
+                  background: movie.posterUrl
+                    ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), url(${movie.posterUrl}) center / cover no-repeat`
+                    : `linear-gradient(145deg, ${movie.gradient[0]} 0%, ${movie.gradient[1]} 100%)`
+                }}
+              />
+              <div className={styles.cardBody}>
+                <h2>{movie.title}</h2>
+                <p>
+                  {movie.genre} · {movie.year}
+                </p>
+                <span>{movie.rating.toFixed(1)}</span>
+              </div>
+            </Link>
+          ))}
+        </section>
+      ) : null}
 
-      {query && results.totalPages > 1 ? (
+      {query && !searchFailed && results.totalPages > 1 ? (
         <nav className={styles.pagination} aria-label={translate(locale, "search.paginationAria")}>
           {hasPrev ? (
             <Link href={`/search?q=${encodeURIComponent(query)}&page=${results.page - 1}`}>

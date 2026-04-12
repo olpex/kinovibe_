@@ -33,10 +33,14 @@ type WatchlistRow = {
       }>;
 };
 
-export const metadata: Metadata = {
-  title: "My Watchlist | KinoVibe",
-  description: "Track what you plan to watch, what you are watching, and what you finished."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  return {
+    title: translate(locale, "meta.watchlistTitle", { site }),
+    description: translate(locale, "meta.watchlistDescription", { site })
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +84,9 @@ export default async function WatchlistPage() {
           <Link href="/" className={styles.logo}>
             KinoVibe
           </Link>
+          <div className={styles.actions}>
+            <LanguageToggle className={styles.linkPill} />
+          </div>
         </header>
         <section className={styles.emptyCard}>
           <h1>{translate(locale, "watchlist.supabaseMissing")}</h1>

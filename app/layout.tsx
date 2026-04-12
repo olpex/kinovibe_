@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import { SiteActivityTracker } from "@/components/analytics/site-activity-tracker";
 import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
 import "./globals.css";
 
 const headingFont = Space_Grotesk({
@@ -22,10 +23,13 @@ const monoFont = JetBrains_Mono({
   display: "swap"
 });
 
-export const metadata: Metadata = {
-  title: "KinoVibe",
-  description: "Cinema-first movie discovery experience."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  return {
+    title: translate(locale, "meta.siteTitle"),
+    description: translate(locale, "meta.siteDescription")
+  };
+}
 
 type RootLayoutProps = Readonly<{
   children: React.ReactNode;

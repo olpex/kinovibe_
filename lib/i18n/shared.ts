@@ -1,4 +1,6 @@
 import { AUTO_TRANSLATIONS } from "./translations.auto";
+import { I18N_OVERRIDE_TRANSLATIONS } from "./overrides.generated";
+import { MANUAL_TRANSLATION_OVERRIDES } from "./overrides.manual";
 
 export type Locale =
   | "en"
@@ -389,7 +391,28 @@ const BASE_MESSAGES: Record<string, string> = {
   "person.birthPlace": "Place of birth",
   "person.openHomepage": "Open homepage",
   "person.alsoKnownAs": "Also known as",
-  "person.knownFor": "Known for"
+  "person.knownFor": "Known for",
+
+  "meta.siteTitle": "KinoVibe",
+  "meta.siteDescription": "Cinema-first movie discovery experience.",
+  "meta.searchTitle": "Search | {site}",
+  "meta.searchDescription": "Search movies across the {site} catalog.",
+  "meta.watchlistTitle": "My Watchlist | {site}",
+  "meta.watchlistDescription": "Track what you plan to watch, what you are watching, and what you finished.",
+  "meta.profileTitle": "Profile | {site}",
+  "meta.profileDescription": "Manage profile preferences and password.",
+  "meta.authTitle": "Auth | {site}",
+  "meta.authDescription": "Sign in or create your {site} account.",
+  "meta.verifyTitle": "Verify Email | {site}",
+  "meta.verifyDescription": "Confirm your email address to activate your {site} account.",
+  "meta.resetTitle": "Reset Password | {site}",
+  "meta.resetDescription": "Securely set a new password for your {site} account.",
+  "meta.adminAnalyticsTitle": "Admin Analytics | {site}",
+  "meta.adminAnalyticsDescription": "Visitor analytics across country, IP, page views, and clicks.",
+  "meta.adminAuditTitle": "Admin Audit Logs | {site}",
+  "meta.adminAuditDescription": "Monitor protected API requests, outcomes, and rate-limit events.",
+  "meta.movieFallbackTitle": "Movie | {site}",
+  "meta.movieFallbackDescription": "Movie details for {title}."
 };
 
 const UK_MESSAGES: Record<string, string> = {
@@ -506,25 +529,42 @@ const UK_MESSAGES: Record<string, string> = {
   "person.knownFor": "Відомий за"
 };
 
+const I18N_OVERRIDES_BY_LOCALE = I18N_OVERRIDE_TRANSLATIONS as Record<string, Record<string, string>>;
+const I18N_MANUAL_OVERRIDES_BY_LOCALE =
+  MANUAL_TRANSLATION_OVERRIDES as Record<string, Record<string, string>>;
+
+function buildLocaleMessages(
+  locale: Locale,
+  extraOverrides?: Record<string, string>
+): Record<string, string> {
+  return {
+    ...BASE_MESSAGES,
+    ...(AUTO_TRANSLATIONS[locale] ?? {}),
+    ...(extraOverrides ?? {}),
+    ...(I18N_OVERRIDES_BY_LOCALE[locale] ?? {}),
+    ...(I18N_MANUAL_OVERRIDES_BY_LOCALE[locale] ?? {})
+  };
+}
+
 const TRANSLATIONS: Record<Locale, Record<string, string>> = {
   en: BASE_MESSAGES,
-  uk: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.uk, ...UK_MESSAGES },
-  de: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.de },
-  fr: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.fr },
-  it: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.it },
-  es: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.es },
-  sv: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.sv },
-  fi: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.fi },
-  no: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.no },
-  da: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.da },
-  cs: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.cs },
-  pl: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.pl },
-  sk: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.sk },
-  hu: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.hu },
-  ro: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.ro },
-  el: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.el },
-  hr: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.hr },
-  me: { ...BASE_MESSAGES, ...AUTO_TRANSLATIONS.me }
+  uk: buildLocaleMessages("uk", UK_MESSAGES),
+  de: buildLocaleMessages("de"),
+  fr: buildLocaleMessages("fr"),
+  it: buildLocaleMessages("it"),
+  es: buildLocaleMessages("es"),
+  sv: buildLocaleMessages("sv"),
+  fi: buildLocaleMessages("fi"),
+  no: buildLocaleMessages("no"),
+  da: buildLocaleMessages("da"),
+  cs: buildLocaleMessages("cs"),
+  pl: buildLocaleMessages("pl"),
+  sk: buildLocaleMessages("sk"),
+  hu: buildLocaleMessages("hu"),
+  ro: buildLocaleMessages("ro"),
+  el: buildLocaleMessages("el"),
+  hr: buildLocaleMessages("hr"),
+  me: buildLocaleMessages("me")
 };
 
 const TMDB_LANGUAGE_BY_LOCALE: Record<Locale, string> = {

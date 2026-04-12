@@ -15,10 +15,14 @@ type AuthPageProps = {
   }>;
 };
 
-export const metadata: Metadata = {
-  title: "Auth | KinoVibe",
-  description: "Sign in or create your KinoVibe account."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  return {
+    title: translate(locale, "meta.authTitle", { site }),
+    description: translate(locale, "meta.authDescription", { site })
+  };
+}
 
 function safeNextPath(value: string | undefined): string {
   if (!value || value.trim().length === 0) {

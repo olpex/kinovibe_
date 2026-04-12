@@ -8,10 +8,14 @@ import { ResetPasswordForm } from "./reset-form";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "./reset.module.css";
 
-export const metadata: Metadata = {
-  title: "Reset Password | KinoVibe",
-  description: "Securely set a new password for your KinoVibe account."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  return {
+    title: translate(locale, "meta.resetTitle", { site }),
+    description: translate(locale, "meta.resetDescription", { site })
+  };
+}
 
 export default async function ResetPasswordPage() {
   const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
@@ -23,6 +27,9 @@ export default async function ResetPasswordPage() {
           <Link href="/" className={styles.logo}>
             KinoVibe
           </Link>
+          <div className={styles.actions}>
+            <LanguageToggle className={styles.linkPill} />
+          </div>
         </header>
         <section className={styles.notice}>
           <h1>{translate(locale, "watchlist.supabaseMissing")}</h1>

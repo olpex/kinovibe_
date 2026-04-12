@@ -39,10 +39,14 @@ type AuditLogsPageProps = {
 const PAGE_SIZE = 40;
 const DEFAULT_RETENTION_DAYS = getDefaultRetentionDays();
 
-export const metadata: Metadata = {
-  title: "Admin Audit Logs | KinoVibe",
-  description: "Monitor protected API requests, outcomes, and rate-limit events."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  return {
+    title: translate(locale, "meta.adminAuditTitle", { site }),
+    description: translate(locale, "meta.adminAuditDescription", { site })
+  };
+}
 
 export const dynamic = "force-dynamic";
 

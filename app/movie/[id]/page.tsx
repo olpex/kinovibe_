@@ -29,22 +29,24 @@ export async function generateMetadata({
 }: MovieDetailsPageProps): Promise<Metadata> {
   const resolved = await params;
   const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
   const movieId = parseMovieId(resolved.id);
   if (!movieId) {
     return {
-      title: "Movie | KinoVibe"
+      title: translate(locale, "meta.movieFallbackTitle", { site })
     };
   }
 
   try {
     const movie = await getTmdbMovieDetails(movieId, locale);
     return {
-      title: `${movie.title} | KinoVibe`,
-      description: movie.overview || `Movie details for ${movie.title}.`
+      title: `${movie.title} | ${site}`,
+      description:
+        movie.overview || translate(locale, "meta.movieFallbackDescription", { title: movie.title })
     };
   } catch {
     return {
-      title: "Movie | KinoVibe"
+      title: translate(locale, "meta.movieFallbackTitle", { site })
     };
   }
 }

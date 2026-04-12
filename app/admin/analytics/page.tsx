@@ -20,10 +20,14 @@ type SiteEventRow = {
   country_code: string | null;
 };
 
-export const metadata: Metadata = {
-  title: "Admin Analytics | KinoVibe",
-  description: "Visitor analytics across country, IP, page views, and clicks."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  return {
+    title: translate(locale, "meta.adminAnalyticsTitle", { site }),
+    description: translate(locale, "meta.adminAnalyticsDescription", { site })
+  };
+}
 
 export const dynamic = "force-dynamic";
 

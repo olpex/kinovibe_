@@ -15,10 +15,14 @@ type VerifyPageProps = {
   }>;
 };
 
-export const metadata: Metadata = {
-  title: "Verify Email | KinoVibe",
-  description: "Confirm your email address to activate your KinoVibe account."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  return {
+    title: translate(locale, "meta.verifyTitle", { site }),
+    description: translate(locale, "meta.verifyDescription", { site })
+  };
+}
 
 function safeNextPath(value: string | undefined): string {
   if (!value || value.trim().length === 0) {

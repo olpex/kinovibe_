@@ -9,10 +9,14 @@ import { translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import styles from "./profile.module.css";
 
-export const metadata: Metadata = {
-  title: "Profile | KinoVibe",
-  description: "Manage profile preferences and password."
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  return {
+    title: translate(locale, "meta.profileTitle", { site }),
+    description: translate(locale, "meta.profileDescription", { site })
+  };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +26,18 @@ export default async function ProfilePage() {
   if (!supabase) {
     return (
       <main className={styles.page}>
-        <p>{translate(locale, "profile.supabaseMissing")}</p>
+        <header className={styles.topBar}>
+          <Link href="/" className={styles.logo}>
+            KinoVibe
+          </Link>
+          <div className={styles.actions}>
+            <LanguageToggle className={styles.linkPill} />
+          </div>
+        </header>
+        <section className={styles.summary}>
+          <h1>{translate(locale, "profile.title")}</h1>
+          <p>{translate(locale, "profile.supabaseMissing")}</p>
+        </section>
       </main>
     );
   }

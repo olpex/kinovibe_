@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CatalogMovieGrid } from "@/components/tmdb/catalog-grid";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { CatalogPagination } from "@/components/tmdb/catalog-pagination";
@@ -34,11 +35,27 @@ export async function TvCatalogView({
 }: TvCatalogViewProps) {
   const params = await searchParams;
   const page = parsePage(params.page);
-  const locale = await getRequestLocale();
-  const [session, result] = await Promise.all([
-    getSessionUser(),
-    getTmdbTvCatalogPage(category, locale, page)
-  ]);
+  const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
+  let result: Awaited<ReturnType<typeof getTmdbTvCatalogPage>> | null = null;
+  try {
+    result = await getTmdbTvCatalogPage(category, locale, page);
+  } catch {
+    result = null;
+  }
+
+  if (!result) {
+    return (
+      <CatalogPageShell locale={locale} session={session} title={title} subtitle={subtitle}>
+        <h2>{translate(locale, "movie.detailsUnavailable")}</h2>
+        <p className={styles.inlineMessage}>{translate(locale, "movie.tmdbMissing")}</p>
+        <div className={styles.actions}>
+          <Link href="/search" className={styles.linkButton}>
+            {translate(locale, "nav.search")}
+          </Link>
+        </div>
+      </CatalogPageShell>
+    );
+  }
 
   return (
     <CatalogPageShell locale={locale} session={session} title={title} subtitle={subtitle}>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CatalogPeopleGrid } from "@/components/tmdb/catalog-grid";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { CatalogPagination } from "@/components/tmdb/catalog-pagination";
@@ -24,11 +25,32 @@ function parsePage(value: string | undefined): number {
 export default async function PeoplePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = parsePage(params.page);
-  const locale = await getRequestLocale();
-  const [session, result] = await Promise.all([
-    getSessionUser(),
-    getTmdbPopularPeople(locale, page)
-  ]);
+  const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
+  let result: Awaited<ReturnType<typeof getTmdbPopularPeople>> | null = null;
+  try {
+    result = await getTmdbPopularPeople(locale, page);
+  } catch {
+    result = null;
+  }
+
+  if (!result) {
+    return (
+      <CatalogPageShell
+        locale={locale}
+        session={session}
+        title={translate(locale, "menu.peoplePopularTitle")}
+        subtitle={translate(locale, "menu.peoplePopularSubtitle")}
+      >
+        <h2>{translate(locale, "movie.detailsUnavailable")}</h2>
+        <p className={styles.inlineMessage}>{translate(locale, "movie.tmdbMissing")}</p>
+        <div className={styles.actions}>
+          <Link href="/search" className={styles.linkButton}>
+            {translate(locale, "nav.search")}
+          </Link>
+        </div>
+      </CatalogPageShell>
+    );
+  }
 
   return (
     <CatalogPageShell
