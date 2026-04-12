@@ -242,6 +242,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "search.paginationAria": "Pagination",
 
   "menu.popular": "Popular",
+  "menu.thriller": "Thrillers",
   "menu.nowPlaying": "Now Playing",
   "menu.upcoming": "Upcoming",
   "menu.topRated": "Top Rated",
@@ -544,7 +545,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Leaderboard",
     "menu.support": "Support",
     "menu.apiDocs": "API Docs",
-    "menu.apiBusiness": "API for Business"
+    "menu.apiBusiness": "API for Business",
+    "menu.thriller": "Thrillers"
   },
   uk: {
     "nav.movies": "Фільми",
@@ -556,7 +558,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Таблиця лідерів",
     "menu.support": "Підтримка",
     "menu.apiDocs": "Документація API",
-    "menu.apiBusiness": "API для бізнесу"
+    "menu.apiBusiness": "API для бізнесу",
+    "menu.thriller": "Трилер-фільми"
   },
   de: {
     "nav.movies": "Filme",
@@ -568,7 +571,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Rangliste",
     "menu.support": "Hilfe",
     "menu.apiDocs": "API-Doku",
-    "menu.apiBusiness": "API für Unternehmen"
+    "menu.apiBusiness": "API für Unternehmen",
+    "menu.thriller": "Thrillerfilme"
   },
   fr: {
     "nav.movies": "Films",
@@ -580,7 +584,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Classement",
     "menu.support": "Aide",
     "menu.apiDocs": "Docs API",
-    "menu.apiBusiness": "API entreprise"
+    "menu.apiBusiness": "API entreprise",
+    "menu.thriller": "Films a suspense"
   },
   it: {
     "nav.movies": "Film",
@@ -592,7 +597,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Classifica",
     "menu.support": "Supporto",
     "menu.apiDocs": "Doc API",
-    "menu.apiBusiness": "API per aziende"
+    "menu.apiBusiness": "API per aziende",
+    "menu.thriller": "Film thriller"
   },
   es: {
     "nav.movies": "Películas",
@@ -604,7 +610,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Clasificación",
     "menu.support": "Soporte",
     "menu.apiDocs": "Docs API",
-    "menu.apiBusiness": "API para empresas"
+    "menu.apiBusiness": "API para empresas",
+    "menu.thriller": "Suspenso"
   },
   pt: {
     "nav.movies": "Filmes",
@@ -616,7 +623,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Classificação",
     "menu.support": "Suporte",
     "menu.apiDocs": "Docs API",
-    "menu.apiBusiness": "API para Empresas"
+    "menu.apiBusiness": "API para Empresas",
+    "menu.thriller": "Suspense"
   },
   nl: {
     "nav.movies": "Films",
@@ -628,7 +636,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Ranglijst",
     "menu.support": "Ondersteuning",
     "menu.apiDocs": "API-docs",
-    "menu.apiBusiness": "API voor Bedrijven"
+    "menu.apiBusiness": "API voor Bedrijven",
+    "menu.thriller": "Thrillerfilms"
   },
   sv: {
     "nav.movies": "Filmer",
@@ -640,7 +649,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Topplista",
     "menu.support": "Hjälp",
     "menu.apiDocs": "API-dokumentation",
-    "menu.apiBusiness": "API för företag"
+    "menu.apiBusiness": "API för företag",
+    "menu.thriller": "Thrillerfilmer"
   },
   fi: {
     "nav.movies": "Elokuvat",
@@ -652,7 +662,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Tulostaulukko",
     "menu.support": "Tuki",
     "menu.apiDocs": "API-dokumentaatio",
-    "menu.apiBusiness": "API yrityksille"
+    "menu.apiBusiness": "API yrityksille",
+    "menu.thriller": "Trillerielokuvat"
   },
   no: {
     "nav.movies": "Filmer",
@@ -664,7 +675,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Toppliste",
     "menu.support": "Hjelp",
     "menu.apiDocs": "API-dokumentasjon",
-    "menu.apiBusiness": "API for bedrifter"
+    "menu.apiBusiness": "API for bedrifter",
+    "menu.thriller": "Thrillerfilmer"
   },
   da: {
     "nav.movies": "Film",
@@ -676,7 +688,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Rangliste",
     "menu.support": "Hjælp",
     "menu.apiDocs": "API-dokumentation",
-    "menu.apiBusiness": "API til virksomheder"
+    "menu.apiBusiness": "API til virksomheder",
+    "menu.thriller": "Thrillerfilm"
   },
   cs: {
     "nav.movies": "Filmy",
@@ -688,7 +701,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Žebříček",
     "menu.support": "Podpora",
     "menu.apiDocs": "Dokumentace API",
-    "menu.apiBusiness": "API pro firmy"
+    "menu.apiBusiness": "API pro firmy",
+    "menu.thriller": "Thrilerove filmy"
   },
   pl: {
     "nav.movies": "Filmy",
@@ -700,7 +714,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Ranking",
     "menu.support": "Wsparcie",
     "menu.apiDocs": "Dokumentacja API",
-    "menu.apiBusiness": "API dla firm"
+    "menu.apiBusiness": "API dla firm",
+    "menu.thriller": "Filmy thriller"
   },
   sk: {
     "nav.movies": "Filmy",
@@ -712,7 +727,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Rebríček",
     "menu.support": "Podpora",
     "menu.apiDocs": "Dokumentácia API",
-    "menu.apiBusiness": "API pre firmy"
+    "menu.apiBusiness": "API pre firmy",
+    "menu.thriller": "Thrilerove filmy"
   },
   hu: {
     "nav.movies": "Filmek",
@@ -724,7 +740,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Ranglista",
     "menu.support": "Támogatás",
     "menu.apiDocs": "API dokumentáció",
-    "menu.apiBusiness": "API vállalatoknak"
+    "menu.apiBusiness": "API vállalatoknak",
+    "menu.thriller": "Thrillerfilmek"
   },
   ro: {
     "nav.movies": "Filme",
@@ -736,7 +753,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Clasament",
     "menu.support": "Suport",
     "menu.apiDocs": "Documentație API",
-    "menu.apiBusiness": "API pentru companii"
+    "menu.apiBusiness": "API pentru companii",
+    "menu.thriller": "Filme thriller"
   },
   el: {
     "nav.movies": "Ταινίες",
@@ -748,7 +766,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Κατάταξη",
     "menu.support": "Υποστήριξη",
     "menu.apiDocs": "Τεκμηρίωση API",
-    "menu.apiBusiness": "API για επιχειρήσεις"
+    "menu.apiBusiness": "API για επιχειρήσεις",
+    "menu.thriller": "Ταινίες θρίλερ"
   },
   hr: {
     "nav.movies": "Filmovi",
@@ -760,7 +779,8 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Poredak",
     "menu.support": "Podrška",
     "menu.apiDocs": "API dokumentacija",
-    "menu.apiBusiness": "API za tvrtke"
+    "menu.apiBusiness": "API za tvrtke",
+    "menu.thriller": "Triler filmovi"
   },
   me: {
     "nav.movies": "Филмови",
@@ -772,7 +792,191 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.leaderboard": "Ранг листа",
     "menu.support": "Подршка",
     "menu.apiDocs": "API документација",
-    "menu.apiBusiness": "API за компаније"
+    "menu.apiBusiness": "API за компаније",
+    "menu.thriller": "Трилер филмови"
+  }
+};
+
+const CORE_CATALOG_LABEL_OVERRIDES: Record<Locale, Record<string, string>> = {
+  en: {
+    "menu.popular": "Popular",
+    "menu.nowPlaying": "Now Playing",
+    "menu.upcoming": "Upcoming",
+    "menu.topRated": "Top Rated",
+    "menu.airingToday": "Airing Today",
+    "menu.onTheAir": "On The Air",
+    "menu.thriller": "Thrillers"
+  },
+  uk: {
+    "menu.popular": "Популярні",
+    "menu.nowPlaying": "Зараз у кіно",
+    "menu.upcoming": "Очікувані",
+    "menu.topRated": "Рейтингові",
+    "menu.airingToday": "Сьогодні в ефірі",
+    "menu.onTheAir": "Зараз на ТБ",
+    "menu.thriller": "Трилери"
+  },
+  de: {
+    "menu.popular": "Beliebt",
+    "menu.nowPlaying": "Jetzt im Kino",
+    "menu.upcoming": "Demnächst",
+    "menu.topRated": "Bestenbewertet",
+    "menu.airingToday": "Heute im TV",
+    "menu.onTheAir": "Im TV",
+    "menu.thriller": "Thrillerfilme"
+  },
+  fr: {
+    "menu.popular": "Populaires",
+    "menu.nowPlaying": "Au cinema",
+    "menu.upcoming": "A venir",
+    "menu.topRated": "Les mieux notes",
+    "menu.airingToday": "Diffuse aujourd'hui",
+    "menu.onTheAir": "A l'antenne",
+    "menu.thriller": "Films a suspense"
+  },
+  it: {
+    "menu.popular": "Popolari",
+    "menu.nowPlaying": "Al cinema",
+    "menu.upcoming": "In arrivo",
+    "menu.topRated": "Piu votati",
+    "menu.airingToday": "In onda oggi",
+    "menu.onTheAir": "In onda",
+    "menu.thriller": "Film thriller"
+  },
+  es: {
+    "menu.popular": "Populares",
+    "menu.nowPlaying": "En cines",
+    "menu.upcoming": "Proximamente",
+    "menu.topRated": "Mejor valoradas",
+    "menu.airingToday": "Se emite hoy",
+    "menu.onTheAir": "En emision",
+    "menu.thriller": "Suspenso"
+  },
+  pt: {
+    "menu.popular": "Populares",
+    "menu.nowPlaying": "Em exibicao",
+    "menu.upcoming": "Em breve",
+    "menu.topRated": "Mais votados",
+    "menu.airingToday": "No ar hoje",
+    "menu.onTheAir": "No ar",
+    "menu.thriller": "Suspense"
+  },
+  nl: {
+    "menu.popular": "Populair",
+    "menu.nowPlaying": "Nu in de bioscoop",
+    "menu.upcoming": "Binnenkort",
+    "menu.topRated": "Hoogst gewaardeerd",
+    "menu.airingToday": "Vandaag op tv",
+    "menu.onTheAir": "Op tv",
+    "menu.thriller": "Thrillerfilms"
+  },
+  sv: {
+    "menu.popular": "Populara",
+    "menu.nowPlaying": "Pa bio nu",
+    "menu.upcoming": "Kommande",
+    "menu.topRated": "Toppbetyg",
+    "menu.airingToday": "Sands idag",
+    "menu.onTheAir": "Pa TV",
+    "menu.thriller": "Thrillerfilmer"
+  },
+  fi: {
+    "menu.popular": "Suositut",
+    "menu.nowPlaying": "Nyt teattereissa",
+    "menu.upcoming": "Tulossa",
+    "menu.topRated": "Parhaiksi arvioidut",
+    "menu.airingToday": "Esitetaan tanaan",
+    "menu.onTheAir": "TV:ssa nyt",
+    "menu.thriller": "Trillerielokuvat"
+  },
+  no: {
+    "menu.popular": "Populaere",
+    "menu.nowPlaying": "Pa kino na",
+    "menu.upcoming": "Kommer snart",
+    "menu.topRated": "Hoyest rangert",
+    "menu.airingToday": "Sendes i dag",
+    "menu.onTheAir": "Pa TV",
+    "menu.thriller": "Thrillerfilmer"
+  },
+  da: {
+    "menu.popular": "Populaere",
+    "menu.nowPlaying": "I biografen nu",
+    "menu.upcoming": "Kommer snart",
+    "menu.topRated": "Hojest bedomte",
+    "menu.airingToday": "Sendes i dag",
+    "menu.onTheAir": "Pa TV",
+    "menu.thriller": "Thrillerfilm"
+  },
+  cs: {
+    "menu.popular": "Popularni",
+    "menu.nowPlaying": "Prave v kinech",
+    "menu.upcoming": "Jiz brzy",
+    "menu.topRated": "Nejlepe hodnocene",
+    "menu.airingToday": "Vysila se dnes",
+    "menu.onTheAir": "Vysila se",
+    "menu.thriller": "Thrilerove filmy"
+  },
+  pl: {
+    "menu.popular": "Popularne",
+    "menu.nowPlaying": "W kinach",
+    "menu.upcoming": "Nadchodzace",
+    "menu.topRated": "Najwyzej oceniane",
+    "menu.airingToday": "Emitowane dzisiaj",
+    "menu.onTheAir": "Na antenie",
+    "menu.thriller": "Thrillery"
+  },
+  sk: {
+    "menu.popular": "Popularne",
+    "menu.nowPlaying": "Prave v kinach",
+    "menu.upcoming": "Uz coskoro",
+    "menu.topRated": "Najlepsie hodnotene",
+    "menu.airingToday": "Vysielane dnes",
+    "menu.onTheAir": "Vo vysielani",
+    "menu.thriller": "Thrilerove filmy"
+  },
+  hu: {
+    "menu.popular": "Nepszeru",
+    "menu.nowPlaying": "Most a mozikban",
+    "menu.upcoming": "Hamarosan",
+    "menu.topRated": "Legmagasabb ertekelesu",
+    "menu.airingToday": "Ma adasban",
+    "menu.onTheAir": "Musoron",
+    "menu.thriller": "Thrillerfilmek"
+  },
+  ro: {
+    "menu.popular": "Populare",
+    "menu.nowPlaying": "In cinematografe",
+    "menu.upcoming": "In curand",
+    "menu.topRated": "Cel mai bine cotate",
+    "menu.airingToday": "Se difuzeaza azi",
+    "menu.onTheAir": "In difuzare",
+    "menu.thriller": "Filme thriller"
+  },
+  el: {
+    "menu.popular": "Δημοφιλή",
+    "menu.nowPlaying": "Στους κινηματογράφους",
+    "menu.upcoming": "Σύντομα",
+    "menu.topRated": "Υψηλότερα βαθμολογημένα",
+    "menu.airingToday": "Προβάλλεται σήμερα",
+    "menu.onTheAir": "Στον αέρα",
+    "menu.thriller": "Ταινίες θρίλερ"
+  },
+  hr: {
+    "menu.popular": "Popularno",
+    "menu.nowPlaying": "U kinima",
+    "menu.upcoming": "Uskoro",
+    "menu.topRated": "Najbolje ocijenjeni",
+    "menu.airingToday": "Emitira se danas",
+    "menu.onTheAir": "Na programu",
+    "menu.thriller": "Triler filmovi"
+  },
+  me: {
+    "menu.popular": "Популарно",
+    "menu.nowPlaying": "У биоскопима",
+    "menu.upcoming": "Ускоро",
+    "menu.topRated": "Најбоље оцењени",
+    "menu.airingToday": "Емитује се данас",
+    "menu.onTheAir": "На програму",
+    "menu.thriller": "Трилер филмови"
   }
 };
 
@@ -973,6 +1177,7 @@ function buildLocaleMessages(
     ...(extraOverrides ?? {}),
     ...(I18N_OVERRIDES_BY_LOCALE[locale] ?? {}),
     ...(CORE_NAV_MENU_OVERRIDES[locale] ?? {}),
+    ...(CORE_CATALOG_LABEL_OVERRIDES[locale] ?? {}),
     ...(AWARDS_UI_OVERRIDES[locale] ?? {}),
     ...(I18N_MANUAL_OVERRIDES_BY_LOCALE[locale] ?? {})
   };

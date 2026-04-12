@@ -422,14 +422,25 @@ export type TmdbPagedCards = {
   items: HomeMovie[];
 };
 
-export type MovieMenuCategory = "popular" | "now_playing" | "upcoming" | "top_rated";
+export type MovieMenuCategory = "popular" | "now_playing" | "upcoming" | "top_rated" | "thriller";
 export type TvMenuCategory = "popular" | "airing_today" | "on_the_air" | "top_rated";
 
-const MOVIE_CATEGORY_PATH: Record<MovieMenuCategory, string> = {
-  popular: "/movie/popular",
-  now_playing: "/movie/now_playing",
-  upcoming: "/movie/upcoming",
-  top_rated: "/movie/top_rated"
+const MOVIE_CATEGORY_CONFIG: Record<
+  MovieMenuCategory,
+  { path: string; params?: Record<string, string> }
+> = {
+  popular: { path: "/movie/popular" },
+  now_playing: { path: "/movie/now_playing" },
+  upcoming: { path: "/movie/upcoming" },
+  top_rated: { path: "/movie/top_rated" },
+  thriller: {
+    path: "/discover/movie",
+    params: {
+      with_genres: "53",
+      sort_by: "popularity.desc",
+      include_adult: "false"
+    }
+  }
 };
 
 const TV_CATEGORY_PATH: Record<TvMenuCategory, string> = {
@@ -447,9 +458,10 @@ export async function getTmdbMovieCatalogPage(
   const safePage = Math.max(1, Math.min(page, 500));
   const language = toTmdbLanguage(locale);
   const genresMap = await getGenresMap(locale);
+  const config = MOVIE_CATEGORY_CONFIG[category];
   const response = await fetchTmdb<TmdbMoviesResponse>(
-    MOVIE_CATEGORY_PATH[category],
-    { language, page: String(safePage) },
+    config.path,
+    { language, page: String(safePage), ...(config.params ?? {}) },
     900
   );
 
