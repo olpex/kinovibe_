@@ -184,6 +184,12 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "home.browseGenreAria": "Udforsk film i genren {genre}",
     "movie.detailsUnavailable": "Detaljer er ikke tilgængelige"
   },
+  sk: {
+    "menu.apiBusinessTitle": "API pre firmy"
+  },
+  hu: {
+    "menu.apiBusinessTitle": "API vállalatoknak"
+  },
   pt: {
     "meta.siteDescription": "Serviço cinéfilo para descobrir filmes.",
     "meta.searchTitle": "Pesquisar | {site}",

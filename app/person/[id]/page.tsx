@@ -72,22 +72,22 @@ export default async function PersonDetailsPage({ params }: PageProps) {
             <h1>{person.name}</h1>
             <div className={styles.meta}>
               <p>
-                {translate(locale, "person.department")}: {person.department}
+                {translate(locale, "menu.department")}: {person.department}
               </p>
               <p>
-                {translate(locale, "person.popularity")}: {person.popularity.toLocaleString(toIntlLocale(locale))}
+                {translate(locale, "menu.popularity")}: {person.popularity.toLocaleString(toIntlLocale(locale))}
               </p>
-              {person.birthDate ? <p>{translate(locale, "person.birthDate")}: {person.birthDate}</p> : null}
+              {person.birthDate ? <p>{translate(locale, "menu.birthDate")}: {person.birthDate}</p> : null}
               {person.placeOfBirth ? (
                 <p>
-                  {translate(locale, "person.birthPlace")}: {person.placeOfBirth}
+                  {translate(locale, "menu.birthPlace")}: {person.placeOfBirth}
                 </p>
               ) : null}
             </div>
             {person.biography ? <p className={styles.bio}>{person.biography}</p> : null}
             {person.homepage ? (
               <Link href={person.homepage} target="_blank" rel="noreferrer">
-                {translate(locale, "person.openHomepage")}
+                {translate(locale, "menu.openHomepage")}
               </Link>
             ) : null}
           </div>
@@ -95,7 +95,7 @@ export default async function PersonDetailsPage({ params }: PageProps) {
 
         {person.aka.length > 0 ? (
           <section className={styles.section}>
-            <h2>{translate(locale, "person.alsoKnownAs")}</h2>
+            <h2>{translate(locale, "menu.alsoKnownAs")}</h2>
             <div className={styles.akaWrap}>
               {person.aka.slice(0, 18).map((name) => (
                 <span key={name} className={styles.akaChip}>
@@ -107,7 +107,7 @@ export default async function PersonDetailsPage({ params }: PageProps) {
         ) : null}
 
         <section className={styles.section}>
-          <h2>{translate(locale, "person.knownFor")}</h2>
+          <h2>{translate(locale, "menu.knownFor")}</h2>
           <div className={styles.creditsGrid}>
             {person.knownFor.map((credit) => (
               <Link

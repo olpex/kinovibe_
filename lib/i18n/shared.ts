@@ -533,6 +533,249 @@ const UK_MESSAGES: Record<string, string> = {
   "person.knownFor": "Відомий за"
 };
 
+const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
+  en: {
+    "nav.movies": "Movies",
+    "nav.tvShows": "TV Shows",
+    "nav.people": "People",
+    "nav.awards": "Awards",
+    "nav.more": "More",
+    "menu.discuss": "Discuss",
+    "menu.leaderboard": "Leaderboard",
+    "menu.support": "Support",
+    "menu.apiDocs": "API Docs",
+    "menu.apiBusiness": "API for Business"
+  },
+  uk: {
+    "nav.movies": "Фільми",
+    "nav.tvShows": "Серіали",
+    "nav.people": "Персони",
+    "nav.awards": "Нагороди",
+    "nav.more": "Ще",
+    "menu.discuss": "Обговорення",
+    "menu.leaderboard": "Таблиця лідерів",
+    "menu.support": "Підтримка",
+    "menu.apiDocs": "Документація API",
+    "menu.apiBusiness": "API для бізнесу"
+  },
+  de: {
+    "nav.movies": "Filme",
+    "nav.tvShows": "Serien",
+    "nav.people": "Personen",
+    "nav.awards": "Auszeichnungen",
+    "nav.more": "Mehr",
+    "menu.discuss": "Diskussion",
+    "menu.leaderboard": "Rangliste",
+    "menu.support": "Hilfe",
+    "menu.apiDocs": "API-Doku",
+    "menu.apiBusiness": "API für Unternehmen"
+  },
+  fr: {
+    "nav.movies": "Films",
+    "nav.tvShows": "Séries TV",
+    "nav.people": "Personnes",
+    "nav.awards": "Récompenses",
+    "nav.more": "Plus",
+    "menu.discuss": "Discussions",
+    "menu.leaderboard": "Classement",
+    "menu.support": "Aide",
+    "menu.apiDocs": "Docs API",
+    "menu.apiBusiness": "API entreprise"
+  },
+  it: {
+    "nav.movies": "Film",
+    "nav.tvShows": "Serie TV",
+    "nav.people": "Persone",
+    "nav.awards": "Premi",
+    "nav.more": "Altro",
+    "menu.discuss": "Discussioni",
+    "menu.leaderboard": "Classifica",
+    "menu.support": "Supporto",
+    "menu.apiDocs": "Doc API",
+    "menu.apiBusiness": "API per aziende"
+  },
+  es: {
+    "nav.movies": "Películas",
+    "nav.tvShows": "Series",
+    "nav.people": "Personas",
+    "nav.awards": "Premios",
+    "nav.more": "Más",
+    "menu.discuss": "Debates",
+    "menu.leaderboard": "Clasificación",
+    "menu.support": "Soporte",
+    "menu.apiDocs": "Docs API",
+    "menu.apiBusiness": "API para empresas"
+  },
+  pt: {
+    "nav.movies": "Filmes",
+    "nav.tvShows": "Séries",
+    "nav.people": "Pessoas",
+    "nav.awards": "Prêmios",
+    "nav.more": "Mais",
+    "menu.discuss": "Discussões",
+    "menu.leaderboard": "Classificação",
+    "menu.support": "Suporte",
+    "menu.apiDocs": "Docs API",
+    "menu.apiBusiness": "API para Empresas"
+  },
+  nl: {
+    "nav.movies": "Films",
+    "nav.tvShows": "TV-series",
+    "nav.people": "Personen",
+    "nav.awards": "Prijzen",
+    "nav.more": "Meer",
+    "menu.discuss": "Discussies",
+    "menu.leaderboard": "Ranglijst",
+    "menu.support": "Ondersteuning",
+    "menu.apiDocs": "API-docs",
+    "menu.apiBusiness": "API voor Bedrijven"
+  },
+  sv: {
+    "nav.movies": "Filmer",
+    "nav.tvShows": "TV-serier",
+    "nav.people": "Personer",
+    "nav.awards": "Priser",
+    "nav.more": "Mer",
+    "menu.discuss": "Diskussioner",
+    "menu.leaderboard": "Topplista",
+    "menu.support": "Hjälp",
+    "menu.apiDocs": "API-dokumentation",
+    "menu.apiBusiness": "API för företag"
+  },
+  fi: {
+    "nav.movies": "Elokuvat",
+    "nav.tvShows": "TV-sarjat",
+    "nav.people": "Henkilöt",
+    "nav.awards": "Palkinnot",
+    "nav.more": "Lisää",
+    "menu.discuss": "Keskustelut",
+    "menu.leaderboard": "Tulostaulukko",
+    "menu.support": "Tuki",
+    "menu.apiDocs": "API-dokumentaatio",
+    "menu.apiBusiness": "API yrityksille"
+  },
+  no: {
+    "nav.movies": "Filmer",
+    "nav.tvShows": "TV-serier",
+    "nav.people": "Personer",
+    "nav.awards": "Priser",
+    "nav.more": "Mer",
+    "menu.discuss": "Diskusjoner",
+    "menu.leaderboard": "Toppliste",
+    "menu.support": "Hjelp",
+    "menu.apiDocs": "API-dokumentasjon",
+    "menu.apiBusiness": "API for bedrifter"
+  },
+  da: {
+    "nav.movies": "Film",
+    "nav.tvShows": "TV-serier",
+    "nav.people": "Personer",
+    "nav.awards": "Priser",
+    "nav.more": "Mere",
+    "menu.discuss": "Diskussioner",
+    "menu.leaderboard": "Rangliste",
+    "menu.support": "Hjælp",
+    "menu.apiDocs": "API-dokumentation",
+    "menu.apiBusiness": "API til virksomheder"
+  },
+  cs: {
+    "nav.movies": "Filmy",
+    "nav.tvShows": "Seriály",
+    "nav.people": "Osobnosti",
+    "nav.awards": "Ocenění",
+    "nav.more": "Více",
+    "menu.discuss": "Diskuze",
+    "menu.leaderboard": "Žebříček",
+    "menu.support": "Podpora",
+    "menu.apiDocs": "Dokumentace API",
+    "menu.apiBusiness": "API pro firmy"
+  },
+  pl: {
+    "nav.movies": "Filmy",
+    "nav.tvShows": "Seriale",
+    "nav.people": "Osoby",
+    "nav.awards": "Nagrody",
+    "nav.more": "Więcej",
+    "menu.discuss": "Dyskusje",
+    "menu.leaderboard": "Ranking",
+    "menu.support": "Wsparcie",
+    "menu.apiDocs": "Dokumentacja API",
+    "menu.apiBusiness": "API dla firm"
+  },
+  sk: {
+    "nav.movies": "Filmy",
+    "nav.tvShows": "Seriály",
+    "nav.people": "Osobnosti",
+    "nav.awards": "Ocenenia",
+    "nav.more": "Viac",
+    "menu.discuss": "Diskusie",
+    "menu.leaderboard": "Rebríček",
+    "menu.support": "Podpora",
+    "menu.apiDocs": "Dokumentácia API",
+    "menu.apiBusiness": "API pre firmy"
+  },
+  hu: {
+    "nav.movies": "Filmek",
+    "nav.tvShows": "Sorozatok",
+    "nav.people": "Személyek",
+    "nav.awards": "Díjak",
+    "nav.more": "Több",
+    "menu.discuss": "Beszélgetések",
+    "menu.leaderboard": "Ranglista",
+    "menu.support": "Támogatás",
+    "menu.apiDocs": "API dokumentáció",
+    "menu.apiBusiness": "API vállalatoknak"
+  },
+  ro: {
+    "nav.movies": "Filme",
+    "nav.tvShows": "Seriale TV",
+    "nav.people": "Persoane",
+    "nav.awards": "Premii",
+    "nav.more": "Mai mult",
+    "menu.discuss": "Discuții",
+    "menu.leaderboard": "Clasament",
+    "menu.support": "Suport",
+    "menu.apiDocs": "Documentație API",
+    "menu.apiBusiness": "API pentru companii"
+  },
+  el: {
+    "nav.movies": "Ταινίες",
+    "nav.tvShows": "Σειρές TV",
+    "nav.people": "Πρόσωπα",
+    "nav.awards": "Βραβεία",
+    "nav.more": "Περισσότερα",
+    "menu.discuss": "Συζητήσεις",
+    "menu.leaderboard": "Κατάταξη",
+    "menu.support": "Υποστήριξη",
+    "menu.apiDocs": "Τεκμηρίωση API",
+    "menu.apiBusiness": "API για επιχειρήσεις"
+  },
+  hr: {
+    "nav.movies": "Filmovi",
+    "nav.tvShows": "TV serije",
+    "nav.people": "Osobe",
+    "nav.awards": "Nagrade",
+    "nav.more": "Više",
+    "menu.discuss": "Rasprave",
+    "menu.leaderboard": "Poredak",
+    "menu.support": "Podrška",
+    "menu.apiDocs": "API dokumentacija",
+    "menu.apiBusiness": "API za tvrtke"
+  },
+  me: {
+    "nav.movies": "Филмови",
+    "nav.tvShows": "ТВ серије",
+    "nav.people": "Особе",
+    "nav.awards": "Награде",
+    "nav.more": "Још",
+    "menu.discuss": "Дискусије",
+    "menu.leaderboard": "Ранг листа",
+    "menu.support": "Подршка",
+    "menu.apiDocs": "API документација",
+    "menu.apiBusiness": "API за компаније"
+  }
+};
+
 const I18N_OVERRIDES_BY_LOCALE = I18N_OVERRIDE_TRANSLATIONS as Record<string, Record<string, string>>;
 const I18N_MANUAL_OVERRIDES_BY_LOCALE =
   MANUAL_TRANSLATION_OVERRIDES as Record<string, Record<string, string>>;
@@ -544,6 +787,7 @@ function buildLocaleMessages(
   return {
     ...BASE_MESSAGES,
     ...(AUTO_TRANSLATIONS[locale] ?? {}),
+    ...(CORE_NAV_MENU_OVERRIDES[locale] ?? {}),
     ...(extraOverrides ?? {}),
     ...(I18N_OVERRIDES_BY_LOCALE[locale] ?? {}),
     ...(I18N_MANUAL_OVERRIDES_BY_LOCALE[locale] ?? {})
