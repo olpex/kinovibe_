@@ -12,8 +12,13 @@ export type MovieCard = {
   overview?: string;
 };
 
+export type GenreChip = {
+  id: number;
+  name: string;
+};
+
 export type HomeScreenData = {
-  genreChips: string[];
+  genreChips: GenreChip[];
   trendingNow: MovieCard[];
   continueWatching: MovieCard[];
   topPicks: MovieCard[];

@@ -163,12 +163,14 @@ function genreLabel(genreIds: number[], genresMap: Map<number, string>): string 
   return "Cinema";
 }
 
-function pickHomeGenres(genresMap: Map<number, string>): string[] {
+function pickHomeGenres(genresMap: Map<number, string>): Array<{ id: number; name: string }> {
   const baseGenreIds = Array.from(genresMap.keys()).slice(0, HOME_GENRE_LIMIT);
   const requiredGenreIds = REQUIRED_HOME_GENRE_IDS.filter((id) => genresMap.has(id));
 
   if (requiredGenreIds.length === 0) {
-    return baseGenreIds.map((id) => genresMap.get(id)).filter((name): name is string => Boolean(name));
+    return baseGenreIds
+      .map((id) => ({ id, name: genresMap.get(id) }))
+      .filter((entry): entry is { id: number; name: string } => Boolean(entry.name));
   }
 
   const requiredSet = new Set<number>(requiredGenreIds);
@@ -196,7 +198,9 @@ function pickHomeGenres(genresMap: Map<number, string>): string[] {
     replacementIndex -= 1;
   }
 
-  return baseGenreIds.map((id) => genresMap.get(id)).filter((name): name is string => Boolean(name));
+  return baseGenreIds
+    .map((id) => ({ id, name: genresMap.get(id) }))
+    .filter((entry): entry is { id: number; name: string } => Boolean(entry.name));
 }
 
 type TmdbVideoItem = TmdbMovieVideosResponse["results"][number] | TmdbTvVideosResponse["results"][number];
@@ -577,7 +581,7 @@ async function localizeTvCard(card: HomeMovie, locale: Locale): Promise<HomeMovi
 }
 
 export type TmdbHomeCatalog = {
-  genres: string[];
+  genres: MovieGenreOption[];
   trendingNow: HomeMovie[];
   popular: HomeMovie[];
   topRated: HomeMovie[];

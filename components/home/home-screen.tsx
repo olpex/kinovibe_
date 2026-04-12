@@ -85,12 +85,12 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
         <div className={styles.genreRow}>
           {data.genreChips.map((genre, index) => (
             <Link
-              key={genre}
-              href={`/search?q=${encodeURIComponent(genre)}`}
+              key={genre.id}
+              href={`/movie?genres=${genre.id}`}
               className={`${styles.genreChip} ${index === 0 ? styles.genreChipActive : ""}`}
-              aria-label={translate(locale, "home.browseGenreAria", { genre })}
+              aria-label={translate(locale, "home.browseGenreAria", { genre: genre.name })}
             >
-              {genre}
+              {genre.name}
             </Link>
           ))}
         </div>

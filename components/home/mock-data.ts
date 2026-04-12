@@ -1,14 +1,14 @@
-import { MovieCard } from "./types";
+import { GenreChip, MovieCard } from "./types";
 
-export const genreChips = [
-  "Action",
-  "Sci-Fi",
-  "Drama",
-  "Thriller",
-  "Animation",
-  "Comedy",
-  "Mystery",
-  "Fantasy"
+export const genreChips: GenreChip[] = [
+  { id: 28, name: "Action" },
+  { id: 878, name: "Sci-Fi" },
+  { id: 18, name: "Drama" },
+  { id: 53, name: "Thriller" },
+  { id: 16, name: "Animation" },
+  { id: 35, name: "Comedy" },
+  { id: 9648, name: "Mystery" },
+  { id: 14, name: "Fantasy" }
 ];
 
 export const trendingNow: MovieCard[] = [
