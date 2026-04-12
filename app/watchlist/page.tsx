@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
@@ -82,7 +83,7 @@ export default async function WatchlistPage() {
       <main className={styles.page}>
         <header className={styles.topBar}>
           <Link href="/" className={styles.logo}>
-            KinoVibe
+            <KinoVibeLogo />
           </Link>
           <div className={styles.actions}>
             <LanguageToggle className={styles.linkPill} />
@@ -140,7 +141,7 @@ export default async function WatchlistPage() {
     <main className={styles.page}>
       <header className={styles.topBar}>
         <Link href="/" className={styles.logo}>
-          KinoVibe
+          <KinoVibeLogo />
         </Link>
         <div className={styles.actions}>
           <Link href="/search" className={styles.linkPill}>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Metadata } from "next";
+import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { AuthForm } from "./auth-form";
 import { getRequestLocale } from "@/lib/i18n/server";
@@ -51,7 +52,7 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
     <main className={styles.page}>
       <header className={styles.topBar}>
         <Link href="/" className={styles.logo}>
-          KinoVibe
+          <KinoVibeLogo />
         </Link>
         <div className={styles.topActions}>
           <LanguageToggle className={styles.backLink} />

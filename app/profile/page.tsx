@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { ProfileForms } from "./profile-forms";
 import { signOutAction } from "@/lib/auth/actions";
@@ -28,7 +29,7 @@ export default async function ProfilePage() {
       <main className={styles.page}>
         <header className={styles.topBar}>
           <Link href="/" className={styles.logo}>
-            KinoVibe
+            <KinoVibeLogo />
           </Link>
           <div className={styles.actions}>
             <LanguageToggle className={styles.linkPill} />
@@ -58,7 +59,7 @@ export default async function ProfilePage() {
     <main className={styles.page}>
       <header className={styles.topBar}>
         <Link href="/" className={styles.logo}>
-          KinoVibe
+          <KinoVibeLogo />
         </Link>
         <div className={styles.actions}>
           <Link href="/watchlist" className={styles.linkPill}>

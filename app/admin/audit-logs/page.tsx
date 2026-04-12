@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { RetentionControls } from "./retention-controls";
 import { signOutAction } from "@/lib/auth/actions";
@@ -99,7 +100,7 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
       <main className={styles.page}>
         <header className={styles.topBar}>
           <Link href="/" className={styles.logo}>
-            KinoVibe
+            <KinoVibeLogo />
           </Link>
           <form action={signOutAction}>
             <button type="submit" className={styles.linkPillAlt}>
@@ -124,7 +125,7 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
       <main className={styles.page}>
         <header className={styles.topBar}>
           <Link href="/" className={styles.logo}>
-            KinoVibe
+            <KinoVibeLogo />
           </Link>
         </header>
         <section className={styles.notice}>
@@ -214,7 +215,7 @@ export default async function AuditLogsPage({ searchParams }: AuditLogsPageProps
     <main className={styles.page}>
       <header className={styles.topBar}>
         <Link href="/" className={styles.logo}>
-          KinoVibe
+          <KinoVibeLogo />
         </Link>
         <div className={styles.actions}>
           <Link href="/admin/analytics" className={styles.linkPill}>

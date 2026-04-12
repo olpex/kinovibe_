@@ -1,0 +1,16 @@
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  white-space: nowrap;
+}
+
+.text {
+  display: inline-block;
+}
+
+.flag {
+  width: 1.08rem;
+  height: 0.78rem;
+  flex: 0 0 auto;
+}

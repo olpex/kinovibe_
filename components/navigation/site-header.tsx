@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { signOutAction } from "@/lib/auth/actions";
@@ -26,7 +27,7 @@ export function SiteHeader({
     <header className={styles.header}>
       <div className={styles.topRow}>
         <Link href="/" className={styles.logo}>
-          KinoVibe
+          <KinoVibeLogo />
         </Link>
         <div className={styles.rightActions}>
           <Link href="/watchlist" className={styles.pill}>
