@@ -224,3 +224,26 @@ export type TmdbAwardsResponse = {
   page?: number;
   results?: TmdbAwardResult[];
 };
+
+export type TmdbWatchProvider = {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string | null;
+  display_priority?: number;
+};
+
+export type TmdbWatchProvidersListResponse = {
+  results: TmdbWatchProvider[];
+};
+
+export type TmdbKeyword = {
+  id: number;
+  name: string;
+};
+
+export type TmdbKeywordSearchResponse = {
+  page: number;
+  results: TmdbKeyword[];
+  total_pages: number;
+  total_results: number;
+};

@@ -15,6 +15,16 @@ export type MovieDiscoverSortBy = (typeof MOVIE_DISCOVER_SORT_OPTIONS)[number]["
 
 export const DEFAULT_MOVIE_DISCOVER_SORT: MovieDiscoverSortBy = "popularity.desc";
 
+export const MOVIE_WATCH_MONETIZATION_TYPES = [
+  "flatrate",
+  "free",
+  "ads",
+  "rent",
+  "buy"
+] as const;
+
+export type MovieWatchMonetizationType = (typeof MOVIE_WATCH_MONETIZATION_TYPES)[number];
+
 export type MovieDiscoverFilters = {
   sortBy: MovieDiscoverSortBy;
   includeAdult: boolean;
@@ -28,10 +38,17 @@ export type MovieDiscoverFilters = {
   runtimeFrom?: number;
   runtimeTo?: number;
   originalLanguage?: string;
+  watchProviderIds: number[];
+  watchRegion?: string;
+  watchMonetizationTypes: MovieWatchMonetizationType[];
+  certificationCountry?: string;
+  certification?: string;
+  keywords: string[];
 };
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
 const SORT_VALUES = new Set<string>(MOVIE_DISCOVER_SORT_OPTIONS.map((entry) => entry.value));
+const WATCH_TYPE_VALUES = new Set<string>(MOVIE_WATCH_MONETIZATION_TYPES);
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) {
@@ -98,6 +115,14 @@ function normalizeNumber(value: number): string {
   return value.toFixed(1).replace(/\.0$/, "");
 }
 
+function normalizeCountryCode(value: string | undefined): string | undefined {
+  const normalized = value?.trim().toUpperCase();
+  if (!normalized || !/^[A-Z]{2}$/.test(normalized)) {
+    return undefined;
+  }
+  return normalized;
+}
+
 export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDiscoverFilters {
   const sortRaw = firstParam(params.sort);
   const sortBy = SORT_VALUES.has(sortRaw ?? "")
@@ -137,6 +162,39 @@ export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDis
     )
   );
 
+  const watchProviderIds = Array.from(
+    new Set(
+      listParam(params.watchProviders)
+        .map((entry) => Number.parseInt(entry.trim(), 10))
+        .filter((entry) => Number.isFinite(entry) && entry > 0 && entry < 100000)
+    )
+  );
+
+  const watchMonetizationTypes = Array.from(
+    new Set(
+      listParam(params.watchTypes).filter((entry): entry is MovieWatchMonetizationType =>
+        WATCH_TYPE_VALUES.has(entry)
+      )
+    )
+  );
+
+  const watchRegion = normalizeCountryCode(firstParam(params.watchRegion));
+  const certificationCountry = normalizeCountryCode(firstParam(params.certCountry));
+
+  const certificationRaw = firstParam(params.certification)?.trim();
+  const certification =
+    certificationRaw && /^[A-Za-z0-9+\-_.]{1,12}$/.test(certificationRaw)
+      ? certificationRaw.toUpperCase()
+      : undefined;
+
+  const keywords = Array.from(
+    new Set(
+      listParam(params.keywords)
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0)
+    )
+  ).slice(0, 8);
+
   return {
     sortBy,
     includeAdult,
@@ -149,11 +207,19 @@ export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDis
     voteCountFrom,
     runtimeFrom,
     runtimeTo,
-    originalLanguage
+    originalLanguage,
+    watchProviderIds,
+    watchRegion,
+    watchMonetizationTypes,
+    certificationCountry,
+    certification,
+    keywords
   };
 }
 
 export function hasActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): boolean {
+  const hasWatchFilters =
+    filters.watchProviderIds.length > 0 || filters.watchMonetizationTypes.length > 0;
   return (
     filters.sortBy !== DEFAULT_MOVIE_DISCOVER_SORT ||
     filters.includeAdult ||
@@ -166,7 +232,10 @@ export function hasActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): bo
     filters.voteCountFrom !== undefined ||
     filters.runtimeFrom !== undefined ||
     filters.runtimeTo !== undefined ||
-    filters.originalLanguage !== undefined
+    filters.originalLanguage !== undefined ||
+    hasWatchFilters ||
+    filters.certification !== undefined ||
+    filters.keywords.length > 0
   );
 }
 
@@ -197,6 +266,15 @@ export function countActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): 
     count += 1;
   }
   if (filters.originalLanguage !== undefined) {
+    count += 1;
+  }
+  if (filters.watchProviderIds.length > 0 || filters.watchMonetizationTypes.length > 0) {
+    count += 1;
+  }
+  if (filters.certification !== undefined) {
+    count += 1;
+  }
+  if (filters.keywords.length > 0) {
     count += 1;
   }
   return count;
@@ -241,12 +319,36 @@ export function movieDiscoverFiltersToQuery(filters: MovieDiscoverFilters): Reco
   if (filters.originalLanguage) {
     query.lang = filters.originalLanguage;
   }
+  if (filters.watchProviderIds.length > 0) {
+    query.watchProviders = filters.watchProviderIds.join(",");
+  }
+  if (filters.watchMonetizationTypes.length > 0) {
+    query.watchTypes = filters.watchMonetizationTypes.join(",");
+  }
+  if (
+    filters.watchRegion &&
+    (filters.watchProviderIds.length > 0 ||
+      filters.watchMonetizationTypes.length > 0 ||
+      filters.certification !== undefined)
+  ) {
+    query.watchRegion = filters.watchRegion;
+  }
+  if (filters.certification) {
+    query.certification = filters.certification;
+  }
+  if (filters.certification && filters.certificationCountry) {
+    query.certCountry = filters.certificationCountry;
+  }
+  if (filters.keywords.length > 0) {
+    query.keywords = filters.keywords.join(", ");
+  }
 
   return query;
 }
 
 export function movieDiscoverFiltersToTmdbParams(
-  filters: MovieDiscoverFilters
+  filters: MovieDiscoverFilters,
+  defaultRegion?: string
 ): Record<string, string> {
   const params: Record<string, string> = {
     sort_by: filters.sortBy,
@@ -280,6 +382,25 @@ export function movieDiscoverFiltersToTmdbParams(
   }
   if (filters.originalLanguage) {
     params.with_original_language = filters.originalLanguage;
+  }
+  if (filters.watchProviderIds.length > 0) {
+    params.with_watch_providers = filters.watchProviderIds.join("|");
+  }
+  if (filters.watchMonetizationTypes.length > 0) {
+    params.with_watch_monetization_types = filters.watchMonetizationTypes.join("|");
+  }
+
+  const effectiveRegion = filters.watchRegion ?? defaultRegion;
+  if (
+    effectiveRegion &&
+    (filters.watchProviderIds.length > 0 || filters.watchMonetizationTypes.length > 0)
+  ) {
+    params.watch_region = effectiveRegion;
+  }
+
+  if (filters.certification) {
+    params.certification = filters.certification;
+    params.certification_country = filters.certificationCountry ?? effectiveRegion ?? "US";
   }
 
   return params;

@@ -15,12 +15,14 @@ import {
   TmdbPersonCombinedCreditsResponse,
   TmdbPersonDetailsResponse,
   TmdbPersonKnownForItem,
+  TmdbKeywordSearchResponse,
   TmdbTv,
   TmdbTvAlternativeTitlesResponse,
   TmdbTvCreditsResponse,
   TmdbTvDetailsResponse,
   TmdbTvResponse,
-  TmdbTvVideosResponse
+  TmdbTvVideosResponse,
+  TmdbWatchProvidersListResponse
 } from "./types";
 import {
   movieDiscoverFiltersToTmdbParams,
@@ -431,6 +433,11 @@ export type MovieGenreOption = {
   name: string;
 };
 
+export type MovieWatchProviderOption = {
+  id: number;
+  name: string;
+};
+
 export type MovieMenuCategory = "popular" | "now_playing" | "upcoming" | "top_rated" | "thriller";
 export type TvMenuCategory = "popular" | "airing_today" | "on_the_air" | "top_rated";
 
@@ -458,6 +465,10 @@ const TV_CATEGORY_PATH: Record<TvMenuCategory, string> = {
   on_the_air: "/tv/on_the_air",
   top_rated: "/tv/top_rated"
 };
+
+export function getTmdbRegionForLocale(locale: Locale): string {
+  return REGION_BY_LOCALE[locale] ?? DEFAULT_REGION;
+}
 
 export async function getTmdbMovieCatalogPage(
   category: MovieMenuCategory,
@@ -487,7 +498,57 @@ export async function getTmdbMovieCatalogPage(
 export const getTmdbMovieGenres = cache(
   async (locale: Locale = "en"): Promise<MovieGenreOption[]> => {
     const genresMap = await getGenresMap(locale);
-    return Array.from(genresMap.entries()).map(([id, name]) => ({ id, name }));
+    return Array.from(genresMap.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+);
+
+export async function getTmdbMovieWatchProviders(
+  locale: Locale = "en",
+  region?: string
+): Promise<MovieWatchProviderOption[]> {
+  const safeRegion = (region ?? getTmdbRegionForLocale(locale)).toUpperCase();
+  const response = await fetchTmdb<TmdbWatchProvidersListResponse>(
+    "/watch/providers/movie",
+    {
+      watch_region: safeRegion,
+      language: toTmdbLanguage(locale)
+    },
+    1800
+  );
+
+  return response.results
+    .map((provider) => ({
+      id: provider.provider_id,
+      name: provider.provider_name
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+const searchTmdbKeywordIds = cache(
+  async (keyword: string, locale: Locale): Promise<number[]> => {
+    const trimmed = keyword.trim();
+    if (!trimmed) {
+      return [];
+    }
+    const response = await fetchTmdb<TmdbKeywordSearchResponse>(
+      "/search/keyword",
+      {
+        query: trimmed,
+        page: "1",
+        language: toTmdbLanguage(locale)
+      },
+      900
+    );
+    const exactMatches = response.results
+      .filter((item) => item.name.trim().toLowerCase() === trimmed.toLowerCase())
+      .map((item) => item.id);
+    if (exactMatches.length > 0) {
+      return exactMatches;
+    }
+    const first = response.results[0];
+    return first ? [first.id] : [];
   }
 );
 
@@ -499,12 +560,38 @@ export async function discoverTmdbMovieCatalogPage(
   const safePage = Math.max(1, Math.min(page, 500));
   const language = toTmdbLanguage(locale);
   const genresMap = await getGenresMap(locale);
+  const keywordIds = filters.keywords.length
+    ? Array.from(
+        new Set(
+          (
+            await Promise.all(
+              filters.keywords.map((keyword) => searchTmdbKeywordIds(keyword, locale))
+            )
+          ).flat()
+        )
+      )
+    : [];
+
+  if (filters.keywords.length > 0 && keywordIds.length === 0) {
+    return {
+      page: safePage,
+      totalPages: 0,
+      totalResults: 0,
+      items: []
+    };
+  }
+
+  const tmdbParams = movieDiscoverFiltersToTmdbParams(filters, getTmdbRegionForLocale(locale));
+  if (keywordIds.length > 0) {
+    tmdbParams.with_keywords = keywordIds.join("|");
+  }
+
   const response = await fetchTmdb<TmdbMoviesResponse>(
     "/discover/movie",
     {
       language,
       page: String(safePage),
-      ...movieDiscoverFiltersToTmdbParams(filters)
+      ...tmdbParams
     },
     900
   );

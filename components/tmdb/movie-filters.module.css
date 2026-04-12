@@ -109,6 +109,33 @@
   accent-color: var(--color-accent, #00b4d8);
 }
 
+.providerGrid {
+  display: grid;
+  gap: 0.42rem;
+  grid-template-columns: 1fr;
+  max-height: 10.8rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.providerGrid label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.79rem;
+  color: var(--color-text);
+}
+
+.providerGrid input {
+  accent-color: var(--color-accent, #00b4d8);
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.8rem;
+}
+
 .actions {
   display: grid;
   gap: 0.45rem;
@@ -142,5 +169,9 @@
   .genreGrid {
     grid-template-columns: 1fr;
     max-height: 9rem;
+  }
+
+  .providerGrid {
+    max-height: 8rem;
   }
 }

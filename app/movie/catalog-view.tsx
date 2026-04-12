@@ -16,6 +16,7 @@ import {
   discoverTmdbMovieCatalogPage,
   getTmdbMovieCatalogPage,
   getTmdbMovieGenres,
+  getTmdbMovieWatchProviders,
   type MovieMenuCategory
 } from "@/lib/tmdb/client";
 import styles from "@/app/menu-page.module.css";
@@ -53,6 +54,7 @@ export async function MovieCatalogView({
 
   let result: Awaited<ReturnType<typeof getTmdbMovieCatalogPage>> | null = null;
   let genres = [] as Awaited<ReturnType<typeof getTmdbMovieGenres>>;
+  let watchProviders = [] as Awaited<ReturnType<typeof getTmdbMovieWatchProviders>>;
 
   try {
     if (category === "popular") {
@@ -62,6 +64,7 @@ export async function MovieCatalogView({
           : getTmdbMovieCatalogPage(category, locale, page),
         getTmdbMovieGenres(locale).catch(() => [])
       ]);
+      watchProviders = await getTmdbMovieWatchProviders(locale, filters.watchRegion).catch(() => []);
     } else {
       result = await getTmdbMovieCatalogPage(category, locale, page);
     }
@@ -86,7 +89,13 @@ export async function MovieCatalogView({
       <CatalogPageShell locale={locale} session={session} title={title} subtitle={subtitle}>
         {category === "popular" ? (
           <div className={styles.contentWithSidebar}>
-            <MovieFilters locale={locale} basePath={basePath} genres={genres} filters={filters} />
+            <MovieFilters
+              locale={locale}
+              basePath={basePath}
+              genres={genres}
+              watchProviders={watchProviders}
+              filters={filters}
+            />
             <div className={styles.mainContent}>{fallbackMessage}</div>
           </div>
         ) : (
@@ -103,7 +112,13 @@ export async function MovieCatalogView({
       </p>
       {category === "popular" ? (
         <div className={styles.contentWithSidebar}>
-          <MovieFilters locale={locale} basePath={basePath} genres={genres} filters={filters} />
+          <MovieFilters
+            locale={locale}
+            basePath={basePath}
+            genres={genres}
+            watchProviders={watchProviders}
+            filters={filters}
+          />
           <div className={styles.mainContent}>
             <CatalogMovieGrid locale={locale} items={result.items} hrefPrefix="/movie" />
             <CatalogPagination
