@@ -1,5 +1,6 @@
 import "server-only";
 import { getPrimaryAdminEmail } from "@/lib/auth/admin";
+import { normalizeLocale, translate, type Locale } from "@/lib/i18n/shared";
 
 type SendFeedbackNotificationArgs = {
   userEmail: string;
@@ -18,7 +19,7 @@ type SendFeedbackNotificationResult = {
 };
 
 function toCategoryLabel(category: "feedback" | "suggestion"): string {
-  return category === "suggestion" ? "Suggestion" : "Feedback";
+  return category === "suggestion" ? "feedback.type.suggestion" : "feedback.type.feedback";
 }
 
 function truncateForEmail(value: string, limit: number): string {
@@ -27,6 +28,15 @@ function truncateForEmail(value: string, limit: number): string {
     return trimmed;
   }
   return `${trimmed.slice(0, Math.max(0, limit - 1))}…`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 export async function sendFeedbackNotificationEmail(
@@ -43,38 +53,40 @@ export async function sendFeedbackNotificationEmail(
 
   const recipient = process.env.FEEDBACK_NOTIFICATION_EMAIL?.trim() || getPrimaryAdminEmail();
   const from = process.env.RESEND_FROM_EMAIL?.trim() || "KinoVibe <onboarding@resend.dev>";
+  const locale: Locale = normalizeLocale(args.locale);
 
-  const categoryLabel = toCategoryLabel(args.category);
-  const title = args.subject?.trim() || "No subject";
+  const categoryLabel = translate(locale, toCategoryLabel(args.category));
+  const title = args.subject?.trim() || translate(locale, "feedback.email.noSubject");
   const snippet = truncateForEmail(args.message, 420);
-  const subjectLine = `[KinoVibe] New ${categoryLabel.toLowerCase()}: ${truncateForEmail(title, 80)}`;
+  const subjectLine = `[KinoVibe] ${categoryLabel}: ${truncateForEmail(title, 80)}`;
+  const escapedSnippet = escapeHtml(snippet).replace(/\n/g, "<br />");
 
   const textLines = [
-    `New ${categoryLabel} submitted in KinoVibe`,
+    translate(locale, "feedback.email.newSubmission"),
     "",
-    `Type: ${categoryLabel}`,
-    `From: ${args.userEmail}`,
-    `Locale: ${args.locale}`,
-    `Page: ${args.pagePath ?? "n/a"}`,
-    `Created at: ${args.createdAtIso}`,
-    `Subject: ${title}`,
+    `${translate(locale, "feedback.email.fieldType")}: ${categoryLabel}`,
+    `${translate(locale, "feedback.email.fieldFrom")}: ${args.userEmail}`,
+    `${translate(locale, "feedback.email.fieldLocale")}: ${locale}`,
+    `${translate(locale, "feedback.email.fieldPage")}: ${args.pagePath ?? "n/a"}`,
+    `${translate(locale, "feedback.email.fieldCreatedAt")}: ${args.createdAtIso}`,
+    `${translate(locale, "feedback.email.fieldSubject")}: ${title}`,
     "",
-    "Message:",
+    `${translate(locale, "feedback.messageLabel")}:`,
     snippet
   ];
 
   const htmlBody = [
-    `<h2>New ${categoryLabel} in KinoVibe</h2>`,
+    `<h2>${escapeHtml(translate(locale, "feedback.email.newSubmission"))}</h2>`,
     "<ul>",
-    `<li><b>Type:</b> ${categoryLabel}</li>`,
-    `<li><b>From:</b> ${args.userEmail}</li>`,
-    `<li><b>Locale:</b> ${args.locale}</li>`,
-    `<li><b>Page:</b> ${args.pagePath ?? "n/a"}</li>`,
-    `<li><b>Created at:</b> ${args.createdAtIso}</li>`,
-    `<li><b>Subject:</b> ${title}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldType"))}:</b> ${escapeHtml(categoryLabel)}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldFrom"))}:</b> ${escapeHtml(args.userEmail)}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldLocale"))}:</b> ${escapeHtml(locale)}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldPage"))}:</b> ${escapeHtml(args.pagePath ?? "n/a")}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldCreatedAt"))}:</b> ${escapeHtml(args.createdAtIso)}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldSubject"))}:</b> ${escapeHtml(title)}</li>`,
     "</ul>",
-    "<p><b>Message:</b></p>",
-    `<p>${snippet.replace(/\n/g, "<br />")}</p>`
+    `<p><b>${escapeHtml(translate(locale, "feedback.messageLabel"))}:</b></p>`,
+    `<p>${escapedSnippet}</p>`
   ].join("");
 
   const response = await fetch("https://api.resend.com/emails", {

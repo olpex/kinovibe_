@@ -97,6 +97,22 @@ create table if not exists public.media_votes (
   constraint media_votes_unique_user_media unique (media_type, media_tmdb_id, user_id)
 );
 
+create table if not exists public.feedback_entries (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  user_email text not null,
+  locale text not null default 'en',
+  category text not null default 'feedback',
+  subject text,
+  message text not null,
+  page_path text,
+  created_at timestamptz not null default now(),
+  constraint feedback_entries_category_check
+    check (category in ('feedback', 'suggestion')),
+  constraint feedback_entries_message_check
+    check (char_length(trim(message)) between 10 and 5000)
+);
+
 create index if not exists movies_tmdb_id_idx on public.movies (tmdb_id);
 create index if not exists watchlist_user_idx on public.watchlist_items (user_id);
 create index if not exists watchlist_movie_idx on public.watchlist_items (movie_id);
@@ -114,6 +130,9 @@ create index if not exists media_discussions_user_idx on public.media_discussion
 create index if not exists media_votes_media_idx
   on public.media_votes (media_type, media_tmdb_id, vote_value);
 create index if not exists media_votes_user_idx on public.media_votes (user_id);
+create index if not exists feedback_entries_user_idx on public.feedback_entries (user_id);
+create index if not exists feedback_entries_created_idx on public.feedback_entries (created_at desc);
+create index if not exists feedback_entries_category_idx on public.feedback_entries (category);
 
 alter table public.profiles enable row level security;
 alter table public.movies enable row level security;
@@ -122,6 +141,7 @@ alter table public.api_audit_logs enable row level security;
 alter table public.site_events enable row level security;
 alter table public.media_discussions enable row level security;
 alter table public.media_votes enable row level security;
+alter table public.feedback_entries enable row level security;
 
 drop policy if exists "Profiles are readable by owner" on public.profiles;
 create policy "Profiles are readable by owner"
@@ -259,5 +279,24 @@ create policy "Media votes are editable by owner"
 drop policy if exists "Media votes are deletable by owner" on public.media_votes;
 create policy "Media votes are deletable by owner"
   on public.media_votes
+  for delete
+  using (auth.uid() = user_id);
+
+drop policy if exists "Feedback entries are readable by owner" on public.feedback_entries;
+create policy "Feedback entries are readable by owner"
+  on public.feedback_entries
+  for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Feedback entries are insertable by owner" on public.feedback_entries;
+create policy "Feedback entries are insertable by owner"
+  on public.feedback_entries
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Feedback entries are deletable by owner" on public.feedback_entries;
+create policy "Feedback entries are deletable by owner"
+  on public.feedback_entries
   for delete
   using (auth.uid() = user_id);
