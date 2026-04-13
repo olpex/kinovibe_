@@ -179,6 +179,25 @@ export type TmdbTvCreditsResponse = {
   }>;
 };
 
+export type TmdbTvAggregateCreditsResponse = {
+  cast: Array<{
+    id: number;
+    name: string;
+    profile_path: string | null;
+    roles?: Array<{
+      character?: string | null;
+    }>;
+  }>;
+  crew: Array<{
+    id: number;
+    name: string;
+    department: string;
+    jobs?: Array<{
+      job?: string | null;
+    }>;
+  }>;
+};
+
 export type TmdbTvVideosResponse = {
   results: Array<{
     id: string;

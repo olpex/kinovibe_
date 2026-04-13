@@ -1,0 +1,146 @@
+{
+  "generatedAt": "2026-04-13T18:45:53.479Z",
+  "locales": [
+    {
+      "locale": "uk",
+      "sampled": {
+        "movies": 20,
+        "tv": 20,
+        "people": 20
+      },
+      "errors": 0,
+      "warnings": 7
+    },
+    {
+      "locale": "en",
+      "sampled": {
+        "movies": 20,
+        "tv": 20,
+        "people": 20
+      },
+      "errors": 0,
+      "warnings": 7
+    }
+  ],
+  "totals": {
+    "sampledMovies": 40,
+    "sampledTv": 40,
+    "sampledPeople": 40,
+    "errors": 0,
+    "warnings": 14
+  },
+  "issues": [
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 8962,
+      "title": "3000 ліг у пошуках матері",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 95557,
+      "title": "НЕПЕРЕМОЖНИЙ",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 110075,
+      "title": "一夫三妻",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 19530,
+      "title": "霹靂布袋戲",
+      "issue": "Cast list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 95479,
+      "title": "Магічна битва",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 95479,
+      "title": "Магічна битва",
+      "issue": "Cast list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "person",
+      "id": 1433019,
+      "title": "Емма Ель Патерсон",
+      "issue": "Biography is missing",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 8962,
+      "title": "3000 Leagues in Search of Mother",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 95557,
+      "title": "Invincible",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 110075,
+      "title": "Trespassing",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 19530,
+      "title": "Pili",
+      "issue": "Cast list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 95479,
+      "title": "JUJUTSU KAISEN",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 95479,
+      "title": "JUJUTSU KAISEN",
+      "issue": "Cast list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "person",
+      "id": 1433019,
+      "title": "Emma Elle Paterson",
+      "issue": "Biography is missing",
+      "severity": "warning"
+    }
+  ]
+}

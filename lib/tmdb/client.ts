@@ -20,6 +20,7 @@ import {
   TmdbPersonKnownForItem,
   TmdbKeywordSearchResponse,
   TmdbTv,
+  TmdbTvAggregateCreditsResponse,
   TmdbTvAlternativeTitlesResponse,
   TmdbTvCreditsResponse,
   TmdbTvDetailsResponse,
@@ -714,6 +715,156 @@ async function fetchTvTranslations(tvId: number): Promise<TmdbTranslationEntry[]
   } catch {
     return [];
   }
+}
+
+function mergeCastEntries(
+  primary: TmdbTvCreditsResponse["cast"],
+  fallback: TmdbTvCreditsResponse["cast"]
+): TmdbTvCreditsResponse["cast"] {
+  const merged = [...primary];
+  const seen = new Set(primary.map((entry) => entry.id));
+
+  for (const candidate of fallback) {
+    if (seen.has(candidate.id)) {
+      continue;
+    }
+    merged.push(candidate);
+    seen.add(candidate.id);
+  }
+
+  return merged;
+}
+
+function mergeCrewEntries(
+  primary: TmdbTvCreditsResponse["crew"],
+  fallback: TmdbTvCreditsResponse["crew"]
+): TmdbTvCreditsResponse["crew"] {
+  const merged = [...primary];
+  const seen = new Set(primary.map((entry) => `${entry.id}:${entry.job.trim().toLowerCase()}`));
+
+  for (const candidate of fallback) {
+    const key = `${candidate.id}:${candidate.job.trim().toLowerCase()}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    merged.push(candidate);
+    seen.add(key);
+  }
+
+  return merged;
+}
+
+function mapAggregateCreditsToTvCredits(
+  aggregate: TmdbTvAggregateCreditsResponse
+): TmdbTvCreditsResponse {
+  const cast = aggregate.cast.map((entry) => ({
+    id: entry.id,
+    name: entry.name,
+    character:
+      entry.roles?.map((role) => normalizeNonEmptyText(role.character)).find(Boolean) ?? "",
+    profile_path: entry.profile_path
+  }));
+
+  const crew: TmdbTvCreditsResponse["crew"] = [];
+  for (const member of aggregate.crew) {
+    const jobs =
+      member.jobs
+        ?.map((job) => normalizeNonEmptyText(job.job))
+        .filter((job): job is string => Boolean(job)) ?? [];
+    if (jobs.length === 0) {
+      crew.push({
+        id: member.id,
+        name: member.name,
+        job: "",
+        department: member.department
+      });
+      continue;
+    }
+
+    for (const job of jobs) {
+      crew.push({
+        id: member.id,
+        name: member.name,
+        job,
+        department: member.department
+      });
+    }
+  }
+
+  return { cast, crew };
+}
+
+async function fetchTvCreditsWithFallback(
+  tvId: number,
+  language: string
+): Promise<TmdbTvCreditsResponse> {
+  let localizedCredits: TmdbTvCreditsResponse = { cast: [], crew: [] };
+  try {
+    localizedCredits = await fetchTmdb<TmdbTvCreditsResponse>(
+      `/tv/${tvId}/credits`,
+      { language },
+      3600
+    );
+  } catch {
+    localizedCredits = { cast: [], crew: [] };
+  }
+
+  if (localizedCredits.cast.length > 0 && localizedCredits.crew.length > 0) {
+    return localizedCredits;
+  }
+
+  let aggregateCredits: TmdbTvCreditsResponse = { cast: [], crew: [] };
+  try {
+    const aggregate = await fetchTmdb<TmdbTvAggregateCreditsResponse>(
+      `/tv/${tvId}/aggregate_credits`,
+      { language },
+      3600
+    );
+    aggregateCredits = mapAggregateCreditsToTvCredits(aggregate);
+  } catch {
+    aggregateCredits = { cast: [], crew: [] };
+  }
+
+  let englishCredits: TmdbTvCreditsResponse = { cast: [], crew: [] };
+  if (language !== "en-US") {
+    try {
+      englishCredits = await fetchTmdb<TmdbTvCreditsResponse>(
+        `/tv/${tvId}/credits`,
+        { language: "en-US" },
+        3600
+      );
+    } catch {
+      englishCredits = { cast: [], crew: [] };
+    }
+
+    if (englishCredits.cast.length === 0 || englishCredits.crew.length === 0) {
+      try {
+        const englishAggregate = await fetchTmdb<TmdbTvAggregateCreditsResponse>(
+          `/tv/${tvId}/aggregate_credits`,
+          { language: "en-US" },
+          3600
+        );
+        const mapped = mapAggregateCreditsToTvCredits(englishAggregate);
+        englishCredits = {
+          cast: mergeCastEntries(englishCredits.cast, mapped.cast),
+          crew: mergeCrewEntries(englishCredits.crew, mapped.crew)
+        };
+      } catch {
+        // keep best-effort english credits
+      }
+    }
+  }
+
+  const cast = mergeCastEntries(
+    mergeCastEntries(localizedCredits.cast, aggregateCredits.cast),
+    englishCredits.cast
+  );
+  const crew = mergeCrewEntries(
+    mergeCrewEntries(localizedCredits.crew, aggregateCredits.crew),
+    englishCredits.crew
+  );
+
+  return { cast, crew };
 }
 
 const getGenresMap = cache(async (locale: Locale): Promise<Map<number, string>> => {
@@ -1792,6 +1943,15 @@ export const getTmdbMovieDetails = cache(
         .filter((member) => member.job?.trim().toLowerCase() === "director")
         .map((member) => member.name)
     );
+    const fallbackDirectingNames =
+      directors.length === 0
+        ? toUniqueNames(
+            credits.crew
+              .filter((member) => member.department?.trim().toLowerCase() === "directing")
+              .map((member) => member.name)
+          )
+        : [];
+    const resolvedDirectors = directors.length > 0 ? directors : fallbackDirectingNames;
     const countries = localizeCountryNames(details.production_countries ?? [], locale);
     const sanitizedTitle = sanitizeNarrativeText(translatedTitle || details.title, 180);
     const sanitizedOverview = sanitizeNarrativeText(
@@ -1816,7 +1976,7 @@ export const getTmdbMovieDetails = cache(
           title: sanitizedTitle || details.title,
           year: parseYear(details.release_date),
           genres: details.genres.map((genre) => genre.name),
-          directors,
+          directors: resolvedDirectors,
           countries
         }),
       tagline: sanitizedTagline,
@@ -1826,7 +1986,7 @@ export const getTmdbMovieDetails = cache(
       status: sanitizedStatus,
       originalLanguage: details.original_language.toUpperCase(),
       countries,
-      directors,
+      directors: resolvedDirectors,
       genres: details.genres.map((genre) => ({
         id: genre.id,
         name: genre.name
@@ -1892,7 +2052,7 @@ export const getTmdbTvDetails = cache(
         locale === "en"
           ? Promise.resolve(null)
           : fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language: "en-US" }, 3600),
-        fetchTmdb<TmdbTvCreditsResponse>(`/tv/${tvId}/credits`, { language }, 3600),
+        fetchTvCreditsWithFallback(tvId, language),
         fetchTvVideosWithFallback(tvId, language),
         fetchTmdb<TmdbTvResponse>(`/tv/${tvId}/similar`, { language, page: "1" }, 3600),
         fetchTmdb<TmdbMovieWatchProvidersResponse>(`/tv/${tvId}/watch/providers`, {}, 3600),
@@ -1986,6 +2146,15 @@ export const getTmdbTvDetails = cache(
         .map((member) => member.name),
       ...(details.created_by ?? []).map((creator) => creator.name)
     ]);
+    const fallbackDirectingNames =
+      directors.length === 0
+        ? toUniqueNames(
+            credits.crew
+              .filter((member) => member.department?.trim().toLowerCase() === "directing")
+              .map((member) => member.name)
+          )
+        : [];
+    const resolvedDirectors = directors.length > 0 ? directors : fallbackDirectingNames;
     const countries = localizeCountryNames(details.production_countries ?? [], locale);
     const sanitizedTitle = sanitizeNarrativeText(translatedTitle || details.name, 180);
     const sanitizedOverview = sanitizeNarrativeText(
@@ -2014,7 +2183,7 @@ export const getTmdbTvDetails = cache(
           title: sanitizedTitle || details.name,
           year: parseYear(details.first_air_date),
           genres: details.genres.map((genre) => genre.name),
-          directors,
+          directors: resolvedDirectors,
           countries,
           seasons: details.number_of_seasons,
           episodes: details.number_of_episodes
@@ -2026,7 +2195,7 @@ export const getTmdbTvDetails = cache(
       status: sanitizedStatus,
       originalLanguage: details.original_language.toUpperCase(),
       countries,
-      directors,
+      directors: resolvedDirectors,
       seasons: details.number_of_seasons,
       episodes: details.number_of_episodes,
       genres: details.genres.map((genre) => genre.name),
@@ -2113,7 +2282,16 @@ export const getTmdbPersonDetails = cache(
 
     const normalizedDetailsBiography = normalizeNonEmptyText(details.biography);
     const biographySource = normalizedDetailsBiography ?? snapshot.biography ?? "";
-    const biography = sanitizeNarrativeText(biographySource, 920);
+    const generatedBiography = shortenInformativeText(
+      `${details.name}. ${translate(locale, "person.department")}: ${normalizeNonEmptyText(details.known_for_department) ?? snapshot.department ?? translate(locale, "common.notAvailable")}. ${translate(locale, "menu.knownFor")}: ${credits.cast
+        .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
+        .map((credit) => credit.title ?? credit.name ?? translate(locale, "person.untitled"))
+        .filter((title) => title.trim().length > 0)
+        .slice(0, 3)
+        .join(", ") || translate(locale, "person.noKnownTitles")}.`,
+      380
+    );
+    const biography = sanitizeNarrativeText(biographySource, 920) || generatedBiography;
 
     return {
       id: details.id,

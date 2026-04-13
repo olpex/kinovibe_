@@ -1,0 +1,146 @@
+{
+  "generatedAt": "2026-04-13T18:54:16.397Z",
+  "locales": [
+    {
+      "locale": "uk",
+      "sampled": {
+        "movies": 69,
+        "tv": 68,
+        "people": 60
+      },
+      "errors": 0,
+      "warnings": 7
+    },
+    {
+      "locale": "en",
+      "sampled": {
+        "movies": 69,
+        "tv": 68,
+        "people": 60
+      },
+      "errors": 0,
+      "warnings": 7
+    }
+  ],
+  "totals": {
+    "sampledMovies": 138,
+    "sampledTv": 136,
+    "sampledPeople": 120,
+    "errors": 0,
+    "warnings": 14
+  },
+  "issues": [
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 95557,
+      "title": "НЕПЕРЕМОЖНИЙ",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 110075,
+      "title": "一夫三妻",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 19530,
+      "title": "霹靂布袋戲",
+      "issue": "Cast list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 63770,
+      "title": "Пізнє шоу зі Стівеном Кольбером",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "tv",
+      "id": 212907,
+      "title": "La promesa",
+      "issue": "Production countries are missing",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "person",
+      "id": 3164807,
+      "title": "Юн Юл",
+      "issue": "Biography is too short (< 60 chars)",
+      "severity": "warning"
+    },
+    {
+      "locale": "uk",
+      "mediaType": "person",
+      "id": 2152816,
+      "title": "Адіт'я Дгар",
+      "issue": "Known-for credits are missing",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 95557,
+      "title": "Invincible",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 19530,
+      "title": "Pili",
+      "issue": "Cast list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 110075,
+      "title": "Trespassing",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 63770,
+      "title": "The Late Show with Stephen Colbert",
+      "issue": "Directors list is empty",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "tv",
+      "id": 212907,
+      "title": "La promesa",
+      "issue": "Production countries are missing",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "person",
+      "id": 3164807,
+      "title": "Yoon Yool",
+      "issue": "Biography is too short (< 60 chars)",
+      "severity": "warning"
+    },
+    {
+      "locale": "en",
+      "mediaType": "person",
+      "id": 2152816,
+      "title": "Aditya Dhar",
+      "issue": "Known-for credits are missing",
+      "severity": "warning"
+    }
+  ]
+}
