@@ -1015,7 +1015,10 @@ export type MovieDetailsView = {
   runtime: string;
   status: string;
   originalLanguage: string;
-  genres: string[];
+  genres: Array<{
+    id: number;
+    name: string;
+  }>;
   posterUrl?: string;
   backdropUrl?: string;
   trailerUrl?: string;
@@ -1122,7 +1125,10 @@ export const getTmdbMovieDetails = cache(
       runtime: formatRuntime(details.runtime, details.id),
       status: translatedStatus,
       originalLanguage: details.original_language.toUpperCase(),
-      genres: details.genres.map((genre) => genre.name),
+      genres: details.genres.map((genre) => ({
+        id: genre.id,
+        name: genre.name
+      })),
       posterUrl: posterUrl(details.poster_path),
       backdropUrl: backdropUrl(details.backdrop_path),
       trailerUrl,

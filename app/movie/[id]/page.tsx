@@ -141,7 +141,9 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           </p>
           <div className={styles.genreRow}>
             {movie.genres.map((genre) => (
-              <span key={genre}>{genre}</span>
+              <Link key={genre.id} href={`/movie?genres=${genre.id}`} className={styles.genreChip}>
+                {genre.name}
+              </Link>
             ))}
           </div>
           <p className={styles.overview}>{movie.overview}</p>
@@ -161,7 +163,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
               tmdbId: movie.id,
               title: movie.title,
               year: movie.year,
-              genres: movie.genres,
+              genres: movie.genres.map((genre) => genre.name),
               runtime: movie.runtime,
               posterUrl: movie.posterUrl,
               overview: movie.overview,
