@@ -6,6 +6,7 @@ import { signOutAction } from "@/lib/auth/actions";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import { SessionUser } from "@/lib/supabase/session";
 import { TmdbMenu } from "./tmdb-menu";
+import { HeaderSearchForm } from "./header-search-form";
 import styles from "./site-header.module.css";
 
 type SiteHeaderProps = {
@@ -70,16 +71,13 @@ export function SiteHeader({
       </div>
       <div className={styles.bottomRow}>
         <TmdbMenu locale={locale} />
-        <form action={searchAction} method="get" className={styles.searchForm}>
-          <input
-            name="q"
-            type="search"
-            defaultValue={searchQuery}
-            placeholder={searchPlaceholder ?? translate(locale, "home.searchPlaceholder")}
-            aria-label={translate(locale, "search.aria")}
-          />
-          <button type="submit">{translate(locale, "nav.search")}</button>
-        </form>
+        <HeaderSearchForm
+          locale={locale}
+          searchAction={searchAction}
+          searchQuery={searchQuery}
+          searchPlaceholder={searchPlaceholder ?? translate(locale, "home.searchPlaceholder")}
+          formClassName={styles.searchForm}
+        />
       </div>
     </header>
   );

@@ -7,6 +7,7 @@ import { getDiscussionThreadsByCategory } from "@/lib/discussions/server";
 import styles from "./discuss-page.module.css";
 
 type DiscussCategory = "movies" | "people" | "tv";
+type DiscussSort = "active" | "replies" | "title";
 
 type DiscussThread = {
   id: string;
@@ -18,13 +19,15 @@ type DiscussThread = {
   secondaryMeta: string;
   replies: number;
   activeHours: number;
+  latestCreatedAt: string;
 };
 
 type PageProps = {
-  searchParams?: Promise<{ category?: string }>;
+  searchParams?: Promise<{ category?: string; sort?: string }>;
 };
 
 const DISCUSS_CATEGORIES: DiscussCategory[] = ["movies", "people", "tv"];
+const DISCUSS_SORTS: DiscussSort[] = ["active", "replies", "title"];
 
 function parseCategory(value: string | undefined): DiscussCategory {
   if (value === "people" || value === "tv") {
@@ -33,8 +36,24 @@ function parseCategory(value: string | undefined): DiscussCategory {
   return "movies";
 }
 
-function buildDiscussHref(category: DiscussCategory): string {
-  return category === "movies" ? "/discuss" : `/discuss?category=${category}`;
+function parseSort(value: string | undefined): DiscussSort {
+  if (value === "replies" || value === "title") {
+    return value;
+  }
+  return "active";
+}
+
+function buildDiscussHref(category: DiscussCategory, sort: DiscussSort): string {
+  const searchParams = new URLSearchParams();
+  if (category !== "movies") {
+    searchParams.set("category", category);
+  }
+  if (sort !== "active") {
+    searchParams.set("sort", sort);
+  }
+
+  const queryString = searchParams.toString();
+  return queryString ? `/discuss?${queryString}` : "/discuss";
 }
 
 function formatCompactCount(locale: Locale, value: number): string {
@@ -55,6 +74,7 @@ function formatActiveHours(isoDate: string): number {
 export default async function DiscussPage({ searchParams }: PageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const category = parseCategory(resolvedSearchParams.category);
+  const sort = parseSort(resolvedSearchParams.sort);
   const [locale, session] = await Promise.all([getRequestLocale(), getSessionUser()]);
   const [moviesResult, peopleResult, tvResult] = await Promise.allSettled([
     getDiscussionThreadsByCategory("movie", locale),
@@ -78,7 +98,8 @@ export default async function DiscussPage({ searchParams }: PageProps) {
         primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
         secondaryMeta: translate(locale, "discussion.tmdbReference", { id: thread.mediaTmdbId }),
         replies: thread.messagesCount,
-        activeHours: formatActiveHours(thread.latestCreatedAt)
+        activeHours: formatActiveHours(thread.latestCreatedAt),
+        latestCreatedAt: thread.latestCreatedAt
       }))
     },
     people: {
@@ -93,7 +114,8 @@ export default async function DiscussPage({ searchParams }: PageProps) {
         primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
         secondaryMeta: translate(locale, "discussion.tmdbReference", { id: thread.mediaTmdbId }),
         replies: thread.messagesCount,
-        activeHours: formatActiveHours(thread.latestCreatedAt)
+        activeHours: formatActiveHours(thread.latestCreatedAt),
+        latestCreatedAt: thread.latestCreatedAt
       }))
     },
     tv: {
@@ -107,12 +129,22 @@ export default async function DiscussPage({ searchParams }: PageProps) {
         primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
         secondaryMeta: translate(locale, "discussion.tmdbReference", { id: thread.mediaTmdbId }),
         replies: thread.messagesCount,
-        activeHours: formatActiveHours(thread.latestCreatedAt)
+        activeHours: formatActiveHours(thread.latestCreatedAt),
+        latestCreatedAt: thread.latestCreatedAt
       }))
     }
   };
 
   const selectedHub = hubs[category];
+  const sortedThreads = [...selectedHub.threads].sort((left, right) => {
+    if (sort === "replies") {
+      return right.replies - left.replies;
+    }
+    if (sort === "title") {
+      return left.title.localeCompare(right.title, toIntlLocale(locale), { sensitivity: "base" });
+    }
+    return new Date(right.latestCreatedAt).getTime() - new Date(left.latestCreatedAt).getTime();
+  });
 
   return (
     <CatalogPageShell
@@ -136,7 +168,7 @@ export default async function DiscussPage({ searchParams }: PageProps) {
           return (
             <Link
               key={entry}
-              href={buildDiscussHref(entry)}
+              href={buildDiscussHref(entry, sort)}
               className={`${styles.tab} ${isActive ? styles.tabActive : ""}`}
             >
               <span>{translate(locale, labelKey)}</span>
@@ -146,7 +178,31 @@ export default async function DiscussPage({ searchParams }: PageProps) {
         })}
       </nav>
 
-      {selectedHub.threads.length === 0 ? (
+      <div className={styles.sortRow}>
+        <span className={styles.sortLabel}>{translate(locale, "menu.discussSortLabel")}</span>
+        <div className={styles.sortTabs}>
+          {DISCUSS_SORTS.map((entry) => {
+            const sortLabelKey =
+              entry === "active"
+                ? "menu.discussSort.active"
+                : entry === "replies"
+                  ? "menu.discussSort.replies"
+                  : "menu.discussSort.title";
+
+            return (
+              <Link
+                key={entry}
+                href={buildDiscussHref(category, entry)}
+                className={`${styles.sortTab} ${sort === entry ? styles.sortTabActive : ""}`}
+              >
+                {translate(locale, sortLabelKey)}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {sortedThreads.length === 0 ? (
         <section className={styles.emptyState}>
           <h2>{translate(locale, "menu.discussEmptyCategory")}</h2>
           <p>{translate(locale, "discussion.onlyStartedAppear")}</p>
@@ -158,7 +214,7 @@ export default async function DiscussPage({ searchParams }: PageProps) {
         </section>
       ) : (
         <ul className={styles.threadList}>
-          {selectedHub.threads.map((thread) => (
+          {sortedThreads.map((thread) => (
             <li key={thread.id}>
               <article className={styles.threadCard}>
                 <header className={styles.threadHead}>

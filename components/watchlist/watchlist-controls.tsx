@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import { watchlistAction } from "@/lib/watchlist/actions";
 import { WATCHLIST_DEFAULT_STATE, WatchlistUiState } from "@/lib/watchlist/types";
@@ -46,6 +46,7 @@ export function WatchlistControls({ initialState, movie, locale }: WatchlistCont
     watchlistAction,
     initialState ?? WATCHLIST_DEFAULT_STATE
   );
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   if (!state.authenticated) {
     return (
@@ -58,7 +59,52 @@ export function WatchlistControls({ initialState, movie, locale }: WatchlistCont
           <Link href={`/auth?next=/movie/${movie.tmdbId}`} className={styles.linkButton}>
             {translate(locale, "nav.signIn")}
           </Link>
+          <button
+            type="button"
+            className={styles.ghostAction}
+            onClick={() => setShowOnboarding(true)}
+          >
+            {translate(locale, "watchlist.whySignIn")}
+          </button>
         </div>
+
+        {showOnboarding ? (
+          <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+            <div className={styles.modalCard}>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setShowOnboarding(false)}
+                aria-label={translate(locale, "watchlist.onboardingCloseAria")}
+              >
+                ×
+              </button>
+              <h3>{translate(locale, "watchlist.onboardingTitle")}</h3>
+              <p>{translate(locale, "watchlist.onboardingBody")}</p>
+              <ul className={styles.modalList}>
+                <li>{translate(locale, "watchlist.onboardingBenefitSync")}</li>
+                <li>{translate(locale, "watchlist.onboardingBenefitDiscussions")}</li>
+                <li>{translate(locale, "watchlist.onboardingBenefitVotes")}</li>
+              </ul>
+              <div className={styles.modalActions}>
+                <Link
+                  href={`/auth?next=/movie/${movie.tmdbId}`}
+                  className={styles.primaryAction}
+                  onClick={() => setShowOnboarding(false)}
+                >
+                  {translate(locale, "watchlist.onboardingContinue")}
+                </Link>
+                <button
+                  type="button"
+                  className={styles.ghostAction}
+                  onClick={() => setShowOnboarding(false)}
+                >
+                  {translate(locale, "watchlist.onboardingLater")}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </section>
     );
   }
