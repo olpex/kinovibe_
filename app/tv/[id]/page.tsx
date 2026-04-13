@@ -56,6 +56,15 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
     );
   }
 
+  const directorsLabel =
+    tv.directors.length > 0
+      ? tv.directors.join(", ")
+      : translate(locale, "common.notAvailable");
+  const countriesLabel =
+    tv.countries.length > 0
+      ? tv.countries.join(", ")
+      : translate(locale, "common.notAvailable");
+
   return (
     <main className={styles.page}>
       <div style={{ maxWidth: "1240px", margin: "0 auto", display: "grid", gap: "1rem" }}>
@@ -84,6 +93,10 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
             {tv.tagline ? <p className={styles.tagline}>{tv.tagline}</p> : null}
             <p className={styles.meta}>
               {tv.year} · {tv.runtime} · {tv.rating.toFixed(1)} · {tv.status} · {tv.originalLanguage}
+            </p>
+            <p className={styles.metaSupplement}>
+              {translate(locale, "movie.directors")}: {directorsLabel} ·{" "}
+              {translate(locale, "movie.productionCountries")}: {countriesLabel}
             </p>
             <p className={styles.meta}>
               {translate(locale, "menu.seasons")}: {tv.seasons} · {translate(locale, "menu.episodes")}: {tv.episodes}
@@ -155,7 +168,7 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
           <h2>{translate(locale, "movie.cast")}</h2>
           <div className={styles.castGrid}>
             {tv.cast.map((person) => (
-              <article key={person.id} className={styles.castCard}>
+              <Link key={person.id} href={`/person/${person.id}`} className={styles.castCard}>
                 <div
                   className={styles.castAvatar}
                   style={{
@@ -168,7 +181,7 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
                   <h3>{person.name}</h3>
                   <p>{person.character || translate(locale, "movie.castUnknownCharacter")}</p>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         </section>

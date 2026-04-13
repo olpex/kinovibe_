@@ -104,6 +104,15 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
     );
   }
 
+  const directorsLabel =
+    movie.directors.length > 0
+      ? movie.directors.join(", ")
+      : translate(locale, "common.notAvailable");
+  const countriesLabel =
+    movie.countries.length > 0
+      ? movie.countries.join(", ")
+      : translate(locale, "common.notAvailable");
+
   return (
     <main className={styles.page}>
       <SiteHeader
@@ -138,6 +147,10 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           <p className={styles.meta}>
             {movie.year} · {movie.runtime} · {movie.rating.toFixed(1)} · {movie.status} ·{" "}
             {movie.originalLanguage}
+          </p>
+          <p className={styles.metaSupplement}>
+            {translate(locale, "movie.directors")}: {directorsLabel} ·{" "}
+            {translate(locale, "movie.productionCountries")}: {countriesLabel}
           </p>
           <div className={styles.genreRow}>
             {movie.genres.map((genre) => (
@@ -237,7 +250,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
         <h2>{translate(locale, "movie.cast")}</h2>
         <div className={styles.castGrid}>
           {movie.cast.map((person) => (
-            <article key={person.id} className={styles.castCard}>
+            <Link key={person.id} href={`/person/${person.id}`} className={styles.castCard}>
               <div
                 className={styles.castAvatar}
                 style={{
@@ -250,7 +263,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
                 <h3>{person.name}</h3>
                 <p>{person.character || translate(locale, "movie.castUnknownCharacter")}</p>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       </section>

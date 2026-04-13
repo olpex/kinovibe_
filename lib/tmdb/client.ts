@@ -1303,6 +1303,8 @@ export type MovieDetailsView = {
   runtime: string;
   status: string;
   originalLanguage: string;
+  countries: string[];
+  directors: string[];
   genres: Array<{
     id: number;
     name: string;
@@ -1351,6 +1353,17 @@ function toUniqueProviderNames(
   const names = new Set<string>();
   providers.forEach((provider) => names.add(provider.provider_name));
   return Array.from(names);
+}
+
+function toUniqueNames(names: Array<string | null | undefined>): string[] {
+  const unique = new Set<string>();
+  names.forEach((name) => {
+    const normalized = name?.trim();
+    if (normalized) {
+      unique.add(normalized);
+    }
+  });
+  return Array.from(unique);
 }
 
 export const getTmdbMovieDetails = cache(
@@ -1467,6 +1480,12 @@ export const getTmdbMovieDetails = cache(
       runtime: formatRuntime(details.runtime, details.id, locale),
       status: translatedStatus,
       originalLanguage: details.original_language.toUpperCase(),
+      countries: toUniqueNames((details.production_countries ?? []).map((country) => country.name)),
+      directors: toUniqueNames(
+        credits.crew
+          .filter((member) => member.job?.trim().toLowerCase() === "director")
+          .map((member) => member.name)
+      ),
       genres: details.genres.map((genre) => ({
         id: genre.id,
         name: genre.name
@@ -1503,6 +1522,8 @@ export type TvDetailsView = {
   runtime: string;
   status: string;
   originalLanguage: string;
+  countries: string[];
+  directors: string[];
   seasons: number;
   episodes: number;
   genres: string[];
@@ -1643,6 +1664,13 @@ export const getTmdbTvDetails = cache(
       runtime,
       status: translatedStatus,
       originalLanguage: details.original_language.toUpperCase(),
+      countries: toUniqueNames((details.production_countries ?? []).map((country) => country.name)),
+      directors: toUniqueNames([
+        ...credits.crew
+          .filter((member) => member.job?.trim().toLowerCase() === "director")
+          .map((member) => member.name),
+        ...(details.created_by ?? []).map((creator) => creator.name)
+      ]),
       seasons: details.number_of_seasons,
       episodes: details.number_of_episodes,
       genres: details.genres.map((genre) => genre.name),

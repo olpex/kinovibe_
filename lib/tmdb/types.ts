@@ -35,6 +35,10 @@ export type TmdbMovieDetailsResponse = {
   poster_path: string | null;
   backdrop_path: string | null;
   genres: TmdbGenre[];
+  production_countries: Array<{
+    iso_3166_1: string;
+    name: string;
+  }>;
   tagline: string;
   status: string;
   original_language: string;
@@ -46,6 +50,12 @@ export type TmdbMovieCreditsResponse = {
     name: string;
     character: string;
     profile_path: string | null;
+  }>;
+  crew: Array<{
+    id: number;
+    name: string;
+    job: string;
+    department: string;
   }>;
 };
 
@@ -138,6 +148,14 @@ export type TmdbTvDetailsResponse = {
   poster_path: string | null;
   backdrop_path: string | null;
   genres: TmdbGenre[];
+  production_countries: Array<{
+    iso_3166_1: string;
+    name: string;
+  }>;
+  created_by: Array<{
+    id: number;
+    name: string;
+  }>;
   tagline: string;
   status: string;
   original_language: string;
@@ -151,6 +169,12 @@ export type TmdbTvCreditsResponse = {
     name: string;
     character: string;
     profile_path: string | null;
+  }>;
+  crew: Array<{
+    id: number;
+    name: string;
+    job: string;
+    department: string;
   }>;
 };
 
