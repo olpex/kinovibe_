@@ -67,6 +67,7 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
   const directorsLabelKey = tv.directors.length > 1 ? "movie.directors" : "movie.director";
   const countriesLabelKey =
     tv.countries.length > 1 ? "movie.productionCountries" : "movie.productionCountry";
+  const tvYearLabel = tv.year > 0 ? String(tv.year) : translate(locale, "watchlist.tba");
 
   return (
     <main className={styles.page}>
@@ -95,7 +96,7 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
             <h1>{tv.title}</h1>
             {tv.tagline ? <p className={styles.tagline}>{tv.tagline}</p> : null}
             <p className={styles.meta}>
-              {tv.year} · {tv.runtime} · {tv.rating.toFixed(1)} · {tv.status} · {tv.originalLanguage}
+              {tvYearLabel} · {tv.runtime} · {tv.rating.toFixed(1)} · {tv.status} · {tv.originalLanguage}
             </p>
             <p className={styles.metaSupplement}>
               {translate(locale, directorsLabelKey)}: {directorsLabel} ·{" "}
@@ -206,7 +207,7 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
                 <div className={styles.similarBody}>
                   <h3>{item.title}</h3>
                   <p>
-                    {item.genre} · {item.year}
+                    {item.genre} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
                   </p>
                   <p>
                     {item.countries.length > 0

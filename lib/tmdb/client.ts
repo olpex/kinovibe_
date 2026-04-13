@@ -58,30 +58,7 @@ const PALETTE = [
 const TMDB_READ_TOKEN = process.env.TMDB_API_READ_ACCESS_TOKEN;
 const TMDB_IMAGE_BASE_URL =
   process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL ?? DEFAULT_IMAGE_BASE_URL;
-const GOOGLE_TRANSLATE_BASE_URL = "https://translate.googleapis.com/translate_a/single";
-
-const GOOGLE_TARGET_BY_LOCALE: Record<Locale, string> = {
-  en: "en",
-  uk: "uk",
-  de: "de",
-  fr: "fr",
-  it: "it",
-  es: "es",
-  pt: "pt",
-  nl: "nl",
-  sv: "sv",
-  fi: "fi",
-  no: "nb",
-  da: "da",
-  cs: "cs",
-  pl: "pl",
-  sk: "sk",
-  hu: "hu",
-  ro: "ro",
-  el: "el",
-  hr: "hr",
-  me: "sr"
-};
+const WIKIPEDIA_MENTION_PATTERN = /wikipedia|wiki\b|вікіпед|википед|wikip[eé]dia/iu;
 
 const REGION_BY_LOCALE: Record<Locale, string> = {
   en: "US",
@@ -108,11 +85,11 @@ const REGION_BY_LOCALE: Record<Locale, string> = {
 
 function parseYear(releaseDate: string | null): number {
   if (!releaseDate) {
-    return new Date().getUTCFullYear();
+    return 0;
   }
 
   const year = Number(releaseDate.slice(0, 4));
-  return Number.isNaN(year) ? new Date().getUTCFullYear() : year;
+  return Number.isNaN(year) ? 0 : year;
 }
 
 function parseDisplayYear(releaseDate: string | null, locale: Locale): string {
@@ -350,54 +327,134 @@ const getRegionalTvTitle = cache(async (tvId: number, locale: Locale): Promise<s
   }
 });
 
-const translateText = cache(
-  async (text: string, locale: Locale): Promise<string> => {
-    const normalized = text.trim();
-    if (!normalized || locale === "en") {
-      return text;
-    }
-
-    const target = GOOGLE_TARGET_BY_LOCALE[locale] ?? "en";
-    try {
-      const url = new URL(GOOGLE_TRANSLATE_BASE_URL);
-      url.searchParams.set("client", "gtx");
-      url.searchParams.set("sl", "auto");
-      url.searchParams.set("tl", target);
-      url.searchParams.set("dt", "t");
-      url.searchParams.set("q", normalized);
-
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        headers: { accept: "application/json" },
-        next: { revalidate: 86400 }
-      });
-      if (!response.ok) {
-        return text;
-      }
-
-      const payload = (await response.json()) as unknown;
-      if (!Array.isArray(payload)) {
-        return text;
-      }
-
-      const segments = Array.isArray(payload[0]) ? payload[0] : [];
-      const translated = segments
-        .map((segment) => (Array.isArray(segment) ? segment[0] : ""))
-        .join("")
-        .trim();
-
-      return translated || text;
-    } catch {
-      return text;
-    }
-  }
-);
-
 type LocalizedField = "overview" | "tagline" | "title" | "name";
 
 function normalizeNonEmptyText(value: string | null | undefined): string | undefined {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
+}
+
+function stripWikipediaMentions(text: string): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  const sentenceParts = normalized.split(/(?<=[.!?])\s+/u);
+  const filteredSentences = sentenceParts.filter((sentence) => !WIKIPEDIA_MENTION_PATTERN.test(sentence));
+  const joined = filteredSentences.join(" ").replace(/\s+/g, " ").trim();
+
+  if (joined) {
+    return joined;
+  }
+
+  return normalized
+    .replace(
+      /(?:from|via|source:?|bio(?:graphy)?(?:\s+source)?)\s+[^.!?]*?(?:wikipedia|wiki)\b[^.!?]*[.!?]?/giu,
+      " "
+    )
+    .replace(/(?:з|із|джерело:?)\s+[^.!?]*?вікіпед[іїя][^.!?]*[.!?]?/giu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function shortenInformativeText(text: string, maxLength: number): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  const sentenceParts = normalized.split(/(?<=[.!?])\s+/u);
+  let combined = "";
+  for (const sentence of sentenceParts) {
+    const next = combined ? `${combined} ${sentence}` : sentence;
+    if (next.length > maxLength) {
+      break;
+    }
+    combined = next;
+    if (combined.length >= Math.floor(maxLength * 0.72)) {
+      break;
+    }
+  }
+
+  if (combined) {
+    return combined.trim();
+  }
+
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
+function sanitizeNarrativeText(text: string | undefined, maxLength: number): string {
+  const base = text?.trim() ?? "";
+  if (!base) {
+    return "";
+  }
+
+  const withoutAttribution = stripWikipediaMentions(base);
+  const normalized = withoutAttribution || base;
+  return shortenInformativeText(normalized, maxLength);
+}
+
+function buildFallbackMovieOverview(
+  locale: Locale,
+  args: {
+    title: string;
+    year: number;
+    genres: string[];
+    directors: string[];
+    countries: string[];
+  }
+): string {
+  const yearLabel = args.year > 0 ? String(args.year) : translate(locale, "watchlist.tba");
+  const genresLabel = args.genres.length > 0 ? args.genres.join(", ") : translate(locale, "home.defaultGenre");
+  const directorsLabel = args.directors.length > 0
+    ? args.directors.join(", ")
+    : translate(locale, "common.notAvailable");
+  const countriesLabel = args.countries.length > 0
+    ? args.countries.join(", ")
+    : translate(locale, "common.notAvailable");
+  const directorKey = args.directors.length > 1 ? "movie.directors" : "movie.director";
+  const countryKey =
+    args.countries.length > 1 ? "movie.productionCountries" : "movie.productionCountry";
+
+  return shortenInformativeText(
+    `${args.title}. ${genresLabel}. ${yearLabel}. ${translate(locale, directorKey)}: ${directorsLabel}. ${translate(locale, countryKey)}: ${countriesLabel}.`,
+    360
+  );
+}
+
+function buildFallbackTvOverview(
+  locale: Locale,
+  args: {
+    title: string;
+    year: number;
+    genres: string[];
+    directors: string[];
+    countries: string[];
+    seasons: number;
+    episodes: number;
+  }
+): string {
+  const yearLabel = args.year > 0 ? String(args.year) : translate(locale, "watchlist.tba");
+  const genresLabel = args.genres.length > 0 ? args.genres.join(", ") : translate(locale, "home.defaultGenre");
+  const directorsLabel = args.directors.length > 0
+    ? args.directors.join(", ")
+    : translate(locale, "common.notAvailable");
+  const countriesLabel = args.countries.length > 0
+    ? args.countries.join(", ")
+    : translate(locale, "common.notAvailable");
+  const directorKey = args.directors.length > 1 ? "movie.directors" : "movie.director";
+  const countryKey =
+    args.countries.length > 1 ? "movie.productionCountries" : "movie.productionCountry";
+
+  return shortenInformativeText(
+    `${args.title}. ${genresLabel}. ${yearLabel}. ${translate(locale, "menu.seasons")}: ${args.seasons}. ${translate(locale, "menu.episodes")}: ${args.episodes}. ${translate(locale, directorKey)}: ${directorsLabel}. ${translate(locale, countryKey)}: ${countriesLabel}.`,
+    380
+  );
 }
 
 function parseTmdbLanguageParts(language: string): { languageCode: string; regionCode?: string } {
@@ -522,16 +579,15 @@ async function translateIfNeeded(
   sourceLanguageCode: string,
   targetLanguageCode: string
 ): Promise<string> {
+  void locale;
+  void sourceLanguageCode;
+  void targetLanguageCode;
+
   const normalized = text.trim();
   if (!normalized) {
     return "";
   }
-
-  if (locale === "en" || sourceLanguageCode === targetLanguageCode) {
-    return text;
-  }
-
-  return translateText(text, locale);
+  return text;
 }
 
 async function fetchTmdb<T>(
@@ -709,7 +765,7 @@ export function mapTmdbMovieToCard(
     gradient: gradientByMovieId(movie.id),
     posterUrl: posterUrl(movie.poster_path),
     backdropUrl: backdropUrl(movie.backdrop_path),
-    overview: movie.overview
+    overview: sanitizeNarrativeText(movie.overview, 420)
   };
 }
 
@@ -725,41 +781,35 @@ export function mapTmdbTvToCard(tv: TmdbTv, genresMap: Map<number, string>, loca
     gradient: gradientByMovieId(tv.id),
     posterUrl: posterUrl(tv.poster_path),
     backdropUrl: backdropUrl(tv.backdrop_path),
-    overview: tv.overview
+    overview: sanitizeNarrativeText(tv.overview, 420)
   };
 }
 
 async function localizeCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
-  const [title, genre, overview, countries] = await Promise.all([
-    locale === "en" ? Promise.resolve(card.title) : translateText(card.title, locale),
-    locale === "en" ? Promise.resolve(card.genre) : translateText(card.genre, locale),
-    locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale),
+  const [countries] = await Promise.all([
     card.countries.length > 0 ? Promise.resolve(card.countries) : getTmdbMovieCountryNames(card.id, locale)
   ]);
 
   return {
     ...card,
-    title: title || card.title,
-    genre,
+    title: card.title,
+    genre: card.genre,
     countries,
-    overview: overview || card.overview
+    overview: sanitizeNarrativeText(card.overview, 420) || card.overview
   };
 }
 
 async function localizeTvCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
-  const [title, genre, overview, countries] = await Promise.all([
-    locale === "en" ? Promise.resolve(card.title) : translateText(card.title, locale),
-    locale === "en" ? Promise.resolve(card.genre) : translateText(card.genre, locale),
-    locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale),
+  const [countries] = await Promise.all([
     card.countries.length > 0 ? Promise.resolve(card.countries) : getTmdbTvCountryNames(card.id, locale)
   ]);
 
   return {
     ...card,
-    title: title || card.title,
-    genre,
+    title: card.title,
+    genre: card.genre,
     countries,
-    overview: overview || card.overview
+    overview: sanitizeNarrativeText(card.overview, 420) || card.overview
   };
 }
 
@@ -1502,8 +1552,8 @@ function firstProfilePath(
   return undefined;
 }
 
-function toBiographySnippet(text: string | undefined, maxLength = 150): string | undefined {
-  const normalized = text?.replace(/\s+/g, " ").trim();
+function toBiographySnippet(text: string | undefined, maxLength = 140): string | undefined {
+  const normalized = sanitizeNarrativeText(text, maxLength);
   if (!normalized) {
     return undefined;
   }
@@ -1586,7 +1636,7 @@ function resolveCastDescription(
 ): string {
   const role = normalizeNonEmptyText(person.character);
   if (role) {
-    return role;
+    return sanitizeNarrativeText(role, 120) || role;
   }
 
   const biographySnippet = toBiographySnippet(snapshot?.biography);
@@ -1737,29 +1787,46 @@ export const getTmdbMovieDetails = cache(
 
     const releaseTitle = await getRegionalReleaseTitle(movieId, locale);
     const cast = await buildCastPeople(credits.cast, locale);
+    const directors = toUniqueNames(
+      credits.crew
+        .filter((member) => member.job?.trim().toLowerCase() === "director")
+        .map((member) => member.name)
+    );
+    const countries = localizeCountryNames(details.production_countries ?? [], locale);
+    const sanitizedTitle = sanitizeNarrativeText(translatedTitle || details.title, 180);
+    const sanitizedOverview = sanitizeNarrativeText(
+      translatedOverview || details.overview || detailsInEnglish?.overview || "",
+      720
+    );
+    const sanitizedTagline = sanitizeNarrativeText(translatedTagline, 180);
+    const sanitizedStatus = sanitizeNarrativeText(translatedStatus, 64);
     const trailerUrl =
       buildVideoUrl(trailer) ??
       buildYoutubeTrailerSearchUrl(
-        (releaseTitle ?? translatedTitle) || details.title,
+        (releaseTitle ?? sanitizedTitle) || details.title,
         parseOptionalYear(details.release_date)
       );
 
     return {
       id: details.id,
-      title: translatedTitle || details.title,
-      overview: translatedOverview,
-      tagline: translatedTagline,
+      title: sanitizedTitle || details.title,
+      overview:
+        sanitizedOverview ||
+        buildFallbackMovieOverview(locale, {
+          title: sanitizedTitle || details.title,
+          year: parseYear(details.release_date),
+          genres: details.genres.map((genre) => genre.name),
+          directors,
+          countries
+        }),
+      tagline: sanitizedTagline,
       year: parseYear(details.release_date),
       rating: details.vote_average || 0,
       runtime: formatRuntime(details.runtime, details.id, locale),
-      status: translatedStatus,
+      status: sanitizedStatus,
       originalLanguage: details.original_language.toUpperCase(),
-      countries: localizeCountryNames(details.production_countries ?? [], locale),
-      directors: toUniqueNames(
-        credits.crew
-          .filter((member) => member.job?.trim().toLowerCase() === "director")
-          .map((member) => member.name)
-      ),
+      countries,
+      directors,
       genres: details.genres.map((genre) => ({
         id: genre.id,
         name: genre.name
@@ -1913,10 +1980,24 @@ export const getTmdbTvDetails = cache(
     ]);
 
     const regionalTitle = await getRegionalTvTitle(tvId, locale);
+    const directors = toUniqueNames([
+      ...credits.crew
+        .filter((member) => member.job?.trim().toLowerCase() === "director")
+        .map((member) => member.name),
+      ...(details.created_by ?? []).map((creator) => creator.name)
+    ]);
+    const countries = localizeCountryNames(details.production_countries ?? [], locale);
+    const sanitizedTitle = sanitizeNarrativeText(translatedTitle || details.name, 180);
+    const sanitizedOverview = sanitizeNarrativeText(
+      translatedOverview || details.overview || detailsInEnglish?.overview || "",
+      720
+    );
+    const sanitizedTagline = sanitizeNarrativeText(translatedTagline, 180);
+    const sanitizedStatus = sanitizeNarrativeText(translatedStatus, 64);
     const trailerUrl =
       buildVideoUrl(trailer) ??
       buildYoutubeTrailerSearchUrl(
-        (regionalTitle ?? translatedTitle) || details.name,
+        (regionalTitle ?? sanitizedTitle) || details.name,
         parseOptionalYear(details.first_air_date)
       );
     const cast = await buildCastPeople(credits.cast, locale);
@@ -1926,21 +2007,26 @@ export const getTmdbTvDetails = cache(
 
     return {
       id: details.id,
-      title: translatedTitle || details.name,
-      overview: translatedOverview,
-      tagline: translatedTagline,
+      title: sanitizedTitle || details.name,
+      overview:
+        sanitizedOverview ||
+        buildFallbackTvOverview(locale, {
+          title: sanitizedTitle || details.name,
+          year: parseYear(details.first_air_date),
+          genres: details.genres.map((genre) => genre.name),
+          directors,
+          countries,
+          seasons: details.number_of_seasons,
+          episodes: details.number_of_episodes
+        }),
+      tagline: sanitizedTagline,
       year: parseYear(details.first_air_date),
       rating: details.vote_average || 0,
       runtime,
-      status: translatedStatus,
+      status: sanitizedStatus,
       originalLanguage: details.original_language.toUpperCase(),
-      countries: localizeCountryNames(details.production_countries ?? [], locale),
-      directors: toUniqueNames([
-        ...credits.crew
-          .filter((member) => member.job?.trim().toLowerCase() === "director")
-          .map((member) => member.name),
-        ...(details.created_by ?? []).map((creator) => creator.name)
-      ]),
+      countries,
+      directors,
       seasons: details.number_of_seasons,
       episodes: details.number_of_episodes,
       genres: details.genres.map((genre) => genre.name),
@@ -2004,14 +2090,8 @@ async function localizePersonCredit(
   credit: PersonCredit,
   locale: Locale
 ): Promise<PersonCredit> {
-  if (locale === "en") {
-    return credit;
-  }
-  const unknownCharacterLabel = translate(locale, "person.unknownCharacter");
-  const translatedCharacter =
-    credit.character && credit.character !== unknownCharacterLabel
-      ? await translateText(credit.character, locale)
-      : credit.character;
+  void locale;
+  const translatedCharacter = sanitizeNarrativeText(credit.character, 120) || credit.character;
   return {
     ...credit,
     character: translatedCharacter
@@ -2033,10 +2113,7 @@ export const getTmdbPersonDetails = cache(
 
     const normalizedDetailsBiography = normalizeNonEmptyText(details.biography);
     const biographySource = normalizedDetailsBiography ?? snapshot.biography ?? "";
-    const biography =
-      locale === "en" || normalizedDetailsBiography
-        ? biographySource
-        : await translateText(biographySource, locale);
+    const biography = sanitizeNarrativeText(biographySource, 920);
 
     return {
       id: details.id,

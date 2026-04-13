@@ -57,7 +57,7 @@ export function MediaRail({
                 <div className={styles.cardBody}>
                   <h3>{item.title}</h3>
                   <p>
-                    {item.year} · {item.runtime}
+                    {item.year > 0 ? item.year : translate(locale, "watchlist.tba")} · {item.runtime}
                   </p>
                   <p>{countriesLabel}</p>
                   <div className={styles.metaRow}>

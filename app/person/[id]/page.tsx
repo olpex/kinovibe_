@@ -144,7 +144,8 @@ export default async function PersonDetailsPage({ params }: PageProps) {
                   <p>
                     {credit.mediaType === "movie"
                       ? translate(locale, "person.mediaTypeMovie")
-                      : translate(locale, "person.mediaTypeTv")}{" "}&middot; {credit.year}
+                      : translate(locale, "person.mediaTypeTv")}{" "}&middot;{" "}
+                    {credit.year > 0 ? credit.year : translate(locale, "watchlist.tba")}
                   </p>
                   <p>{credit.character}</p>
                   <p>{credit.rating.toFixed(1)}</p>

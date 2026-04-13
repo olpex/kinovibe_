@@ -115,6 +115,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   const directorsLabelKey = movie.directors.length > 1 ? "movie.directors" : "movie.director";
   const countriesLabelKey =
     movie.countries.length > 1 ? "movie.productionCountries" : "movie.productionCountry";
+  const movieYearLabel = movie.year > 0 ? String(movie.year) : translate(locale, "watchlist.tba");
 
   return (
     <main className={styles.page}>
@@ -148,7 +149,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           <h1>{movie.title}</h1>
           {movie.tagline ? <p className={styles.tagline}>{movie.tagline}</p> : null}
           <p className={styles.meta}>
-            {movie.year} · {movie.runtime} · {movie.rating.toFixed(1)} · {movie.status} ·{" "}
+            {movieYearLabel} · {movie.runtime} · {movie.rating.toFixed(1)} · {movie.status} ·{" "}
             {movie.originalLanguage}
           </p>
           <p className={styles.metaSupplement}>
@@ -288,7 +289,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
               <div className={styles.similarBody}>
                 <h3>{item.title}</h3>
                 <p>
-                  {item.genre} · {item.year}
+                  {item.genre} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
                 </p>
                 <p>
                   {item.countries.length > 0

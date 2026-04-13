@@ -43,7 +43,7 @@ export function CatalogMovieGrid({
             <div className={styles.body}>
               <h2>{item.title}</h2>
               <p>
-                {item.genre} · {item.year}
+                {item.genre} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
               </p>
               <p>{countriesLabel}</p>
               <span>{item.rating.toFixed(1)}</span>

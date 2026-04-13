@@ -181,7 +181,7 @@ export function HeaderSearchForm({
                     >
                       <strong>{item.title}</strong>
                       <span>
-                        {item.year} · {item.genre}
+                        {item.year > 0 ? item.year : translate(locale, "watchlist.tba")} · {item.genre}
                       </span>
                     </Link>
                   </li>

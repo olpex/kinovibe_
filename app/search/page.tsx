@@ -109,7 +109,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <div className={styles.cardBody}>
                 <h2>{movie.title}</h2>
                 <p>
-                  {movie.genre} · {movie.year}
+                  {movie.genre} · {movie.year > 0 ? movie.year : translate(locale, "watchlist.tba")}
                 </p>
                 <span>{movie.rating.toFixed(1)}</span>
               </div>
