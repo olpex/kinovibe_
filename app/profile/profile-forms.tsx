@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import {
   changePasswordFromProfileAction,
@@ -11,6 +12,7 @@ import styles from "./profile.module.css";
 
 type ProfileFormsProps = {
   locale: Locale;
+  isAdmin: boolean;
   initialProfile: {
     firstName: string;
     lastName: string;
@@ -19,7 +21,7 @@ type ProfileFormsProps = {
   };
 };
 
-export function ProfileForms({ locale, initialProfile }: ProfileFormsProps) {
+export function ProfileForms({ locale, isAdmin, initialProfile }: ProfileFormsProps) {
   const [profileState, profileAction, profilePending] = useActionState(
     updateProfileSettingsAction,
     PROFILE_ACTION_INITIAL_STATE
@@ -84,6 +86,21 @@ export function ProfileForms({ locale, initialProfile }: ProfileFormsProps) {
           </button>
         </form>
       </section>
+
+      {isAdmin ? (
+        <section className={styles.card}>
+          <h2>{translate(locale, "profile.adminTitle")}</h2>
+          <p>{translate(locale, "profile.adminHint")}</p>
+          <div className={styles.adminLinks}>
+            <Link href="/admin/analytics" className={styles.adminLink}>
+              {translate(locale, "nav.analytics")}
+            </Link>
+            <Link href="/admin/audit-logs" className={styles.adminLink}>
+              {translate(locale, "nav.auditLogs")}
+            </Link>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

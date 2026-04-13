@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { ProfileForms } from "./profile-forms";
+import { isAdminEmail } from "@/lib/auth/admin";
 import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
@@ -54,6 +55,7 @@ export default async function ProfilePage() {
     .select("first_name,last_name,website,country")
     .eq("id", user.id)
     .maybeSingle();
+  const isAdmin = isAdminEmail(user.email ?? undefined);
 
   return (
     <main className={styles.page}>
@@ -68,6 +70,11 @@ export default async function ProfilePage() {
           <Link href="/search" className={styles.linkPill}>
             {translate(locale, "nav.search")}
           </Link>
+          {isAdmin ? (
+            <Link href="/admin/analytics" className={styles.linkPill}>
+              {translate(locale, "nav.analytics")}
+            </Link>
+          ) : null}
           <LanguageToggle className={styles.linkPill} />
           <form action={signOutAction}>
             <button type="submit" className={styles.linkPillAlt}>
@@ -84,6 +91,7 @@ export default async function ProfilePage() {
 
       <ProfileForms
         locale={locale}
+        isAdmin={isAdmin}
         initialProfile={{
           firstName: (profile?.first_name as string | null) ?? "",
           lastName: (profile?.last_name as string | null) ?? "",

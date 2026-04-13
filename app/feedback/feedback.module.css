@@ -1,0 +1,78 @@
+.formCard,
+.authCard {
+  border: 1px solid var(--color-border);
+  border-radius: 0.95rem;
+  background: rgba(11, 15, 20, 0.45);
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.formCard h2,
+.authCard h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.formCard p,
+.authCard p {
+  margin: 0;
+  color: var(--color-text-soft);
+}
+
+.form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.form label {
+  display: grid;
+  gap: 0.34rem;
+}
+
+.form span {
+  font-size: 0.82rem;
+  color: var(--color-text-soft);
+}
+
+.form input,
+.form select,
+.form textarea {
+  border: 1px solid var(--color-border);
+  border-radius: 0.72rem;
+  background: rgba(26, 34, 48, 0.78);
+  color: var(--color-text);
+  padding: 0.56rem 0.62rem;
+  font: inherit;
+}
+
+.form textarea {
+  resize: vertical;
+  min-height: 170px;
+}
+
+.form button,
+.authButton {
+  border: 1px solid transparent;
+  border-radius: 0.72rem;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.58rem 0.82rem;
+  width: fit-content;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.feedbackOk,
+.feedbackError {
+  margin: 0 !important;
+  font-size: 0.84rem;
+}
+
+.feedbackOk {
+  color: var(--color-success) !important;
+}
+
+.feedbackError {
+  color: var(--color-danger) !important;
+}

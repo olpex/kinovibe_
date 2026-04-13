@@ -38,6 +38,13 @@ export default async function TalkPage() {
             {translate(locale, "nav.profile")}
           </Link>
         </article>
+        <article className={styles.textCard}>
+          <h2>{translate(locale, "feedback.title")}</h2>
+          <p>{translate(locale, "feedback.supportCardText")}</p>
+          <Link href="/feedback" className={styles.linkButton}>
+            {translate(locale, "menu.feedback")}
+          </Link>
+        </article>
       </div>
     </CatalogPageShell>
   );
