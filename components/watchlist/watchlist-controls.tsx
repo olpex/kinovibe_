@@ -104,22 +104,6 @@ export function WatchlistControls({ initialState, movie, locale }: WatchlistCont
 
           <form action={formAction} className={styles.quickActions}>
             <HiddenMovieFields movie={movie} />
-            <button
-              name="operation"
-              value="mark_watching"
-              disabled={isPending}
-              className={styles.ghostAction}
-            >
-              {translate(locale, "watchlist.markWatching")}
-            </button>
-            <button
-              name="operation"
-              value="mark_watched"
-              disabled={isPending}
-              className={styles.ghostAction}
-            >
-              {translate(locale, "watchlist.markWatched")}
-            </button>
             <button name="operation" value="remove" disabled={isPending} className={styles.dangerAction}>
               {translate(locale, "watchlist.remove")}
             </button>
