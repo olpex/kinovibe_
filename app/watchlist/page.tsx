@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getTmdbMovieLocalizedSummaries } from "@/lib/tmdb/client";
+import { getTmdbMovieCatalogPage, getTmdbMovieLocalizedSummaries } from "@/lib/tmdb/client";
 import styles from "./watchlist.module.css";
 
 type WatchlistRow = {
@@ -100,7 +99,84 @@ export default async function WatchlistPage() {
   const { data: authData } = await supabase.auth.getUser();
   const user = authData.user;
   if (!user) {
-    redirect("/auth?next=/watchlist");
+    let guestPicks: Awaited<ReturnType<typeof getTmdbMovieCatalogPage>>["items"] = [];
+    try {
+      const result = await getTmdbMovieCatalogPage("popular", locale, 1);
+      guestPicks = result.items.slice(0, 10);
+    } catch {
+      guestPicks = [];
+    }
+
+    return (
+      <main className={styles.page}>
+        <header className={styles.topBar}>
+          <Link href="/" className={styles.logo}>
+            <KinoVibeLogo />
+          </Link>
+          <div className={styles.actions}>
+            <Link href="/search" className={styles.linkPill}>
+              {translate(locale, "nav.search")}
+            </Link>
+            <LanguageToggle className={styles.linkPill} />
+            <Link href="/" className={styles.linkPill}>
+              {translate(locale, "nav.home")}
+            </Link>
+            <Link href="/auth?next=/watchlist" className={styles.linkPillAlt}>
+              {translate(locale, "nav.signIn")}
+            </Link>
+          </div>
+        </header>
+
+        <section className={styles.emptyCard}>
+          <h1>{translate(locale, "watchlist.title")}</h1>
+          <p>{translate(locale, "watchlist.signInHint")}</p>
+          <div className={styles.ctaRow}>
+            <Link href="/auth?next=/watchlist" className={styles.ctaLink}>
+              {translate(locale, "nav.signIn")}
+            </Link>
+            <Link href="/search" className={styles.secondaryLink}>
+              {translate(locale, "watchlist.findMovies")}
+            </Link>
+          </div>
+        </section>
+
+        {guestPicks.length > 0 ? (
+          <section className={styles.groupSection}>
+            <header className={styles.groupHeader}>
+              <h2>{translate(locale, "home.topPicks")}</h2>
+              <span>{guestPicks.length}</span>
+            </header>
+            <div className={styles.grid}>
+              {guestPicks.map((item) => (
+                <Link key={`guest-${item.id}`} href={`/movie/${item.id}`} className={styles.card}>
+                  <div
+                    className={styles.poster}
+                    style={{
+                      background: item.posterUrl
+                        ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), url(${item.posterUrl}) center / cover no-repeat`
+                        : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
+                    }}
+                  >
+                    {!item.posterUrl ? <span className={styles.posterFallback}>{item.title}</span> : null}
+                  </div>
+                  <div className={styles.cardBody}>
+                    <h3>{item.title}</h3>
+                    <p>
+                      {(item.genre || translate(locale, "home.defaultGenre"))} ·{" "}
+                      {item.year ?? translate(locale, "watchlist.tba")}
+                    </p>
+                    <div className={styles.metaRow}>
+                      <span>{item.rating.toFixed(1)}</span>
+                      <b className={styles.previewLabel}>{translate(locale, "home.addToWatchlist")}</b>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </main>
+    );
   }
 
   const { data, error } = await supabase
@@ -207,7 +283,9 @@ export default async function WatchlistPage() {
                           ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), url(${item.posterUrl}) center / cover no-repeat`
                           : "linear-gradient(145deg, #3A0CA3 0%, #4CC9F0 100%)"
                       }}
-                    />
+                    >
+                      {!item.posterUrl ? <span className={styles.posterFallback}>{item.title}</span> : null}
+                    </div>
                     <div className={styles.cardBody}>
                       <h3>{item.title}</h3>
                       <p>

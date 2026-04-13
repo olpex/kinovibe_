@@ -88,6 +88,25 @@
   font-weight: 600;
 }
 
+.ctaRow {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.secondaryLink {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-surface-soft) 84%, transparent);
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.72rem;
+  text-decoration: none;
+}
+
 .groupSection {
   margin-top: 1rem;
   border: 1px solid var(--color-border);
@@ -139,6 +158,11 @@
 
 .poster {
   height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.8rem;
+  text-align: center;
 }
 
 .cardBody {
@@ -172,6 +196,28 @@
 
 .metaRow time {
   color: var(--color-text-soft);
+}
+
+.previewLabel {
+  color: var(--color-text-soft);
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+.posterFallback {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.34);
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  max-height: 100%;
+  padding: 0.34rem 0.46rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .progressTrack {

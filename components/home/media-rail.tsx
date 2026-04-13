@@ -30,47 +30,51 @@ export function MediaRail({
         {items.length === 0 ? (
           <li className={styles.emptyRail}>{emptyMessage}</li>
         ) : null}
-        {items.map((item) => (
-          <li key={item.id} className={styles.railItem}>
-            <Link
-              href={`/movie/${item.id}`}
-              className={`${styles.posterCard} ${styles.posterCardLink}`}
-              aria-label={translate(locale, "home.details")}
-            >
-              <div
-                className={styles.poster}
-                style={{
-                  background: item.posterUrl
-                    ? `linear-gradient(to top, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.12)), url(${item.posterUrl}) center / cover no-repeat`
-                    : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
-                }}
+        {items.map((item) => {
+          const hasPoster = Boolean(item.posterUrl);
+          return (
+            <li key={item.id} className={styles.railItem}>
+              <Link
+                href={`/movie/${item.id}`}
+                className={`${styles.posterCard} ${styles.posterCardLink}`}
+                aria-label={translate(locale, "home.details")}
               >
-                <span className={styles.posterGenre}>{item.genre}</span>
-              </div>
-              <div className={styles.cardBody}>
-                <h3>{item.title}</h3>
-                <p>
-                  {item.year} · {item.runtime}
-                </p>
-                <div className={styles.metaRow}>
-                  <span className={styles.rating}>{item.rating.toFixed(1)}</span>
-                  <span className={styles.inlineCta}>{translate(locale, "home.details")}</span>
+                <div
+                  className={styles.poster}
+                  style={{
+                    background: hasPoster
+                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.12)), url(${item.posterUrl}) center / cover no-repeat`
+                      : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
+                  }}
+                >
+                  {!hasPoster ? <span className={styles.posterFallbackTitle}>{item.title}</span> : null}
+                  <span className={styles.posterGenre}>{item.genre}</span>
                 </div>
-                {showProgress && typeof item.progress === "number" ? (
-                  <div
-                    className={styles.progressWrap}
-                    aria-label={translate(locale, "home.progressAria", { progress: item.progress })}
-                  >
-                    <div
-                      className={styles.progressFill}
-                      style={{ width: `${item.progress}%` }}
-                    />
+                <div className={styles.cardBody}>
+                  <h3>{item.title}</h3>
+                  <p>
+                    {item.year} · {item.runtime}
+                  </p>
+                  <div className={styles.metaRow}>
+                    <span className={styles.rating}>{item.rating.toFixed(1)}</span>
+                    <span className={styles.inlineCta}>{translate(locale, "home.details")}</span>
                   </div>
-                ) : null}
-              </div>
-            </Link>
-          </li>
-        ))}
+                  {showProgress && typeof item.progress === "number" ? (
+                    <div
+                      className={styles.progressWrap}
+                      aria-label={translate(locale, "home.progressAria", { progress: item.progress })}
+                    >
+                      <div
+                        className={styles.progressFill}
+                        style={{ width: `${item.progress}%` }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

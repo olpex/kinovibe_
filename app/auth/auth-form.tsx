@@ -37,7 +37,7 @@ export function AuthForm({ nextPath, locale }: AuthFormProps) {
 
   return (
     <div className={styles.grid}>
-      <section className={styles.card}>
+      <section className={`${styles.card} ${styles.primaryCard}`}>
         <h2>{translate(locale, "nav.signIn")}</h2>
         <p>{translate(locale, "auth.signInHint")}</p>
         {signInState.message ? (
@@ -78,47 +78,57 @@ export function AuthForm({ nextPath, locale }: AuthFormProps) {
         </p>
       </section>
 
-      <section className={styles.card}>
-        <h2>{translate(locale, "auth.createAccount")}</h2>
-        <p>{translate(locale, "auth.createAccountHint")}</p>
-        {signUpState.message ? (
-          <p className={signUpState.ok ? styles.feedbackOk : styles.feedbackError}>
-            {signUpState.message}
-          </p>
-        ) : null}
-        <form action={signUpAction} className={styles.form}>
-          <input type="hidden" name="next" value={nextPath} />
-          <label>
-            <span>{translate(locale, "common.email")}</span>
-            <input type="email" name="email" required autoComplete="email" />
-          </label>
-          <label>
-            <span>{translate(locale, "common.password")}</span>
-            <input type="password" name="password" required autoComplete="new-password" />
-          </label>
-          <button type="submit" disabled={signUpPending}>
-            {signUpPending ? translate(locale, "auth.creatingAccount") : translate(locale, "auth.createAccount")}
-          </button>
-        </form>
-      </section>
+      <section className={`${styles.card} ${styles.assistCard}`}>
+        <details className={styles.fold} open>
+          <summary className={styles.foldSummary}>
+            <span>{translate(locale, "auth.createAccount")}</span>
+          </summary>
+          <div className={styles.foldBody}>
+            <p>{translate(locale, "auth.createAccountHint")}</p>
+            {signUpState.message ? (
+              <p className={signUpState.ok ? styles.feedbackOk : styles.feedbackError}>
+                {signUpState.message}
+              </p>
+            ) : null}
+            <form action={signUpAction} className={styles.form}>
+              <input type="hidden" name="next" value={nextPath} />
+              <label>
+                <span>{translate(locale, "common.email")}</span>
+                <input type="email" name="email" required autoComplete="email" />
+              </label>
+              <label>
+                <span>{translate(locale, "common.password")}</span>
+                <input type="password" name="password" required autoComplete="new-password" />
+              </label>
+              <button type="submit" disabled={signUpPending}>
+                {signUpPending ? translate(locale, "auth.creatingAccount") : translate(locale, "auth.createAccount")}
+              </button>
+            </form>
+          </div>
+        </details>
 
-      <section className={styles.card}>
-        <h2>{translate(locale, "auth.forgotPassword")}</h2>
-        <p>{translate(locale, "auth.forgotPasswordHint")}</p>
-        {resetState.message ? (
-          <p className={resetState.ok ? styles.feedbackOk : styles.feedbackError}>
-            {resetState.message}
-          </p>
-        ) : null}
-        <form action={resetAction} className={styles.form}>
-          <label>
-            <span>{translate(locale, "common.email")}</span>
-            <input type="email" name="email" required autoComplete="email" />
-          </label>
-          <button type="submit" disabled={resetPending}>
-            {resetPending ? translate(locale, "common.sending") : translate(locale, "auth.sendResetLink")}
-          </button>
-        </form>
+        <details className={styles.fold}>
+          <summary className={styles.foldSummary}>
+            <span>{translate(locale, "auth.forgotPassword")}</span>
+          </summary>
+          <div className={styles.foldBody}>
+            <p>{translate(locale, "auth.forgotPasswordHint")}</p>
+            {resetState.message ? (
+              <p className={resetState.ok ? styles.feedbackOk : styles.feedbackError}>
+                {resetState.message}
+              </p>
+            ) : null}
+            <form action={resetAction} className={styles.form}>
+              <label>
+                <span>{translate(locale, "common.email")}</span>
+                <input type="email" name="email" required autoComplete="email" />
+              </label>
+              <button type="submit" disabled={resetPending}>
+                {resetPending ? translate(locale, "common.sending") : translate(locale, "auth.sendResetLink")}
+              </button>
+            </form>
+          </div>
+        </details>
       </section>
     </div>
   );

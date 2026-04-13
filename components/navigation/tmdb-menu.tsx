@@ -72,7 +72,7 @@ export function TmdbMenu({ locale, className }: TmdbMenuProps) {
       className={`${styles.nav} ${className ?? ""}`.trim()}
       aria-label={translate(locale, "nav.tmdbMainMenu")}
     >
-      <ul className={styles.list}>
+      <ul className={`${styles.list} ${styles.desktopList}`}>
         {MENU_SECTIONS.map((section) => (
           <li key={section.labelKey} className={styles.item}>
             <Link href={section.href} className={styles.trigger}>
@@ -91,6 +91,31 @@ export function TmdbMenu({ locale, className }: TmdbMenuProps) {
                 </li>
               ))}
             </ul>
+          </li>
+        ))}
+      </ul>
+
+      <ul className={styles.mobileList}>
+        {MENU_SECTIONS.map((section) => (
+          <li key={`mobile-${section.labelKey}`} className={styles.mobileItem}>
+            <details>
+              <summary className={styles.mobileSummary}>
+                {translate(locale, section.labelKey)}
+              </summary>
+              <ul className={styles.mobileDropdown}>
+                {section.links.map((link) => (
+                  <li key={`mobile-${link.href}`}>
+                    {link.external ? (
+                      <a href={link.href} target="_blank" rel="noreferrer">
+                        {translate(locale, link.labelKey)}
+                      </a>
+                    ) : (
+                      <Link href={link.href}>{translate(locale, link.labelKey)}</Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </details>
           </li>
         ))}
       </ul>

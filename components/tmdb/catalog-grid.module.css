@@ -16,6 +16,11 @@
 .poster {
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem;
+  text-align: center;
 }
 
 .body {
@@ -47,6 +52,22 @@
   padding: 0.18rem 0.45rem;
   font-size: 0.76rem;
   color: #9fe4ff;
+}
+
+.posterFallbackText {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.32);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  padding: 0.42rem 0.56rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .empty {
