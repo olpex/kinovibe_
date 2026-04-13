@@ -1340,6 +1340,124 @@ const I18N_OVERRIDES_BY_LOCALE = I18N_OVERRIDE_TRANSLATIONS as Record<string, Re
 const I18N_MANUAL_OVERRIDES_BY_LOCALE =
   MANUAL_TRANSLATION_OVERRIDES as Record<string, Record<string, string>>;
 
+const LOCALE_QUALITY_OVERRIDES: Record<Locale, Record<string, string>> = {
+  en: {},
+  uk: {
+    "common.notAvailable": "н/д",
+    "watchlist.tba": "Незабаром",
+    "watchlist.markWatching": "Позначити як дивлюся",
+    "watchlist.markWatched": "Позначити як переглянуто"
+  },
+  de: {
+    "common.notAvailable": "k. A.",
+    "watchlist.tba": "Demnächst",
+    "watchlist.markWatching": "Als „Schaue ich“ markieren",
+    "watchlist.markWatched": "Als „Gesehen“ markieren"
+  },
+  fr: {
+    "common.notAvailable": "n/d",
+    "watchlist.tba": "Bientôt",
+    "watchlist.markWatching": "Marquer comme en cours",
+    "watchlist.markWatched": "Marquer comme vu"
+  },
+  it: {
+    "common.notAvailable": "n/d",
+    "watchlist.tba": "Prossimamente",
+    "watchlist.markWatching": "Segna come in visione",
+    "watchlist.markWatched": "Segna come visto"
+  },
+  es: {
+    "common.notAvailable": "n/d",
+    "watchlist.tba": "Próximamente",
+    "watchlist.markWatching": "Marcar como viendo",
+    "watchlist.markWatched": "Marcar como visto"
+  },
+  pt: {
+    "common.notAvailable": "n/d",
+    "watchlist.tba": "Em breve",
+    "watchlist.markWatching": "Marcar como assistindo",
+    "watchlist.markWatched": "Marcar como assistido"
+  },
+  nl: {
+    "common.notAvailable": "n.v.t.",
+    "watchlist.tba": "Binnenkort",
+    "watchlist.markWatching": "Markeer als aan het kijken",
+    "watchlist.markWatched": "Markeer als bekeken"
+  },
+  sv: {
+    "common.notAvailable": "ej tillg.",
+    "watchlist.tba": "Kommer snart",
+    "watchlist.markWatching": "Markera som pågående",
+    "watchlist.markWatched": "Markera som sett"
+  },
+  fi: {
+    "common.notAvailable": "ei saat.",
+    "watchlist.tba": "Tulossa pian",
+    "watchlist.markWatching": "Merkitse katselussa",
+    "watchlist.markWatched": "Merkitse katsotuksi"
+  },
+  no: {
+    "common.notAvailable": "ikke tilg.",
+    "watchlist.tba": "Kommer snart",
+    "watchlist.markWatching": "Marker som ser nå",
+    "watchlist.markWatched": "Marker som sett"
+  },
+  da: {
+    "common.notAvailable": "ikke tilg.",
+    "watchlist.tba": "Kommer snart",
+    "watchlist.markWatching": "Marker som ser nu",
+    "watchlist.markWatched": "Marker som set"
+  },
+  cs: {
+    "common.notAvailable": "není k disp.",
+    "watchlist.tba": "Již brzy",
+    "watchlist.markWatching": "Označit jako sleduji",
+    "watchlist.markWatched": "Označit jako zhlédnuto"
+  },
+  pl: {
+    "common.notAvailable": "brak",
+    "watchlist.tba": "Wkrótce",
+    "watchlist.markWatching": "Oznacz jako oglądam",
+    "watchlist.markWatched": "Oznacz jako obejrzane"
+  },
+  sk: {
+    "common.notAvailable": "nedost.",
+    "watchlist.tba": "Čoskoro",
+    "watchlist.markWatching": "Označiť ako pozerám",
+    "watchlist.markWatched": "Označiť ako pozreté"
+  },
+  hu: {
+    "common.notAvailable": "n.a.",
+    "watchlist.tba": "Hamarosan",
+    "watchlist.markWatching": "Megjelölés: nézem",
+    "watchlist.markWatched": "Megjelölés: megnézve"
+  },
+  ro: {
+    "common.notAvailable": "indisp.",
+    "watchlist.tba": "În curând",
+    "watchlist.markWatching": "Marchează ca urmăresc",
+    "watchlist.markWatched": "Marchează ca văzut"
+  },
+  el: {
+    "common.notAvailable": "μη διαθ.",
+    "watchlist.tba": "Σύντομα",
+    "watchlist.markWatching": "Σήμανση ως βλέπω",
+    "watchlist.markWatched": "Σήμανση ως είδα"
+  },
+  hr: {
+    "common.notAvailable": "nije dostupno",
+    "watchlist.tba": "Uskoro",
+    "watchlist.markWatching": "Označi kao gledam",
+    "watchlist.markWatched": "Označi kao odgledano"
+  },
+  me: {
+    "common.notAvailable": "nije dostupno",
+    "watchlist.tba": "Uskoro",
+    "watchlist.markWatching": "Označi kao gledam",
+    "watchlist.markWatched": "Označi kao odgledano"
+  }
+};
+
 function buildLocaleMessages(
   locale: Locale,
   extraOverrides?: Record<string, string>
@@ -1352,7 +1470,8 @@ function buildLocaleMessages(
     ...(CORE_NAV_MENU_OVERRIDES[locale] ?? {}),
     ...(CORE_CATALOG_LABEL_OVERRIDES[locale] ?? {}),
     ...(AWARDS_UI_OVERRIDES[locale] ?? {}),
-    ...(I18N_MANUAL_OVERRIDES_BY_LOCALE[locale] ?? {})
+    ...(I18N_MANUAL_OVERRIDES_BY_LOCALE[locale] ?? {}),
+    ...(LOCALE_QUALITY_OVERRIDES[locale] ?? {})
   };
 }
 

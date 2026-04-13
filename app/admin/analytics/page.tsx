@@ -338,7 +338,10 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
             <ul>
               {topEntries(movieCounts).map((entry) => (
                 <li key={entry.key}>
-                  <span>{movieTitles.get(entry.key) ?? `TMDB #${entry.key}`}</span>
+                  <span>
+                    {movieTitles.get(entry.key) ??
+                      translate(locale, "discussion.tmdbReference", { id: entry.key })}
+                  </span>
                   <b>{entry.value}</b>
                 </li>
               ))}
