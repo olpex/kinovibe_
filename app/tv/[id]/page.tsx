@@ -208,6 +208,11 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
                   <p>
                     {item.genre} · {item.year}
                   </p>
+                  <p>
+                    {item.countries.length > 0
+                      ? item.countries.join(", ")
+                      : translate(locale, "common.notAvailable")}
+                  </p>
                 </div>
               </Link>
             ))}

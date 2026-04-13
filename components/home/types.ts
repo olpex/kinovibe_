@@ -3,6 +3,7 @@ export type MovieCard = {
   title: string;
   year: number;
   genre: string;
+  countries: string[];
   runtime: string;
   rating: number;
   progress?: number;

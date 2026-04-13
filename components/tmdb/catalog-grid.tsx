@@ -24,6 +24,10 @@ export function CatalogMovieGrid({
     <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
       {items.map((item) => {
         const hasPoster = Boolean(item.posterUrl);
+        const countriesLabel =
+          item.countries.length > 0
+            ? item.countries.join(", ")
+            : translate(locale, "common.notAvailable");
         return (
           <Link key={item.id} href={`${hrefPrefix}/${item.id}`} className={styles.card}>
             <div
@@ -41,6 +45,7 @@ export function CatalogMovieGrid({
               <p>
                 {item.genre} · {item.year}
               </p>
+              <p>{countriesLabel}</p>
               <span>{item.rating.toFixed(1)}</span>
             </div>
           </Link>

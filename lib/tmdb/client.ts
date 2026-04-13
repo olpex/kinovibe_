@@ -683,6 +683,7 @@ export type HomeMovie = {
   title: string;
   year: number;
   genre: string;
+  countries: string[];
   runtime: string;
   rating: number;
   progress?: number;
@@ -702,6 +703,7 @@ export function mapTmdbMovieToCard(
     title: movie.title,
     year: parseYear(movie.release_date),
     genre: genreLabel(movie.genre_ids, genresMap, locale),
+    countries: [],
     runtime: formatRuntime(null, movie.id, locale),
     rating: movie.vote_average || 0,
     gradient: gradientByMovieId(movie.id),
@@ -717,6 +719,7 @@ export function mapTmdbTvToCard(tv: TmdbTv, genresMap: Map<number, string>, loca
     title: tv.name,
     year: parseYear(tv.first_air_date),
     genre: genreLabel(tv.genre_ids, genresMap, locale),
+    countries: localizeCountryCodes(tv.origin_country ?? [], locale),
     runtime: translate(locale, "nav.tvShows"),
     rating: tv.vote_average || 0,
     gradient: gradientByMovieId(tv.id),
@@ -727,31 +730,35 @@ export function mapTmdbTvToCard(tv: TmdbTv, genresMap: Map<number, string>, loca
 }
 
 async function localizeCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
-  const [title, genre, overview] = await Promise.all([
+  const [title, genre, overview, countries] = await Promise.all([
     locale === "en" ? Promise.resolve(card.title) : translateText(card.title, locale),
     locale === "en" ? Promise.resolve(card.genre) : translateText(card.genre, locale),
-    locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale)
+    locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale),
+    card.countries.length > 0 ? Promise.resolve(card.countries) : getTmdbMovieCountryNames(card.id, locale)
   ]);
 
   return {
     ...card,
     title: title || card.title,
     genre,
+    countries,
     overview: overview || card.overview
   };
 }
 
 async function localizeTvCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
-  const [title, genre, overview] = await Promise.all([
+  const [title, genre, overview, countries] = await Promise.all([
     locale === "en" ? Promise.resolve(card.title) : translateText(card.title, locale),
     locale === "en" ? Promise.resolve(card.genre) : translateText(card.genre, locale),
-    locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale)
+    locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale),
+    card.countries.length > 0 ? Promise.resolve(card.countries) : getTmdbTvCountryNames(card.id, locale)
   ]);
 
   return {
     ...card,
     title: title || card.title,
     genre,
+    countries,
     overview: overview || card.overview
   };
 }
@@ -1055,6 +1062,23 @@ function localizeCountryName(code: string, fallback: string, locale: Locale): st
   } catch {
     return fallback;
   }
+}
+
+function localizeCountryCodes(countryCodes: string[], locale: Locale): string[] {
+  if (!countryCodes || countryCodes.length === 0) {
+    return [];
+  }
+
+  const localized = new Set<string>();
+  for (const rawCode of countryCodes) {
+    const code = rawCode?.trim().toUpperCase();
+    if (!code) {
+      continue;
+    }
+    localized.add(localizeCountryName(code, code, locale));
+  }
+
+  return Array.from(localized);
 }
 
 export const getTmdbCountries = cache(
@@ -1408,6 +1432,36 @@ function localizeCountryNames(
 
   return Array.from(names);
 }
+
+const getTmdbMovieCountryNames = cache(
+  async (movieId: number, locale: Locale): Promise<string[]> => {
+    try {
+      const details = await fetchTmdb<TmdbMovieDetailsResponse>(
+        `/movie/${movieId}`,
+        { language: toTmdbLanguage(locale) },
+        86400
+      );
+      return localizeCountryNames(details.production_countries ?? [], locale);
+    } catch {
+      return [];
+    }
+  }
+);
+
+const getTmdbTvCountryNames = cache(
+  async (tvId: number, locale: Locale): Promise<string[]> => {
+    try {
+      const details = await fetchTmdb<TmdbTvDetailsResponse>(
+        `/tv/${tvId}`,
+        { language: toTmdbLanguage(locale) },
+        86400
+      );
+      return localizeCountryNames(details.production_countries ?? [], locale);
+    } catch {
+      return [];
+    }
+  }
+);
 
 type CreditCastPerson = {
   id: number;

@@ -32,6 +32,10 @@ export function MediaRail({
         ) : null}
         {items.map((item) => {
           const hasPoster = Boolean(item.posterUrl);
+          const countriesLabel =
+            item.countries.length > 0
+              ? item.countries.join(", ")
+              : translate(locale, "common.notAvailable");
           return (
             <li key={item.id} className={styles.railItem}>
               <Link
@@ -55,6 +59,7 @@ export function MediaRail({
                   <p>
                     {item.year} · {item.runtime}
                   </p>
+                  <p>{countriesLabel}</p>
                   <div className={styles.metaRow}>
                     <span className={styles.rating}>{item.rating.toFixed(1)}</span>
                     <span className={styles.inlineCta}>{translate(locale, "home.details")}</span>

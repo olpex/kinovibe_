@@ -126,6 +126,7 @@ export type TmdbTv = {
   first_air_date: string | null;
   vote_average: number;
   genre_ids: number[];
+  origin_country?: string[];
   poster_path: string | null;
   backdrop_path: string | null;
   overview: string;

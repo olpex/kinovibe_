@@ -17,6 +17,7 @@ export const trendingNow: MovieCard[] = [
     title: "Solar Drift",
     year: 2025,
     genre: "Sci-Fi",
+    countries: ["USA"],
     runtime: "2h 04m",
     rating: 8.6,
     gradient: ["#3A0CA3", "#4CC9F0"]
@@ -26,6 +27,7 @@ export const trendingNow: MovieCard[] = [
     title: "Echo Unit",
     year: 2026,
     genre: "Action",
+    countries: ["UK"],
     runtime: "1h 52m",
     rating: 7.9,
     gradient: ["#9D0208", "#FFBA08"]
@@ -35,6 +37,7 @@ export const trendingNow: MovieCard[] = [
     title: "Quiet Orbit",
     year: 2024,
     genre: "Drama",
+    countries: ["Canada"],
     runtime: "2h 16m",
     rating: 8.1,
     gradient: ["#1B4332", "#95D5B2"]
@@ -44,6 +47,7 @@ export const trendingNow: MovieCard[] = [
     title: "Neon Harbor",
     year: 2026,
     genre: "Thriller",
+    countries: ["USA", "Japan"],
     runtime: "1h 47m",
     rating: 7.8,
     gradient: ["#03045E", "#00B4D8"]
@@ -53,6 +57,7 @@ export const trendingNow: MovieCard[] = [
     title: "Paper Moonline",
     year: 2025,
     genre: "Mystery",
+    countries: ["France"],
     runtime: "2h 02m",
     rating: 8.3,
     gradient: ["#6A040F", "#F48C06"]
@@ -65,6 +70,7 @@ export const continueWatching: MovieCard[] = [
     title: "Skyline 71",
     year: 2025,
     genre: "Action",
+    countries: ["USA"],
     runtime: "1h 59m",
     rating: 7.6,
     progress: 72,
@@ -75,6 +81,7 @@ export const continueWatching: MovieCard[] = [
     title: "Lantern City",
     year: 2024,
     genre: "Mystery",
+    countries: ["Japan"],
     runtime: "2h 09m",
     rating: 8.0,
     progress: 39,
@@ -85,6 +92,7 @@ export const continueWatching: MovieCard[] = [
     title: "Arctic Signal",
     year: 2026,
     genre: "Thriller",
+    countries: ["Norway"],
     runtime: "1h 44m",
     rating: 7.7,
     progress: 54,
@@ -98,6 +106,7 @@ export const topPicks: MovieCard[] = [
     title: "Atlas of Fire",
     year: 2025,
     genre: "Fantasy",
+    countries: ["New Zealand"],
     runtime: "2h 22m",
     rating: 8.4,
     gradient: ["#6D4C41", "#FF7043"]
@@ -107,6 +116,7 @@ export const topPicks: MovieCard[] = [
     title: "Static Bloom",
     year: 2026,
     genre: "Sci-Fi",
+    countries: ["Germany"],
     runtime: "1h 56m",
     rating: 8.2,
     gradient: ["#1D3557", "#A8DADC"]
@@ -116,6 +126,7 @@ export const topPicks: MovieCard[] = [
     title: "Shoreline Trial",
     year: 2024,
     genre: "Drama",
+    countries: ["Italy"],
     runtime: "2h 11m",
     rating: 7.9,
     gradient: ["#8D0801", "#FAA307"]
@@ -125,6 +136,7 @@ export const topPicks: MovieCard[] = [
     title: "Wired Summer",
     year: 2025,
     genre: "Comedy",
+    countries: ["Spain"],
     runtime: "1h 43m",
     rating: 7.4,
     gradient: ["#2A9D8F", "#E9C46A"]
