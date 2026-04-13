@@ -396,6 +396,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "watchlist.statusLabel": "Status",
   "watchlist.progress": "Progress",
   "watchlist.saveProgress": "Save progress",
+  "watchlist.saveStatus": "Save status",
   "watchlist.markWatching": "Mark watching",
   "watchlist.markWatched": "Mark watched",
   "watchlist.remove": "Remove",

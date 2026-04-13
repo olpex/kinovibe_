@@ -97,19 +97,8 @@ export function WatchlistControls({ initialState, movie, locale }: WatchlistCont
                 <option value="watched">{translate(locale, "watchlist.status.watched")}</option>
               </select>
             </label>
-            <label className={styles.field}>
-              <span>{translate(locale, "watchlist.progress")} ({state.progressPercent}%)</span>
-              <input
-                name="progressPercent"
-                type="range"
-                min="0"
-                max="100"
-                defaultValue={state.progressPercent}
-                disabled={isPending}
-              />
-            </label>
             <button name="operation" value="save" disabled={isPending} className={styles.secondaryAction}>
-              {translate(locale, "watchlist.saveProgress")}
+              {translate(locale, "watchlist.saveStatus")}
             </button>
           </form>
 

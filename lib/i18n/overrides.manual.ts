@@ -17,6 +17,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Перевірте, чи правильно налаштовані таблиці фільмів і списку перегляду.",
     "home.browseGenreAria": "Переглянути фільми жанру {genre}",
     "home.progressAria": "{progress}% переглянуто",
+    "watchlist.saveStatus": "Зберегти статус",
     "search.resultsFor": "результатів для",
     "movie.detailsUnavailable": "Деталі недоступні"
   },

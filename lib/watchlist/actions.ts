@@ -38,16 +38,6 @@ function clampProgress(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function deriveStatus(progressPercent: number, fallback: WatchlistStatus): WatchlistStatus {
-  if (progressPercent >= 100) {
-    return "watched";
-  }
-  if (progressPercent > 0) {
-    return "watching";
-  }
-  return fallback;
-}
-
 function parseMoviePayload(formData: FormData): WatchlistMoviePayload | null {
   const tmdbId = asNumber(formData.get("tmdbId"), 0);
   const title = asString(formData.get("title")).trim();
@@ -175,13 +165,18 @@ export async function watchlistAction(
     status = "watched";
     progressPercent = 100;
   } else if (operation === "save") {
-    const requestedProgress = clampProgress(asNumber(formData.get("progressPercent"), progressPercent));
     const requestedStatusRaw = asString(formData.get("status"));
     const requestedStatus = isWatchlistStatus(requestedStatusRaw)
       ? requestedStatusRaw
       : status;
-    progressPercent = requestedProgress;
-    status = deriveStatus(progressPercent, requestedStatus);
+    status = requestedStatus;
+    if (status === "to_watch") {
+      progressPercent = 0;
+    } else if (status === "watching") {
+      progressPercent = Math.max(10, Math.min(progressPercent, 95));
+    } else if (status === "watched") {
+      progressPercent = 100;
+    }
   }
 
   const { error } = await supabase.from("watchlist_items").upsert(
