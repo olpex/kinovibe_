@@ -248,6 +248,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
 
       <section className={styles.section}>
         <h2>{translate(locale, "movie.cast")}</h2>
+        <p className={styles.castHint}>{translate(locale, "movie.castPhotoOnlyHint")}</p>
         <div className={styles.castGrid}>
           {movie.cast.map((person) => (
             <Link key={person.id} href={`/person/${person.id}`} className={styles.castCard}>

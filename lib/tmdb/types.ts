@@ -244,6 +244,14 @@ export type TmdbPersonDetailsResponse = {
   homepage: string | null;
 };
 
+export type TmdbPersonDetailsWithImagesResponse = TmdbPersonDetailsResponse & {
+  images?: {
+    profiles: Array<{
+      file_path: string | null;
+    }>;
+  };
+};
+
 export type TmdbPersonCombinedCreditsResponse = {
   cast: Array<{
     id: number;

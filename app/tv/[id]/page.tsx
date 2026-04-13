@@ -166,6 +166,7 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
 
         <section className={styles.section}>
           <h2>{translate(locale, "movie.cast")}</h2>
+          <p className={styles.castHint}>{translate(locale, "movie.castPhotoOnlyHint")}</p>
           <div className={styles.castGrid}>
             {tv.cast.map((person) => (
               <Link key={person.id} href={`/person/${person.id}`} className={styles.castCard}>

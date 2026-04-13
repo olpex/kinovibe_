@@ -16,6 +16,7 @@ import {
   TmdbPeopleResponse,
   TmdbPersonCombinedCreditsResponse,
   TmdbPersonDetailsResponse,
+  TmdbPersonDetailsWithImagesResponse,
   TmdbPersonKnownForItem,
   TmdbKeywordSearchResponse,
   TmdbTv,
@@ -1366,6 +1367,182 @@ function toUniqueNames(names: Array<string | null | undefined>): string[] {
   return Array.from(unique);
 }
 
+type CreditCastPerson = {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+};
+
+type CastPersonView = {
+  id: number;
+  name: string;
+  character: string;
+  avatarUrl?: string;
+};
+
+type PersonSnapshot = {
+  profilePath?: string;
+  biography?: string;
+  department?: string;
+};
+
+function firstProfilePath(
+  profiles:
+    | Array<{
+        file_path: string | null;
+      }>
+    | undefined
+): string | undefined {
+  if (!profiles || profiles.length === 0) {
+    return undefined;
+  }
+  for (const profile of profiles) {
+    const path = profile.file_path?.trim();
+    if (path) {
+      return path;
+    }
+  }
+  return undefined;
+}
+
+function toBiographySnippet(text: string | undefined, maxLength = 150): string | undefined {
+  const normalized = text?.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  const sentenceEnd = normalized.indexOf(".", 80);
+  if (sentenceEnd > 0 && sentenceEnd <= maxLength + 40) {
+    return `${normalized.slice(0, sentenceEnd + 1).trim()}`;
+  }
+
+  return `${normalized.slice(0, maxLength).trimEnd()}...`;
+}
+
+const getTmdbPersonSnapshot = cache(
+  async (personId: number, locale: Locale): Promise<PersonSnapshot> => {
+    const language = toTmdbLanguage(locale);
+    const localized = await fetchTmdb<TmdbPersonDetailsWithImagesResponse>(
+      `/person/${personId}`,
+      {
+        language,
+        append_to_response: "images"
+      },
+      86400
+    );
+
+    const localizedProfilePath =
+      localized.profile_path ?? firstProfilePath(localized.images?.profiles);
+    const localizedBiography = normalizeNonEmptyText(localized.biography);
+    const localizedDepartment = normalizeNonEmptyText(localized.known_for_department);
+
+    if (localizedProfilePath && localizedBiography && localizedDepartment) {
+      return {
+        profilePath: localizedProfilePath,
+        biography: localizedBiography,
+        department: localizedDepartment
+      };
+    }
+
+    if (language === "en-US") {
+      return {
+        profilePath: localizedProfilePath,
+        biography: localizedBiography,
+        department: localizedDepartment
+      };
+    }
+
+    try {
+      const english = await fetchTmdb<TmdbPersonDetailsWithImagesResponse>(
+        `/person/${personId}`,
+        {
+          language: "en-US",
+          append_to_response: "images"
+        },
+        86400
+      );
+
+      return {
+        profilePath:
+          localizedProfilePath ?? english.profile_path ?? firstProfilePath(english.images?.profiles),
+        biography: localizedBiography ?? normalizeNonEmptyText(english.biography),
+        department: localizedDepartment ?? normalizeNonEmptyText(english.known_for_department)
+      };
+    } catch {
+      return {
+        profilePath: localizedProfilePath,
+        biography: localizedBiography,
+        department: localizedDepartment
+      };
+    }
+  }
+);
+
+function resolveCastDescription(
+  person: CreditCastPerson,
+  snapshot: PersonSnapshot | undefined,
+  locale: Locale
+): string {
+  const role = normalizeNonEmptyText(person.character);
+  if (role) {
+    return role;
+  }
+
+  const biographySnippet = toBiographySnippet(snapshot?.biography);
+  if (biographySnippet) {
+    return biographySnippet;
+  }
+
+  const department = normalizeNonEmptyText(snapshot?.department);
+  if (department) {
+    return `${translate(locale, "movie.castDepartment")}: ${department}`;
+  }
+
+  return translate(locale, "movie.castDescriptionUnavailable");
+}
+
+async function buildCastPeople(
+  cast: CreditCastPerson[],
+  locale: Locale
+): Promise<CastPersonView[]> {
+  const candidateCast = cast.slice(0, 40);
+  const enriched = await Promise.all(
+    candidateCast.map(async (person) => {
+      let snapshot: PersonSnapshot | undefined;
+      const role = normalizeNonEmptyText(person.character);
+      if (!person.profile_path || !role) {
+        try {
+          snapshot = await getTmdbPersonSnapshot(person.id, locale);
+        } catch {
+          snapshot = undefined;
+        }
+      }
+
+      const avatarPath = person.profile_path ?? snapshot?.profilePath;
+      if (!avatarPath) {
+        return null;
+      }
+
+      return {
+        id: person.id,
+        name: person.name,
+        character: resolveCastDescription(person, snapshot, locale),
+        avatarUrl: posterUrl(avatarPath)
+      };
+    })
+  );
+
+  const filtered = enriched.filter(
+    (person): person is NonNullable<(typeof enriched)[number]> => person !== null
+  );
+  return filtered.slice(0, 12);
+}
+
 export const getTmdbMovieDetails = cache(
   async (movieId: number, locale: Locale = "en"): Promise<MovieDetailsView> => {
     const language = toTmdbLanguage(locale);
@@ -1463,6 +1640,7 @@ export const getTmdbMovieDetails = cache(
     ]);
 
     const releaseTitle = await getRegionalReleaseTitle(movieId, locale);
+    const cast = await buildCastPeople(credits.cast, locale);
     const trailerUrl =
       buildVideoUrl(trailer) ??
       buildYoutubeTrailerSearchUrl(
@@ -1494,12 +1672,7 @@ export const getTmdbMovieDetails = cache(
       backdropUrl: backdropUrl(details.backdrop_path),
       trailerUrl,
       trailerName: trailer?.name,
-      cast: credits.cast.slice(0, 12).map((person) => ({
-        id: person.id,
-        name: person.name,
-        character: person.character,
-        avatarUrl: posterUrl(person.profile_path)
-      })),
+      cast,
       watchProviders: {
         region: providerRegionCode ?? translate(locale, "common.notAvailable"),
         link: providerRegion?.link,
@@ -1650,6 +1823,7 @@ export const getTmdbTvDetails = cache(
         (regionalTitle ?? translatedTitle) || details.name,
         parseOptionalYear(details.first_air_date)
       );
+    const cast = await buildCastPeople(credits.cast, locale);
     const runtime = details.episode_run_time[0]
       ? formatRuntime(details.episode_run_time[0], tvId, locale)
       : translate(locale, "home.runtimeTbd");
@@ -1678,12 +1852,7 @@ export const getTmdbTvDetails = cache(
       backdropUrl: backdropUrl(details.backdrop_path),
       trailerUrl,
       trailerName: trailer?.name,
-      cast: credits.cast.slice(0, 12).map((person) => ({
-        id: person.id,
-        name: person.name,
-        character: person.character,
-        avatarUrl: posterUrl(person.profile_path)
-      })),
+      cast,
       watchProviders: {
         region: providerRegionCode ?? translate(locale, "common.notAvailable"),
         link: providerRegion?.link,
@@ -1756,29 +1925,37 @@ async function localizePersonCredit(
 export const getTmdbPersonDetails = cache(
   async (personId: number, locale: Locale = "en"): Promise<PersonDetailsView> => {
     const language = toTmdbLanguage(locale);
-    const [details, credits] = await Promise.all([
+    const [details, credits, snapshot] = await Promise.all([
       fetchTmdb<TmdbPersonDetailsResponse>(`/person/${personId}`, { language }, 3600),
       fetchTmdb<TmdbPersonCombinedCreditsResponse>(
         `/person/${personId}/combined_credits`,
         { language },
         3600
-      )
+      ),
+      getTmdbPersonSnapshot(personId, locale)
     ]);
 
+    const normalizedDetailsBiography = normalizeNonEmptyText(details.biography);
+    const biographySource = normalizedDetailsBiography ?? snapshot.biography ?? "";
     const biography =
-      locale === "en" ? details.biography : await translateText(details.biography || "", locale);
+      locale === "en" || normalizedDetailsBiography
+        ? biographySource
+        : await translateText(biographySource, locale);
 
     return {
       id: details.id,
       name: details.name,
       biography,
-      department: details.known_for_department || translate(locale, "common.notAvailable"),
+      department:
+        normalizeNonEmptyText(details.known_for_department) ??
+        snapshot.department ??
+        translate(locale, "common.notAvailable"),
       birthDate: details.birthday,
       placeOfBirth: details.place_of_birth,
       popularity: details.popularity || 0,
       aka: details.also_known_as ?? [],
       homepage: details.homepage,
-      avatarUrl: posterUrl(details.profile_path),
+      avatarUrl: posterUrl(details.profile_path ?? snapshot.profilePath ?? null),
       knownFor: await Promise.all(
         credits.cast
           .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
