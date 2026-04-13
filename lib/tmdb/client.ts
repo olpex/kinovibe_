@@ -1031,10 +1031,27 @@ export const getTmdbTvGenres = cache(async (locale: Locale = "en"): Promise<TvGe
     .sort((a, b) => a.name.localeCompare(b.name));
 });
 
+const COUNTRY_ABBREVIATIONS_BY_LOCALE: Partial<Record<Locale, Record<string, string>>> = {
+  en: {
+    US: "USA",
+    GB: "UK"
+  },
+  uk: {
+    US: "США",
+    GB: "Велика Британія"
+  }
+};
+
 function localizeCountryName(code: string, fallback: string, locale: Locale): string {
+  const normalizedCode = code.trim().toUpperCase();
+  const abbreviation = COUNTRY_ABBREVIATIONS_BY_LOCALE[locale]?.[normalizedCode];
+  if (abbreviation) {
+    return abbreviation;
+  }
+
   try {
     const displayNames = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
-    return displayNames.of(code) ?? fallback;
+    return displayNames.of(normalizedCode) ?? fallback;
   } catch {
     return fallback;
   }
@@ -1367,6 +1384,31 @@ function toUniqueNames(names: Array<string | null | undefined>): string[] {
   return Array.from(unique);
 }
 
+function localizeCountryNames(
+  countries: Array<{ iso_3166_1: string; name: string }> | undefined,
+  locale: Locale
+): string[] {
+  if (!countries || countries.length === 0) {
+    return [];
+  }
+
+  const names = new Set<string>();
+  for (const country of countries) {
+    const code = country.iso_3166_1?.trim().toUpperCase();
+    const fallback = country.name?.trim();
+    if (!code || !fallback) {
+      continue;
+    }
+
+    const localized = localizeCountryName(code, fallback, locale);
+    if (localized) {
+      names.add(localized);
+    }
+  }
+
+  return Array.from(names);
+}
+
 type CreditCastPerson = {
   id: number;
   name: string;
@@ -1658,7 +1700,7 @@ export const getTmdbMovieDetails = cache(
       runtime: formatRuntime(details.runtime, details.id, locale),
       status: translatedStatus,
       originalLanguage: details.original_language.toUpperCase(),
-      countries: toUniqueNames((details.production_countries ?? []).map((country) => country.name)),
+      countries: localizeCountryNames(details.production_countries ?? [], locale),
       directors: toUniqueNames(
         credits.crew
           .filter((member) => member.job?.trim().toLowerCase() === "director")
@@ -1838,7 +1880,7 @@ export const getTmdbTvDetails = cache(
       runtime,
       status: translatedStatus,
       originalLanguage: details.original_language.toUpperCase(),
-      countries: toUniqueNames((details.production_countries ?? []).map((country) => country.name)),
+      countries: localizeCountryNames(details.production_countries ?? [], locale),
       directors: toUniqueNames([
         ...credits.crew
           .filter((member) => member.job?.trim().toLowerCase() === "director")

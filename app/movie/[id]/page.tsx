@@ -112,6 +112,9 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
     movie.countries.length > 0
       ? movie.countries.join(", ")
       : translate(locale, "common.notAvailable");
+  const directorsLabelKey = movie.directors.length > 1 ? "movie.directors" : "movie.director";
+  const countriesLabelKey =
+    movie.countries.length > 1 ? "movie.productionCountries" : "movie.productionCountry";
 
   return (
     <main className={styles.page}>
@@ -149,8 +152,8 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
             {movie.originalLanguage}
           </p>
           <p className={styles.metaSupplement}>
-            {translate(locale, "movie.directors")}: {directorsLabel} ·{" "}
-            {translate(locale, "movie.productionCountries")}: {countriesLabel}
+            {translate(locale, directorsLabelKey)}: {directorsLabel} ·{" "}
+            {translate(locale, countriesLabelKey)}: {countriesLabel}
           </p>
           <div className={styles.genreRow}>
             {movie.genres.map((genre) => (

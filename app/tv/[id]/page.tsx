@@ -64,6 +64,9 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
     tv.countries.length > 0
       ? tv.countries.join(", ")
       : translate(locale, "common.notAvailable");
+  const directorsLabelKey = tv.directors.length > 1 ? "movie.directors" : "movie.director";
+  const countriesLabelKey =
+    tv.countries.length > 1 ? "movie.productionCountries" : "movie.productionCountry";
 
   return (
     <main className={styles.page}>
@@ -95,8 +98,8 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
               {tv.year} · {tv.runtime} · {tv.rating.toFixed(1)} · {tv.status} · {tv.originalLanguage}
             </p>
             <p className={styles.metaSupplement}>
-              {translate(locale, "movie.directors")}: {directorsLabel} ·{" "}
-              {translate(locale, "movie.productionCountries")}: {countriesLabel}
+              {translate(locale, directorsLabelKey)}: {directorsLabel} ·{" "}
+              {translate(locale, countriesLabelKey)}: {countriesLabel}
             </p>
             <p className={styles.meta}>
               {translate(locale, "menu.seasons")}: {tv.seasons} · {translate(locale, "menu.episodes")}: {tv.episodes}
