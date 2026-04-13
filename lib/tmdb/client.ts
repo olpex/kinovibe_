@@ -1,8 +1,9 @@
 import { cache } from "react";
-import { toTmdbLanguage, translate, type Locale } from "@/lib/i18n/shared";
+import { toIntlLocale, toTmdbLanguage, translate, type Locale } from "@/lib/i18n/shared";
 import {
   TmdbAwardResult,
   TmdbAwardsResponse,
+  TmdbCountryResponseItem,
   TmdbMovieAlternativeTitlesResponse,
   TmdbMovieTranslationsResponse,
   TmdbGenreListResponse,
@@ -31,6 +32,10 @@ import {
   movieDiscoverFiltersToTmdbParams,
   type MovieDiscoverFilters
 } from "./movie-filters";
+import {
+  tvDiscoverFiltersToTmdbParams,
+  type TvDiscoverFilters
+} from "./tv-filters";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
@@ -816,6 +821,16 @@ export type MovieWatchProviderOption = {
   name: string;
 };
 
+export type TvGenreOption = {
+  id: number;
+  name: string;
+};
+
+export type TmdbCountryOption = {
+  code: string;
+  name: string;
+};
+
 export type MovieMenuCategory = "popular" | "now_playing" | "upcoming" | "top_rated" | "thriller";
 export type TvMenuCategory = "popular" | "airing_today" | "on_the_air" | "top_rated";
 
@@ -995,6 +1010,109 @@ export async function getTmdbTvCatalogPage(
   const response = await fetchTmdb<TmdbTvResponse>(
     TV_CATEGORY_PATH[category],
     { language, page: String(safePage) },
+    900
+  );
+
+  return {
+    page: response.page,
+    totalPages: response.total_pages,
+    totalResults: response.total_results,
+    items: await Promise.all(
+      response.results.map((tv) => localizeTvCard(mapTmdbTvToCard(tv, genresMap, locale), locale))
+    )
+  };
+}
+
+export const getTmdbTvGenres = cache(async (locale: Locale = "en"): Promise<TvGenreOption[]> => {
+  const genresMap = await getTvGenresMap(locale);
+  return Array.from(genresMap.entries())
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+});
+
+function localizeCountryName(code: string, fallback: string, locale: Locale): string {
+  try {
+    const displayNames = new Intl.DisplayNames([toIntlLocale(locale)], { type: "region" });
+    return displayNames.of(code) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export const getTmdbCountries = cache(
+  async (locale: Locale = "en"): Promise<TmdbCountryOption[]> => {
+    const response = await fetchTmdb<TmdbCountryResponseItem[]>("/configuration/countries", {}, 3600);
+
+    return response
+      .map((entry) => {
+        const code = entry.iso_3166_1?.trim().toUpperCase();
+        const englishName = entry.english_name?.trim();
+        if (!code || !englishName) {
+          return null;
+        }
+
+        return {
+          code,
+          name: localizeCountryName(code, englishName, locale)
+        } satisfies TmdbCountryOption;
+      })
+      .filter((entry): entry is TmdbCountryOption => Boolean(entry))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+);
+
+function formatUtcDate(value: Date): string {
+  const year = value.getUTCFullYear();
+  const month = String(value.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(value.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getTvCategoryDiscoverParams(category: TvMenuCategory): Record<string, string> {
+  if (category === "airing_today") {
+    const today = formatUtcDate(new Date());
+    return {
+      "air_date.gte": today,
+      "air_date.lte": today
+    };
+  }
+
+  if (category === "on_the_air") {
+    return {
+      with_status: "0"
+    };
+  }
+
+  if (category === "top_rated") {
+    return {
+      sort_by: "vote_average.desc",
+      "vote_count.gte": "200"
+    };
+  }
+
+  return {};
+}
+
+export async function discoverTmdbTvCatalogPage(
+  category: TvMenuCategory,
+  filters: TvDiscoverFilters,
+  locale: Locale = "en",
+  page = 1
+): Promise<TmdbPagedCards> {
+  const safePage = Math.max(1, Math.min(page, 500));
+  const language = toTmdbLanguage(locale);
+  const genresMap = await getTvGenresMap(locale);
+  const categoryParams = getTvCategoryDiscoverParams(category);
+  const filterParams = tvDiscoverFiltersToTmdbParams(filters);
+
+  const response = await fetchTmdb<TmdbTvResponse>(
+    "/discover/tv",
+    {
+      language,
+      page: String(safePage),
+      ...categoryParams,
+      ...filterParams
+    },
     900
   );
 

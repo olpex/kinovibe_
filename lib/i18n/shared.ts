@@ -486,6 +486,8 @@ const BASE_MESSAGES: Record<string, string> = {
   "movie.filters.sort.releaseDateAsc": "Release date ascending",
   "movie.filters.sort.voteCountDesc": "Vote count descending",
   "movie.filters.sort.voteCountAsc": "Vote count ascending",
+  "tv.filters.title": "Filter TV shows",
+  "tv.filters.allCountries": "Any country",
 
   "person.mediaTypeMovie": "Movie",
   "person.mediaTypeTv": "TV Series",
@@ -723,6 +725,8 @@ const UK_MESSAGES: Record<string, string> = {
   "movie.filters.sort.releaseDateAsc": "За датою релізу (старіші)",
   "movie.filters.sort.voteCountDesc": "За кількістю голосів (спадання)",
   "movie.filters.sort.voteCountAsc": "За кількістю голосів (зростання)",
+  "tv.filters.title": "Фільтр серіалів",
+  "tv.filters.allCountries": "Будь-яка країна",
 
   "person.mediaTypeMovie": "Фільм",
   "person.mediaTypeTv": "Серіал",

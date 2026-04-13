@@ -270,3 +270,8 @@ export type TmdbKeywordSearchResponse = {
   total_pages: number;
   total_results: number;
 };
+
+export type TmdbCountryResponseItem = {
+  iso_3166_1: string;
+  english_name: string;
+};
