@@ -35,7 +35,7 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
   try {
     [tv, discussions] = await Promise.all([
       getTmdbTvDetails(tvId, locale),
-      getMediaDiscussions("tv", tvId)
+      getMediaDiscussions("tv", tvId, locale)
     ]);
   } catch {
     tv = null;

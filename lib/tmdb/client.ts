@@ -4,6 +4,7 @@ import {
   TmdbAwardResult,
   TmdbAwardsResponse,
   TmdbMovieAlternativeTitlesResponse,
+  TmdbMovieTranslationsResponse,
   TmdbGenreListResponse,
   TmdbMovie,
   TmdbMovieCreditsResponse,
@@ -21,7 +22,9 @@ import {
   TmdbTvCreditsResponse,
   TmdbTvDetailsResponse,
   TmdbTvResponse,
+  TmdbTvTranslationsResponse,
   TmdbTvVideosResponse,
+  TmdbTranslationEntry,
   TmdbWatchProvidersListResponse
 } from "./types";
 import {
@@ -106,13 +109,13 @@ function parseYear(releaseDate: string | null): number {
   return Number.isNaN(year) ? new Date().getUTCFullYear() : year;
 }
 
-function parseDisplayYear(releaseDate: string | null): string {
+function parseDisplayYear(releaseDate: string | null, locale: Locale): string {
   if (!releaseDate) {
-    return "TBA";
+    return translate(locale, "watchlist.tba");
   }
 
   const year = Number(releaseDate.slice(0, 4));
-  return Number.isNaN(year) ? "TBA" : String(year);
+  return Number.isNaN(year) ? translate(locale, "watchlist.tba") : String(year);
 }
 
 function parseOptionalYear(releaseDate: string | null | undefined): number | undefined {
@@ -124,14 +127,14 @@ function parseOptionalYear(releaseDate: string | null | undefined): number | und
   return Number.isNaN(year) ? undefined : year;
 }
 
-function formatRuntime(minutes: number | null | undefined, id: number): string {
+function formatRuntime(minutes: number | null | undefined, id: number, locale: Locale): string {
   if (typeof minutes === "number" && minutes > 0) {
     const hours = Math.floor(minutes / 60);
     const remaining = minutes % 60;
     return `${hours}h ${remaining.toString().padStart(2, "0")}m`;
   }
 
-  return "Runtime TBD";
+  return translate(locale, "home.runtimeTbd");
 }
 
 function posterUrl(path: string | null): string | undefined {
@@ -153,14 +156,14 @@ function gradientByMovieId(id: number): [string, string] {
   return [pair[0], pair[1]];
 }
 
-function genreLabel(genreIds: number[], genresMap: Map<number, string>): string {
+function genreLabel(genreIds: number[], genresMap: Map<number, string>, locale: Locale): string {
   for (const id of genreIds) {
     const label = genresMap.get(id);
     if (label) {
       return label;
     }
   }
-  return "Cinema";
+  return translate(locale, "home.defaultGenre");
 }
 
 function pickHomeGenres(genresMap: Map<number, string>): Array<{ id: number; name: string }> {
@@ -384,6 +387,147 @@ const translateText = cache(
   }
 );
 
+type LocalizedField = "overview" | "tagline" | "title" | "name";
+
+function normalizeNonEmptyText(value: string | null | undefined): string | undefined {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
+}
+
+function parseTmdbLanguageParts(language: string): { languageCode: string; regionCode?: string } {
+  const [rawLanguageCode, rawRegionCode] = language.split("-");
+  const languageCode = rawLanguageCode?.trim().toLowerCase() || "en";
+  const regionCode = rawRegionCode?.trim().toUpperCase();
+  return regionCode ? { languageCode, regionCode } : { languageCode };
+}
+
+function scoreTranslationEntry(
+  entry: TmdbTranslationEntry,
+  targetLanguageCode: string,
+  targetRegionCode?: string
+): number {
+  const languageCode = entry.iso_639_1.toLowerCase();
+  const regionCode = entry.iso_3166_1.toUpperCase();
+
+  let score = 0;
+  if (languageCode === targetLanguageCode) {
+    score += 100;
+  }
+  if (targetRegionCode && regionCode === targetRegionCode) {
+    score += 20;
+  }
+  if (languageCode === "en") {
+    score += 10;
+  }
+  if (regionCode === "US") {
+    score += 2;
+  }
+
+  return score;
+}
+
+function sortTranslationsByPriority(
+  translations: TmdbTranslationEntry[],
+  targetLanguageCode: string,
+  targetRegionCode?: string
+): TmdbTranslationEntry[] {
+  return translations
+    .map((entry, index) => ({
+      entry,
+      index,
+      score: scoreTranslationEntry(entry, targetLanguageCode, targetRegionCode)
+    }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.entry);
+}
+
+function pickTranslationText(
+  translations: TmdbTranslationEntry[],
+  field: LocalizedField,
+  targetLanguageCode: string,
+  targetRegionCode?: string
+): { text: string; sourceLanguageCode: string } | null {
+  const sortedTranslations = sortTranslationsByPriority(
+    translations,
+    targetLanguageCode,
+    targetRegionCode
+  );
+
+  for (const translation of sortedTranslations) {
+    const candidate = normalizeNonEmptyText(translation.data?.[field]);
+    if (candidate) {
+      return {
+        text: candidate,
+        sourceLanguageCode: translation.iso_639_1.toLowerCase()
+      };
+    }
+  }
+
+  return null;
+}
+
+function resolveLocalizedText(
+  localizedText: string | null | undefined,
+  englishText: string | null | undefined,
+  translations: TmdbTranslationEntry[],
+  field: LocalizedField,
+  targetLanguageCode: string,
+  targetRegionCode?: string
+): { text: string; sourceLanguageCode: string } {
+  const normalizedLocalized = normalizeNonEmptyText(localizedText);
+  const normalizedEnglish = normalizeNonEmptyText(englishText);
+
+  if (normalizedLocalized) {
+    const localizedIsEnglish =
+      Boolean(normalizedEnglish) && normalizedLocalized === normalizedEnglish;
+
+    return {
+      text: normalizedLocalized,
+      sourceLanguageCode: localizedIsEnglish ? "en" : targetLanguageCode
+    };
+  }
+
+  const translatedFallback = pickTranslationText(
+    translations,
+    field,
+    targetLanguageCode,
+    targetRegionCode
+  );
+  if (translatedFallback) {
+    return translatedFallback;
+  }
+
+  if (normalizedEnglish) {
+    return {
+      text: normalizedEnglish,
+      sourceLanguageCode: "en"
+    };
+  }
+
+  return {
+    text: "",
+    sourceLanguageCode: targetLanguageCode
+  };
+}
+
+async function translateIfNeeded(
+  text: string,
+  locale: Locale,
+  sourceLanguageCode: string,
+  targetLanguageCode: string
+): Promise<string> {
+  const normalized = text.trim();
+  if (!normalized) {
+    return "";
+  }
+
+  if (locale === "en" || sourceLanguageCode === targetLanguageCode) {
+    return text;
+  }
+
+  return translateText(text, locale);
+}
+
 async function fetchTmdb<T>(
   path: string,
   params: Record<string, string> = {},
@@ -452,6 +596,19 @@ async function fetchMovieVideosWithFallback(
   }
 }
 
+async function fetchMovieTranslations(movieId: number): Promise<TmdbTranslationEntry[]> {
+  try {
+    const response = await fetchTmdb<TmdbMovieTranslationsResponse>(
+      `/movie/${movieId}/translations`,
+      {},
+      3600
+    );
+    return response.translations ?? [];
+  } catch {
+    return [];
+  }
+}
+
 async function fetchTvVideosWithFallback(
   tvId: number,
   language: string
@@ -483,6 +640,15 @@ async function fetchTvVideosWithFallback(
   try {
     const neutral = await fetchTmdb<TmdbTvVideosResponse>(`/tv/${tvId}/videos`, {}, 3600);
     return neutral.results;
+  } catch {
+    return [];
+  }
+}
+
+async function fetchTvTranslations(tvId: number): Promise<TmdbTranslationEntry[]> {
+  try {
+    const response = await fetchTmdb<TmdbTvTranslationsResponse>(`/tv/${tvId}/translations`, {}, 3600);
+    return response.translations ?? [];
   } catch {
     return [];
   }
@@ -520,13 +686,17 @@ export type HomeMovie = {
   overview?: string;
 };
 
-export function mapTmdbMovieToCard(movie: TmdbMovie, genresMap: Map<number, string>): HomeMovie {
+export function mapTmdbMovieToCard(
+  movie: TmdbMovie,
+  genresMap: Map<number, string>,
+  locale: Locale
+): HomeMovie {
   return {
     id: movie.id,
     title: movie.title,
     year: parseYear(movie.release_date),
-    genre: genreLabel(movie.genre_ids, genresMap),
-    runtime: formatRuntime(null, movie.id),
+    genre: genreLabel(movie.genre_ids, genresMap, locale),
+    runtime: formatRuntime(null, movie.id, locale),
     rating: movie.vote_average || 0,
     gradient: gradientByMovieId(movie.id),
     posterUrl: posterUrl(movie.poster_path),
@@ -535,13 +705,13 @@ export function mapTmdbMovieToCard(movie: TmdbMovie, genresMap: Map<number, stri
   };
 }
 
-export function mapTmdbTvToCard(tv: TmdbTv, genresMap: Map<number, string>): HomeMovie {
+export function mapTmdbTvToCard(tv: TmdbTv, genresMap: Map<number, string>, locale: Locale): HomeMovie {
   return {
     id: tv.id,
     title: tv.name,
     year: parseYear(tv.first_air_date),
-    genre: genreLabel(tv.genre_ids, genresMap),
-    runtime: "Series",
+    genre: genreLabel(tv.genre_ids, genresMap, locale),
+    runtime: translate(locale, "nav.tvShows"),
     rating: tv.vote_average || 0,
     gradient: gradientByMovieId(tv.id),
     posterUrl: posterUrl(tv.poster_path),
@@ -551,30 +721,30 @@ export function mapTmdbTvToCard(tv: TmdbTv, genresMap: Map<number, string>): Hom
 }
 
 async function localizeCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
-  const [releaseTitle, genre, overview] = await Promise.all([
-    getRegionalReleaseTitle(card.id, locale),
+  const [title, genre, overview] = await Promise.all([
+    locale === "en" ? Promise.resolve(card.title) : translateText(card.title, locale),
     locale === "en" ? Promise.resolve(card.genre) : translateText(card.genre, locale),
     locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale)
   ]);
 
   return {
     ...card,
-    title: releaseTitle ?? card.title,
+    title: title || card.title,
     genre,
     overview: overview || card.overview
   };
 }
 
 async function localizeTvCard(card: HomeMovie, locale: Locale): Promise<HomeMovie> {
-  const [regionalTitle, genre, overview] = await Promise.all([
-    getRegionalTvTitle(card.id, locale),
+  const [title, genre, overview] = await Promise.all([
+    locale === "en" ? Promise.resolve(card.title) : translateText(card.title, locale),
     locale === "en" ? Promise.resolve(card.genre) : translateText(card.genre, locale),
     locale === "en" ? Promise.resolve(card.overview ?? "") : translateText(card.overview ?? "", locale)
   ]);
 
   return {
     ...card,
-    title: regionalTitle ?? card.title,
+    title: title || card.title,
     genre,
     overview: overview || card.overview
   };
@@ -599,19 +769,19 @@ export async function getTmdbHomeCatalog(locale: Locale = "en"): Promise<TmdbHom
 
   const trendingNow = trendingResponse.results
     .slice(0, 8)
-    .map((movie) => mapTmdbMovieToCard(movie, genresMap));
+    .map((movie) => mapTmdbMovieToCard(movie, genresMap, locale));
 
   const popular = popularResponse.results
     .slice(0, 8)
     .map((movie, index) => ({
-      ...mapTmdbMovieToCard(movie, genresMap),
+      ...mapTmdbMovieToCard(movie, genresMap, locale),
       progress: 24 + ((movie.id + index) % 63)
     }))
     .slice(0, 6);
 
   const topRated = topRatedResponse.results
     .slice(0, 8)
-    .map((movie) => mapTmdbMovieToCard(movie, genresMap));
+    .map((movie) => mapTmdbMovieToCard(movie, genresMap, locale));
 
   const [localizedTrendingNow, localizedPopular, localizedTopRated] = await Promise.all([
     Promise.all(trendingNow.map((movie) => localizeCard(movie, locale))),
@@ -698,7 +868,7 @@ export async function getTmdbMovieCatalogPage(
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap), locale))
+      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
     )
   };
 }
@@ -809,7 +979,7 @@ export async function discoverTmdbMovieCatalogPage(
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap), locale))
+      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
     )
   };
 }
@@ -833,7 +1003,7 @@ export async function getTmdbTvCatalogPage(
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((tv) => localizeTvCard(mapTmdbTvToCard(tv, genresMap), locale))
+      response.results.map((tv) => localizeTvCard(mapTmdbTvToCard(tv, genresMap, locale), locale))
     )
   };
 }
@@ -855,14 +1025,14 @@ export type TmdbPagedPeople = {
   items: PersonCard[];
 };
 
-function personKnownForLabel(items: TmdbPersonKnownForItem[]): string {
+function personKnownForLabel(items: TmdbPersonKnownForItem[], locale: Locale): string {
   if (items.length === 0) {
-    return "No known titles";
+    return translate(locale, "person.noKnownTitles");
   }
 
   return items
     .slice(0, 3)
-    .map((item) => item.title ?? item.name ?? "Untitled")
+    .map((item) => item.title ?? item.name ?? translate(locale, "person.untitled"))
     .join(", ");
 }
 
@@ -885,8 +1055,8 @@ export async function getTmdbPopularPeople(
     items: response.results.map((person) => ({
       id: person.id,
       name: person.name,
-      department: person.known_for_department || "Artist",
-      knownFor: personKnownForLabel(person.known_for ?? []),
+      department: person.known_for_department || translate(locale, "common.notAvailable"),
+      knownFor: personKnownForLabel(person.known_for ?? [], locale),
       popularity: person.popularity || 0,
       avatarUrl: posterUrl(person.profile_path),
       gradient: gradientByMovieId(person.id)
@@ -902,15 +1072,15 @@ export type AwardCard = {
   imageUrl?: string;
 };
 
-function mapAwardResult(item: TmdbAwardResult): AwardCard {
+function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard {
   return {
     id: item.id,
     title: item.name,
-    category: item.category ?? "Award",
+    category: item.category ?? translate(locale, "nav.awards"),
     year:
       typeof item.year === "number"
         ? String(item.year)
-        : parseDisplayYear(item.event_date ?? null),
+        : parseDisplayYear(item.event_date ?? null, locale),
     imageUrl: item.image_url ?? undefined
   };
 }
@@ -943,7 +1113,7 @@ export async function getTmdbAwards(
     );
     const results = response.results ?? [];
     if (results.length > 0) {
-      return results.slice(0, 24).map(mapAwardResult);
+      return results.slice(0, 24).map((item) => mapAwardResult(item, locale));
     }
   } catch {
     // TMDB public APIs may not expose awards in every environment.
@@ -1000,7 +1170,7 @@ export async function searchTmdbMovies(
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap), locale))
+      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
     )
   };
 }
@@ -1068,16 +1238,18 @@ function toUniqueProviderNames(
 export const getTmdbMovieDetails = cache(
   async (movieId: number, locale: Locale = "en"): Promise<MovieDetailsView> => {
     const language = toTmdbLanguage(locale);
-    const [details, detailsInEnglish, credits, videoResults, similar, providers] = await Promise.all([
-      fetchTmdb<TmdbMovieDetailsResponse>(`/movie/${movieId}`, { language }, 3600),
-      locale === "en"
-        ? Promise.resolve(null)
-        : fetchTmdb<TmdbMovieDetailsResponse>(`/movie/${movieId}`, { language: "en-US" }, 3600),
-      fetchTmdb<TmdbMovieCreditsResponse>(`/movie/${movieId}/credits`, { language }, 3600),
-      fetchMovieVideosWithFallback(movieId, language),
-      fetchTmdb<TmdbMoviesResponse>(`/movie/${movieId}/similar`, { language, page: "1" }, 3600),
-      fetchTmdb<TmdbMovieWatchProvidersResponse>(`/movie/${movieId}/watch/providers`, {}, 3600)
-    ]);
+    const [details, detailsInEnglish, credits, videoResults, similar, providers, translations] =
+      await Promise.all([
+        fetchTmdb<TmdbMovieDetailsResponse>(`/movie/${movieId}`, { language }, 3600),
+        locale === "en"
+          ? Promise.resolve(null)
+          : fetchTmdb<TmdbMovieDetailsResponse>(`/movie/${movieId}`, { language: "en-US" }, 3600),
+        fetchTmdb<TmdbMovieCreditsResponse>(`/movie/${movieId}/credits`, { language }, 3600),
+        fetchMovieVideosWithFallback(movieId, language),
+        fetchTmdb<TmdbMoviesResponse>(`/movie/${movieId}/similar`, { language, page: "1" }, 3600),
+        fetchTmdb<TmdbMovieWatchProvidersResponse>(`/movie/${movieId}/watch/providers`, {}, 3600),
+        fetchMovieTranslations(movieId)
+      ]);
 
     const trailer = selectBestTrailer(videoResults);
 
@@ -1094,35 +1266,87 @@ export const getTmdbMovieDetails = cache(
     const genresMap = await getGenresMap(locale);
     const similarItems = similar.results
       .slice(0, 8)
-      .map((movie) => mapTmdbMovieToCard(movie, genresMap));
+      .map((movie) => mapTmdbMovieToCard(movie, genresMap, locale));
 
-    const shouldTranslateFromEnglish =
-      locale !== "en" &&
-      detailsInEnglish !== null &&
-      details.overview === detailsInEnglish.overview;
+    const { languageCode: targetLanguageCode, regionCode: targetRegionCode } =
+      parseTmdbLanguageParts(language);
 
-    const [translatedOverview, translatedTagline, translatedStatus] =
-      shouldTranslateFromEnglish
-        ? await Promise.all([
-            translateText(details.overview || detailsInEnglish?.overview || "", locale),
-            translateText(details.tagline || detailsInEnglish?.tagline || "", locale),
-            translateText(details.status, locale)
-          ])
-        : [details.overview, details.tagline, details.status];
+    const resolvedOverview = resolveLocalizedText(
+      details.overview,
+      detailsInEnglish?.overview,
+      translations,
+      "overview",
+      targetLanguageCode,
+      targetRegionCode
+    );
+    const resolvedTagline = resolveLocalizedText(
+      details.tagline,
+      detailsInEnglish?.tagline,
+      translations,
+      "tagline",
+      targetLanguageCode,
+      targetRegionCode
+    );
+    const resolvedTitle = resolveLocalizedText(
+      details.title,
+      detailsInEnglish?.title,
+      translations,
+      "title",
+      targetLanguageCode,
+      targetRegionCode
+    );
+
+    const localizedStatus = normalizeNonEmptyText(details.status);
+    const englishStatus = normalizeNonEmptyText(detailsInEnglish?.status);
+    const resolvedStatusText = localizedStatus ?? englishStatus ?? "";
+    const resolvedStatusSourceLanguageCode =
+      localizedStatus && englishStatus && localizedStatus === englishStatus
+        ? "en"
+        : targetLanguageCode;
+
+    const [translatedOverview, translatedTagline, translatedStatus, translatedTitle] = await Promise.all([
+      translateIfNeeded(
+        resolvedOverview.text,
+        locale,
+        resolvedOverview.sourceLanguageCode,
+        targetLanguageCode
+      ),
+      translateIfNeeded(
+        resolvedTagline.text,
+        locale,
+        resolvedTagline.sourceLanguageCode,
+        targetLanguageCode
+      ),
+      translateIfNeeded(
+        resolvedStatusText,
+        locale,
+        resolvedStatusSourceLanguageCode,
+        targetLanguageCode
+      ),
+      translateIfNeeded(
+        resolvedTitle.text,
+        locale,
+        resolvedTitle.sourceLanguageCode,
+        targetLanguageCode
+      )
+    ]);
 
     const releaseTitle = await getRegionalReleaseTitle(movieId, locale);
     const trailerUrl =
       buildVideoUrl(trailer) ??
-      buildYoutubeTrailerSearchUrl(releaseTitle ?? details.title, parseOptionalYear(details.release_date));
+      buildYoutubeTrailerSearchUrl(
+        (releaseTitle ?? translatedTitle) || details.title,
+        parseOptionalYear(details.release_date)
+      );
 
     return {
       id: details.id,
-      title: releaseTitle ?? details.title,
+      title: translatedTitle || details.title,
       overview: translatedOverview,
       tagline: translatedTagline,
       year: parseYear(details.release_date),
       rating: details.vote_average || 0,
-      runtime: formatRuntime(details.runtime, details.id),
+      runtime: formatRuntime(details.runtime, details.id, locale),
       status: translatedStatus,
       originalLanguage: details.original_language.toUpperCase(),
       genres: details.genres.map((genre) => ({
@@ -1140,7 +1364,7 @@ export const getTmdbMovieDetails = cache(
         avatarUrl: posterUrl(person.profile_path)
       })),
       watchProviders: {
-        region: providerRegionCode ?? "N/A",
+        region: providerRegionCode ?? translate(locale, "common.notAvailable"),
         link: providerRegion?.link,
         subscription: toUniqueProviderNames(providerRegion?.flatrate),
         rent: toUniqueProviderNames(providerRegion?.rent),
@@ -1187,16 +1411,18 @@ export type TvDetailsView = {
 export const getTmdbTvDetails = cache(
   async (tvId: number, locale: Locale = "en"): Promise<TvDetailsView> => {
     const language = toTmdbLanguage(locale);
-    const [details, detailsInEnglish, credits, videoResults, similar, providers] = await Promise.all([
-      fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language }, 3600),
-      locale === "en"
-        ? Promise.resolve(null)
-        : fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language: "en-US" }, 3600),
-      fetchTmdb<TmdbTvCreditsResponse>(`/tv/${tvId}/credits`, { language }, 3600),
-      fetchTvVideosWithFallback(tvId, language),
-      fetchTmdb<TmdbTvResponse>(`/tv/${tvId}/similar`, { language, page: "1" }, 3600),
-      fetchTmdb<TmdbMovieWatchProvidersResponse>(`/tv/${tvId}/watch/providers`, {}, 3600)
-    ]);
+    const [details, detailsInEnglish, credits, videoResults, similar, providers, translations] =
+      await Promise.all([
+        fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language }, 3600),
+        locale === "en"
+          ? Promise.resolve(null)
+          : fetchTmdb<TmdbTvDetailsResponse>(`/tv/${tvId}`, { language: "en-US" }, 3600),
+        fetchTmdb<TmdbTvCreditsResponse>(`/tv/${tvId}/credits`, { language }, 3600),
+        fetchTvVideosWithFallback(tvId, language),
+        fetchTmdb<TmdbTvResponse>(`/tv/${tvId}/similar`, { language, page: "1" }, 3600),
+        fetchTmdb<TmdbMovieWatchProvidersResponse>(`/tv/${tvId}/watch/providers`, {}, 3600),
+        fetchTvTranslations(tvId)
+      ]);
 
     const trailer = selectBestTrailer(videoResults);
 
@@ -1213,33 +1439,85 @@ export const getTmdbTvDetails = cache(
     const genresMap = await getTvGenresMap(locale);
     const similarItems = similar.results
       .slice(0, 8)
-      .map((item) => mapTmdbTvToCard(item, genresMap));
+      .map((item) => mapTmdbTvToCard(item, genresMap, locale));
 
-    const shouldTranslateFromEnglish =
-      locale !== "en" &&
-      detailsInEnglish !== null &&
-      details.overview === detailsInEnglish.overview;
+    const { languageCode: targetLanguageCode, regionCode: targetRegionCode } =
+      parseTmdbLanguageParts(language);
 
-    const [translatedOverview, translatedTagline, translatedStatus] =
-      shouldTranslateFromEnglish
-        ? await Promise.all([
-            translateText(details.overview || detailsInEnglish?.overview || "", locale),
-            translateText(details.tagline || detailsInEnglish?.tagline || "", locale),
-            translateText(details.status, locale)
-          ])
-        : [details.overview, details.tagline, details.status];
+    const resolvedOverview = resolveLocalizedText(
+      details.overview,
+      detailsInEnglish?.overview,
+      translations,
+      "overview",
+      targetLanguageCode,
+      targetRegionCode
+    );
+    const resolvedTagline = resolveLocalizedText(
+      details.tagline,
+      detailsInEnglish?.tagline,
+      translations,
+      "tagline",
+      targetLanguageCode,
+      targetRegionCode
+    );
+    const resolvedTitle = resolveLocalizedText(
+      details.name,
+      detailsInEnglish?.name,
+      translations,
+      "name",
+      targetLanguageCode,
+      targetRegionCode
+    );
+
+    const localizedStatus = normalizeNonEmptyText(details.status);
+    const englishStatus = normalizeNonEmptyText(detailsInEnglish?.status);
+    const resolvedStatusText = localizedStatus ?? englishStatus ?? "";
+    const resolvedStatusSourceLanguageCode =
+      localizedStatus && englishStatus && localizedStatus === englishStatus
+        ? "en"
+        : targetLanguageCode;
+
+    const [translatedOverview, translatedTagline, translatedStatus, translatedTitle] = await Promise.all([
+      translateIfNeeded(
+        resolvedOverview.text,
+        locale,
+        resolvedOverview.sourceLanguageCode,
+        targetLanguageCode
+      ),
+      translateIfNeeded(
+        resolvedTagline.text,
+        locale,
+        resolvedTagline.sourceLanguageCode,
+        targetLanguageCode
+      ),
+      translateIfNeeded(
+        resolvedStatusText,
+        locale,
+        resolvedStatusSourceLanguageCode,
+        targetLanguageCode
+      ),
+      translateIfNeeded(
+        resolvedTitle.text,
+        locale,
+        resolvedTitle.sourceLanguageCode,
+        targetLanguageCode
+      )
+    ]);
 
     const regionalTitle = await getRegionalTvTitle(tvId, locale);
     const trailerUrl =
       buildVideoUrl(trailer) ??
-      buildYoutubeTrailerSearchUrl(regionalTitle ?? details.name, parseOptionalYear(details.first_air_date));
+      buildYoutubeTrailerSearchUrl(
+        (regionalTitle ?? translatedTitle) || details.name,
+        parseOptionalYear(details.first_air_date)
+      );
     const runtime = details.episode_run_time[0]
-      ? formatRuntime(details.episode_run_time[0], tvId)
-      : "Runtime TBD";
+      ? formatRuntime(details.episode_run_time[0], tvId, locale)
+      : translate(locale, "home.runtimeTbd");
 
     return {
       id: details.id,
-      title: regionalTitle ?? details.name,
+      title: translatedTitle || details.name,
       overview: translatedOverview,
       tagline: translatedTagline,
       year: parseYear(details.first_air_date),
@@ -1261,7 +1539,7 @@ export const getTmdbTvDetails = cache(
         avatarUrl: posterUrl(person.profile_path)
       })),
       watchProviders: {
-        region: providerRegionCode ?? "N/A",
+        region: providerRegionCode ?? translate(locale, "common.notAvailable"),
         link: providerRegion?.link,
         subscription: toUniqueProviderNames(providerRegion?.flatrate),
         rent: toUniqueProviderNames(providerRegion?.rent),
@@ -1296,12 +1574,15 @@ export type PersonDetailsView = {
   knownFor: PersonCredit[];
 };
 
-function mapPersonCredit(item: TmdbPersonCombinedCreditsResponse["cast"][number]): PersonCredit {
+function mapPersonCredit(
+  item: TmdbPersonCombinedCreditsResponse["cast"][number],
+  locale: Locale
+): PersonCredit {
   return {
     id: item.id,
     mediaType: item.media_type,
-    title: item.title ?? item.name ?? "Untitled",
-    character: item.character ?? "Unknown",
+    title: item.title ?? item.name ?? translate(locale, "person.untitled"),
+    character: item.character ?? translate(locale, "person.unknownCharacter"),
     year: parseYear(item.release_date ?? item.first_air_date ?? null),
     rating: item.vote_average ?? 0,
     posterUrl: posterUrl(item.poster_path ?? null)
@@ -1315,29 +1596,13 @@ async function localizePersonCredit(
   if (locale === "en") {
     return credit;
   }
-  if (credit.mediaType === "movie") {
-    const [regionalTitle, translatedCharacter] = await Promise.all([
-      getRegionalReleaseTitle(credit.id, locale),
-      credit.character && credit.character !== "Unknown"
-        ? translateText(credit.character, locale)
-        : Promise.resolve(credit.character)
-    ]);
-    return {
-      ...credit,
-      title: regionalTitle ?? credit.title,
-      character: translatedCharacter
-    };
-  }
-  // tv
-  const [regionalTitle, translatedCharacter] = await Promise.all([
-    getRegionalTvTitle(credit.id, locale),
-    credit.character && credit.character !== "Unknown"
-      ? translateText(credit.character, locale)
-      : Promise.resolve(credit.character)
-  ]);
+  const unknownCharacterLabel = translate(locale, "person.unknownCharacter");
+  const translatedCharacter =
+    credit.character && credit.character !== unknownCharacterLabel
+      ? await translateText(credit.character, locale)
+      : credit.character;
   return {
     ...credit,
-    title: regionalTitle ?? credit.title,
     character: translatedCharacter
   };
 }
@@ -1361,7 +1626,7 @@ export const getTmdbPersonDetails = cache(
       id: details.id,
       name: details.name,
       biography,
-      department: details.known_for_department || "Artist",
+      department: details.known_for_department || translate(locale, "common.notAvailable"),
       birthDate: details.birthday,
       placeOfBirth: details.place_of_birth,
       popularity: details.popularity || 0,
@@ -1371,7 +1636,7 @@ export const getTmdbPersonDetails = cache(
       knownFor: await Promise.all(
         credits.cast
           .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
-          .map(mapPersonCredit)
+          .map((credit) => mapPersonCredit(credit, locale))
           .sort((a, b) => b.rating - a.rating)
           .slice(0, 20)
           .map((credit) => localizePersonCredit(credit, locale))
@@ -1398,13 +1663,11 @@ export async function getTmdbMovieLocalizedSummaries(
           { language },
           3600
         );
-        const releaseTitle = await getRegionalReleaseTitle(movieId, locale);
-
         return {
           tmdbId: movieId,
-          title: releaseTitle ?? details.title,
+          title: details.title,
           year: parseYear(details.release_date),
-          genre: details.genres[0]?.name ?? "Cinema",
+          genre: details.genres[0]?.name ?? translate(locale, "home.defaultGenre"),
           rating: details.vote_average || 0,
           posterUrl: posterUrl(details.poster_path)
         } satisfies LocalizedMovieSummary;

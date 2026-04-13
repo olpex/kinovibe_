@@ -78,7 +78,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
     [movie, watchlistState, discussions, voteSummary] = await Promise.all([
       getTmdbMovieDetails(movieId, locale),
       getUserMovieWatchlistState(movieId),
-      getMediaDiscussions("movie", movieId),
+      getMediaDiscussions("movie", movieId, locale),
       getMediaVoteSummary("movie", movieId)
     ]);
   } catch {

@@ -17,6 +17,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Перевірте, чи правильно налаштовані таблиці фільмів і списку перегляду.",
     "home.browseGenreAria": "Переглянути фільми жанру {genre}",
     "home.progressAria": "{progress}% переглянуто",
+    "home.runtimeTbd": "Тривалість уточнюється",
     "watchlist.saveStatus": "Зберегти статус",
     "search.resultsFor": "результатів для",
     "movie.detailsUnavailable": "Деталі недоступні"
@@ -30,6 +31,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "menu.leaderboardHint":
       "Beispiel-Ranking für den MVP-Modus. Verbinde vollständiges Event-Scoring für Live-Ränge.",
     "home.progressAria": "{progress}% angesehen",
+    "home.runtimeTbd": "Laufzeit folgt",
     "movie.detailsUnavailable": "Details nicht verfügbar"
   },
   fr: {
@@ -44,6 +46,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Classement exemple pour le mode MVP. Connectez le scoring complet des événements pour le rang en direct.",
     "home.browseGenreAria": "Parcourir les films {genre}",
     "home.progressAria": "{progress}% visionné",
+    "home.runtimeTbd": "Durée à confirmer",
     "movie.detailsUnavailable": "Détails indisponibles"
   },
   es: {
@@ -60,6 +63,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "menu.docsProjectRoutesText":
       "Usa las rutas de esta app para verificar la UI después de cada despliegue.",
     "home.browseGenreAria": "Explorar películas de {genre}",
+    "home.runtimeTbd": "Duración por confirmar",
     "movie.detailsUnavailable": "Detalles no disponibles"
   },
   pl: {
@@ -76,6 +80,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Korzystaj z tras tej aplikacji do kontroli UI po każdym wdrożeniu.",
     "home.progressAria": "{progress}% obejrzano",
     "home.browseGenreAria": "Przeglądaj filmy z gatunku {genre}",
+    "home.runtimeTbd": "Czas trwania wkrótce",
     "movie.detailsUnavailable": "Szczegóły niedostępne"
   },
   ro: {
@@ -92,6 +97,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "menu.docsProjectRoutesText":
       "Folosește rutele acestei aplicații pentru verificări UI după fiecare deploy.",
     "home.browseGenreAria": "Răsfoiește filme din genul {genre}",
+    "home.runtimeTbd": "Durată în curs de actualizare",
     "movie.detailsUnavailable": "Detalii indisponibile"
   },
   it: {
@@ -106,6 +112,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Verifica che le tabelle dei film e della watchlist siano configurate correttamente.",
     "menu.docsProjectRoutesText":
       "Usa le route di questa app per i controlli UI dopo ogni deploy.",
+    "home.runtimeTbd": "Durata da definire",
     "movie.detailsUnavailable": "Dettagli non disponibili"
   },
   sv: {
@@ -120,6 +127,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Kontrollera att tabellerna för filmer och bevakningslista är korrekt konfigurerade.",
     "menu.docsProjectRoutesText":
       "Använd appens rutter för UI-kontroller efter varje driftsättning.",
+    "home.runtimeTbd": "Speltid saknas",
     "movie.detailsUnavailable": "Detaljer inte tillgängliga"
   },
   fi: {
@@ -136,6 +144,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Tarkista, että elokuva- ja katselulistataulut on määritetty oikein.",
     "menu.docsProjectRoutesText":
       "Käytä tämän sovelluksen reittejä käyttöliittymän tarkistuksiin jokaisen deployn jälkeen.",
+    "home.runtimeTbd": "Kesto tarkentuu myöhemmin",
     "movie.detailsUnavailable": "Tiedot eivät ole saatavilla"
   },
   cs: {
@@ -152,6 +161,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Použijte trasy této aplikace pro kontrolu UI po každém nasazení.",
     "home.progressAria": "{progress}% zhlédnuto",
     "home.browseGenreAria": "Procházet filmy žánru {genre}",
+    "home.runtimeTbd": "Délka bude upřesněna",
     "movie.detailsUnavailable": "Detaily nejsou k dispozici"
   },
   no: {
@@ -168,6 +178,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Bruk appens ruter til UI-kontroller etter hver deploy.",
     "home.progressAria": "{progress}% sett",
     "home.browseGenreAria": "Bla gjennom filmer i sjangeren {genre}",
+    "home.runtimeTbd": "Spilletid kommer",
     "movie.detailsUnavailable": "Detaljer er ikke tilgjengelige"
   },
   da: {
@@ -184,13 +195,16 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Brug appens ruter til UI-kontrol efter hver deploy.",
     "home.progressAria": "{progress}% set",
     "home.browseGenreAria": "Udforsk film i genren {genre}",
+    "home.runtimeTbd": "Spilletid følger",
     "movie.detailsUnavailable": "Detaljer er ikke tilgængelige"
   },
   sk: {
-    "menu.apiBusinessTitle": "API pre firmy"
+    "menu.apiBusinessTitle": "API pre firmy",
+    "home.runtimeTbd": "Dĺžka bude upresnená"
   },
   hu: {
-    "menu.apiBusinessTitle": "API vállalatoknak"
+    "menu.apiBusinessTitle": "API vállalatoknak",
+    "home.runtimeTbd": "Játékidő hamarosan"
   },
   pt: {
     "meta.siteDescription": "Serviço cinéfilo para descobrir filmes.",
@@ -214,6 +228,7 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Use as rotas desta app para verificações de UI após cada deploy.",
     "home.progressAria": "{progress}% visto",
     "home.browseGenreAria": "Explorar filmes do género {genre}",
+    "home.runtimeTbd": "Duração por confirmar",
     "movie.detailsUnavailable": "Detalhes indisponíveis"
   },
   nl: {
@@ -238,6 +253,16 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Gebruik de routes van deze app voor UI-checks na elke deploy.",
     "home.progressAria": "{progress}% bekeken",
     "home.browseGenreAria": "Bekijk films in het genre {genre}",
+    "home.runtimeTbd": "Speelduur volgt",
     "movie.detailsUnavailable": "Details niet beschikbaar"
+  },
+  el: {
+    "home.runtimeTbd": "Η διάρκεια θα ανακοινωθεί"
+  },
+  hr: {
+    "home.runtimeTbd": "Trajanje će biti dostupno uskoro"
+  },
+  me: {
+    "home.runtimeTbd": "Trajanje će biti dostupno uskoro"
   }
 };

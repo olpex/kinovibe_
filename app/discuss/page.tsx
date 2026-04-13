@@ -57,9 +57,9 @@ export default async function DiscussPage({ searchParams }: PageProps) {
   const category = parseCategory(resolvedSearchParams.category);
   const [locale, session] = await Promise.all([getRequestLocale(), getSessionUser()]);
   const [moviesResult, peopleResult, tvResult] = await Promise.allSettled([
-    getDiscussionThreadsByCategory("movie"),
-    getDiscussionThreadsByCategory("person"),
-    getDiscussionThreadsByCategory("tv")
+    getDiscussionThreadsByCategory("movie", locale),
+    getDiscussionThreadsByCategory("person", locale),
+    getDiscussionThreadsByCategory("tv", locale)
   ]);
 
   const movieThreads = moviesResult.status === "fulfilled" ? moviesResult.value : [];
@@ -76,7 +76,7 @@ export default async function DiscussPage({ searchParams }: PageProps) {
         summary: thread.latestBody || translate(locale, "menu.discussMovieFallback", { title: thread.mediaTitle }),
         label: translate(locale, "nav.movies"),
         primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
-        secondaryMeta: `TMDB #${thread.mediaTmdbId}`,
+        secondaryMeta: translate(locale, "discussion.tmdbReference", { id: thread.mediaTmdbId }),
         replies: thread.messagesCount,
         activeHours: formatActiveHours(thread.latestCreatedAt)
       }))
@@ -91,7 +91,7 @@ export default async function DiscussPage({ searchParams }: PageProps) {
           thread.latestBody || translate(locale, "menu.discussPersonFallback", { name: thread.mediaTitle }),
         label: translate(locale, "menu.discussActors"),
         primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
-        secondaryMeta: `TMDB #${thread.mediaTmdbId}`,
+        secondaryMeta: translate(locale, "discussion.tmdbReference", { id: thread.mediaTmdbId }),
         replies: thread.messagesCount,
         activeHours: formatActiveHours(thread.latestCreatedAt)
       }))
@@ -105,7 +105,7 @@ export default async function DiscussPage({ searchParams }: PageProps) {
         summary: thread.latestBody || translate(locale, "menu.discussTvFallback", { title: thread.mediaTitle }),
         label: translate(locale, "menu.discussTvShows"),
         primaryMeta: translate(locale, "discussion.by", { author: thread.latestAuthorName }),
-        secondaryMeta: `TMDB #${thread.mediaTmdbId}`,
+        secondaryMeta: translate(locale, "discussion.tmdbReference", { id: thread.mediaTmdbId }),
         replies: thread.messagesCount,
         activeHours: formatActiveHours(thread.latestCreatedAt)
       }))

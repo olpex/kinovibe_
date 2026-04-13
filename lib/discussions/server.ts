@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { translate, type Locale } from "@/lib/i18n/shared";
 import { DiscussionEntry, DiscussionMediaType, DiscussionThreadSummary } from "./types";
 
 function isDiscussionMediaType(value: unknown): value is DiscussionMediaType {
@@ -8,6 +9,7 @@ function isDiscussionMediaType(value: unknown): value is DiscussionMediaType {
 export async function getMediaDiscussions(
   mediaType: DiscussionMediaType,
   tmdbId: number,
+  locale: Locale = "en",
   limit = 30
 ): Promise<DiscussionEntry[]> {
   const safeLimit = Math.max(1, Math.min(limit, 100));
@@ -28,6 +30,8 @@ export async function getMediaDiscussions(
     return [];
   }
 
+  const unknownAuthor = translate(locale, "discussion.unknownAuthor");
+
   return data
     .map((row) => {
       const rowMediaType = row.media_type;
@@ -47,7 +51,7 @@ export async function getMediaDiscussions(
         mediaType: rowMediaType,
         mediaTmdbId: rowTmdbId,
         mediaTitle: typeof row.media_title === "string" ? row.media_title : "",
-        authorName: typeof row.author_name === "string" ? row.author_name : "Community member",
+        authorName: typeof row.author_name === "string" ? row.author_name : unknownAuthor,
         body: typeof row.body === "string" ? row.body : "",
         createdAt: typeof row.created_at === "string" ? row.created_at : new Date().toISOString()
       } satisfies DiscussionEntry;
@@ -57,6 +61,7 @@ export async function getMediaDiscussions(
 
 export async function getDiscussionThreadsByCategory(
   mediaType: DiscussionMediaType,
+  locale: Locale = "en",
   limit = 40
 ): Promise<DiscussionThreadSummary[]> {
   const safeLimit = Math.max(1, Math.min(limit, 120));
@@ -76,6 +81,8 @@ export async function getDiscussionThreadsByCategory(
     return [];
   }
 
+  const unknownAuthor = translate(locale, "discussion.unknownAuthor");
+
   const threadMap = new Map<string, DiscussionThreadSummary>();
 
   for (const row of data) {
@@ -84,7 +91,7 @@ export async function getDiscussionThreadsByCategory(
     const rowCreatedAt = typeof row.created_at === "string" ? row.created_at : new Date().toISOString();
     const rowTitle = typeof row.media_title === "string" ? row.media_title.trim() : "";
     const rowBody = typeof row.body === "string" ? row.body.trim() : "";
-    const rowAuthor = typeof row.author_name === "string" ? row.author_name.trim() : "Community member";
+    const rowAuthor = typeof row.author_name === "string" ? row.author_name.trim() : unknownAuthor;
 
     if (!isDiscussionMediaType(rowMediaType) || rowMediaType !== mediaType || Number.isNaN(rowTmdbId)) {
       continue;
@@ -101,7 +108,7 @@ export async function getDiscussionThreadsByCategory(
       key,
       mediaType: rowMediaType,
       mediaTmdbId: rowTmdbId,
-      mediaTitle: rowTitle || `TMDB #${rowTmdbId}`,
+      mediaTitle: rowTitle || translate(locale, "discussion.tmdbReference", { id: rowTmdbId }),
       latestBody: rowBody,
       latestAuthorName: rowAuthor,
       latestCreatedAt: rowCreatedAt,

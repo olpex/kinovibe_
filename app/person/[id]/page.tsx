@@ -36,7 +36,7 @@ export default async function PersonDetailsPage({ params }: PageProps) {
   try {
     [person, discussions] = await Promise.all([
       getTmdbPersonDetails(personId, locale),
-      getMediaDiscussions("person", personId)
+      getMediaDiscussions("person", personId, locale)
     ]);
   } catch {
     person = null;

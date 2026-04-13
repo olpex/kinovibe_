@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { getRequestLocale } from "@/lib/i18n/server";
-import { translate } from "@/lib/i18n/shared";
+import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "@/app/menu-page.module.css";
 
 const STATIC_LEADERS = [
-  { name: "Cinema Scout", points: 1180, focus: "Movies" },
-  { name: "Series Curator", points: 970, focus: "TV" },
-  { name: "Profile Pro", points: 820, focus: "Community" }
+  { name: "Cinema Scout", points: 1180, focusKey: "nav.movies" },
+  { name: "Series Curator", points: 970, focusKey: "nav.tvShows" },
+  { name: "Profile Pro", points: 820, focusKey: "discussion.title" }
 ];
 
 export default async function LeaderboardPage() {
@@ -27,8 +27,8 @@ export default async function LeaderboardPage() {
         {STATIC_LEADERS.map((entry) => (
           <article key={entry.name} className={styles.textCard}>
             <h2>{entry.name}</h2>
-            <p>{entry.focus}</p>
-            <p>{entry.points} pts</p>
+            <p>{translate(locale, entry.focusKey)}</p>
+            <p>{entry.points.toLocaleString(toIntlLocale(locale))}</p>
             <Link href="/search" className={styles.linkButton}>
               {translate(locale, "nav.search")}
             </Link>

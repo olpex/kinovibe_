@@ -92,6 +92,24 @@ export type TmdbMovieAlternativeTitlesResponse = {
   }>;
 };
 
+export type TmdbTranslationEntry = {
+  iso_3166_1: string;
+  iso_639_1: string;
+  name: string;
+  english_name: string;
+  data: {
+    title?: string;
+    name?: string;
+    overview?: string;
+    tagline?: string;
+  };
+};
+
+export type TmdbMovieTranslationsResponse = {
+  id: number;
+  translations: TmdbTranslationEntry[];
+};
+
 export type TmdbTv = {
   id: number;
   name: string;
@@ -155,6 +173,11 @@ export type TmdbTvAlternativeTitlesResponse = {
     title: string;
     type: string;
   }>;
+};
+
+export type TmdbTvTranslationsResponse = {
+  id: number;
+  translations: TmdbTranslationEntry[];
 };
 
 export type TmdbPersonKnownForItem = {
