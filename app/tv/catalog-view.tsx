@@ -15,6 +15,7 @@ import {
 } from "@/lib/tmdb/client";
 import {
   DEFAULT_TV_DISCOVER_SORT,
+  enforceTvDiscoverPlan,
   hasActiveTvDiscoverFilters,
   parseTvDiscoverFilters,
   tvDiscoverFiltersToQuery,
@@ -62,10 +63,10 @@ export async function TvCatalogView({
   const params = await searchParams;
   const page = parsePage(params.page);
   const defaultSort = getDefaultSortByCategory(category);
-  const filters = parseTvDiscoverFilters(params, defaultSort);
+  const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
+  const filters = enforceTvDiscoverPlan(parseTvDiscoverFilters(params, defaultSort), session.isPro);
   const hasFilters = hasActiveTvDiscoverFilters(filters, defaultSort);
   const filtersQuery = tvDiscoverFiltersToQuery(filters, defaultSort);
-  const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
   let result: Awaited<ReturnType<typeof getTmdbTvCatalogPage>> | null = null;
   let genres = [] as Awaited<ReturnType<typeof getTmdbTvGenres>>;
   let countries = [] as Awaited<ReturnType<typeof getTmdbCountries>>;
@@ -104,6 +105,7 @@ export async function TvCatalogView({
             countryOptions={countries}
             filters={filters}
             defaultSort={defaultSort}
+            isPro={session.isPro}
           />
           <div className={styles.mainContent}>
             {fallbackMessage}
@@ -126,6 +128,7 @@ export async function TvCatalogView({
           countryOptions={countries}
           filters={filters}
           defaultSort={defaultSort}
+          isPro={session.isPro}
         />
         <div className={styles.mainContent}>
           <CatalogMovieGrid locale={locale} items={result.items} hrefPrefix="/tv" />

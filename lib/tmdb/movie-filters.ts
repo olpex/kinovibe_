@@ -48,6 +48,7 @@ export type MovieDiscoverFilters = {
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
 const SORT_VALUES = new Set<string>(MOVIE_DISCOVER_SORT_OPTIONS.map((entry) => entry.value));
+const PRO_ONLY_SORT_VALUES = new Set<string>(["vote_count.desc", "vote_count.asc"]);
 const WATCH_TYPE_VALUES = new Set<string>(MOVIE_WATCH_MONETIZATION_TYPES);
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -214,6 +215,28 @@ export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDis
     certificationCountry,
     certification,
     keywords
+  };
+}
+
+export function enforceMovieDiscoverPlan(
+  filters: MovieDiscoverFilters,
+  isPro: boolean
+): MovieDiscoverFilters {
+  if (isPro) {
+    return filters;
+  }
+
+  return {
+    ...filters,
+    sortBy: PRO_ONLY_SORT_VALUES.has(filters.sortBy) ? DEFAULT_MOVIE_DISCOVER_SORT : filters.sortBy,
+    voteCountFrom: undefined,
+    runtimeFrom: undefined,
+    runtimeTo: undefined,
+    watchProviderIds: [],
+    watchMonetizationTypes: [],
+    certificationCountry: undefined,
+    certification: undefined,
+    keywords: []
   };
 }
 

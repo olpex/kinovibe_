@@ -136,6 +136,43 @@
   font-size: 0.8rem;
 }
 
+.lockableFieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.paywallBox {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 38%, var(--color-border));
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  padding: 0.62rem;
+  display: grid;
+  gap: 0.38rem;
+}
+
+.paywallBox strong {
+  font-size: 0.85rem;
+}
+
+.paywallBox p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-soft);
+}
+
+.paywallBox a {
+  justify-self: start;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  padding: 0.38rem 0.56rem;
+  text-decoration: none;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-surface-soft) 85%, transparent);
+}
+
 .actions {
   display: grid;
   gap: 0.45rem;

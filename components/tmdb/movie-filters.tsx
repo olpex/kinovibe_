@@ -22,6 +22,7 @@ type MovieFiltersProps = {
   genres: MovieGenreOption[];
   watchProviders: MovieWatchProviderOption[];
   filters: MovieDiscoverFilters;
+  isPro: boolean;
 };
 
 export function MovieFilters({
@@ -29,13 +30,16 @@ export function MovieFilters({
   basePath,
   genres,
   watchProviders,
-  filters
+  filters,
+  isPro
 }: MovieFiltersProps) {
   const selectedGenres = new Set(filters.genreIds);
   const selectedWatchProviders = new Set(filters.watchProviderIds);
   const selectedWatchTypes = new Set(filters.watchMonetizationTypes);
   const activeCount = countActiveMovieDiscoverFilters(filters);
   const defaultRegion = getTmdbRegionForLocale(locale);
+  const lockProFilters = !isPro;
+  const proOnlySortValues = new Set(["vote_count.desc", "vote_count.asc"]);
 
   const languageOptions = [
     { value: "", label: translate(locale, "movie.filters.allLanguages") },
@@ -69,7 +73,11 @@ export function MovieFilters({
           <label htmlFor="movie-filter-sort">{translate(locale, "movie.filters.sortBy")}</label>
           <select id="movie-filter-sort" name="sort" defaultValue={filters.sortBy}>
             {MOVIE_DISCOVER_SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+              <option
+                key={option.value}
+                value={option.value}
+                disabled={lockProFilters && proOnlySortValues.has(option.value)}
+              >
                 {translate(locale, option.labelKey)}
               </option>
             ))}
@@ -178,39 +186,42 @@ export function MovieFilters({
             max={500000}
             step={10}
             defaultValue={filters.voteCountFrom ?? ""}
+            disabled={lockProFilters}
           />
         </div>
 
-        <div className={styles.row}>
-          <div className={styles.group}>
-            <label htmlFor="movie-filter-runtime-from">
-              {translate(locale, "movie.filters.runtimeFrom")}
-            </label>
-            <input
-              id="movie-filter-runtime-from"
-              type="number"
-              name="runtimeFrom"
-              min={0}
-              max={600}
-              step={1}
-              defaultValue={filters.runtimeFrom ?? ""}
-            />
+        <fieldset className={styles.lockableFieldset} disabled={lockProFilters}>
+          <div className={styles.row}>
+            <div className={styles.group}>
+              <label htmlFor="movie-filter-runtime-from">
+                {translate(locale, "movie.filters.runtimeFrom")}
+              </label>
+              <input
+                id="movie-filter-runtime-from"
+                type="number"
+                name="runtimeFrom"
+                min={0}
+                max={600}
+                step={1}
+                defaultValue={filters.runtimeFrom ?? ""}
+              />
+            </div>
+            <div className={styles.group}>
+              <label htmlFor="movie-filter-runtime-to">
+                {translate(locale, "movie.filters.runtimeTo")}
+              </label>
+              <input
+                id="movie-filter-runtime-to"
+                type="number"
+                name="runtimeTo"
+                min={0}
+                max={600}
+                step={1}
+                defaultValue={filters.runtimeTo ?? ""}
+              />
+            </div>
           </div>
-          <div className={styles.group}>
-            <label htmlFor="movie-filter-runtime-to">
-              {translate(locale, "movie.filters.runtimeTo")}
-            </label>
-            <input
-              id="movie-filter-runtime-to"
-              type="number"
-              name="runtimeTo"
-              min={0}
-              max={600}
-              step={1}
-              defaultValue={filters.runtimeTo ?? ""}
-            />
-          </div>
-        </div>
+        </fieldset>
 
         <div className={styles.group}>
           <label htmlFor="movie-filter-language">
@@ -225,7 +236,7 @@ export function MovieFilters({
           </select>
         </div>
 
-        <fieldset className={styles.genreGroup}>
+        <fieldset className={styles.genreGroup} disabled={lockProFilters}>
           <legend>{translate(locale, "movie.filters.watchSection")}</legend>
           <div className={styles.group}>
             <label htmlFor="movie-filter-watch-region">
@@ -277,7 +288,7 @@ export function MovieFilters({
           )}
         </fieldset>
 
-        <fieldset className={styles.genreGroup}>
+        <fieldset className={styles.genreGroup} disabled={lockProFilters}>
           <legend>{translate(locale, "movie.filters.certifications")}</legend>
           <div className={styles.row}>
             <div className={styles.group}>
@@ -320,8 +331,17 @@ export function MovieFilters({
             name="keywords"
             defaultValue={filters.keywords.join(", ")}
             placeholder={translate(locale, "movie.filters.keywordsPlaceholder")}
+            disabled={lockProFilters}
           />
         </div>
+
+        {lockProFilters ? (
+          <div className={styles.paywallBox}>
+            <strong>{translate(locale, "monetization.proRequiredTitle")}</strong>
+            <p>{translate(locale, "monetization.proFiltersHint")}</p>
+            <a href="/profile">{translate(locale, "monetization.managePlan")}</a>
+          </div>
+        ) : null}
 
         <div className={styles.actions}>
           <button type="submit">{translate(locale, "movie.filters.apply")}</button>

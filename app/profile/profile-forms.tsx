@@ -13,6 +13,7 @@ import styles from "./profile.module.css";
 type ProfileFormsProps = {
   locale: Locale;
   isAdmin: boolean;
+  billingPlan: "free" | "pro";
   initialProfile: {
     firstName: string;
     lastName: string;
@@ -21,7 +22,7 @@ type ProfileFormsProps = {
   };
 };
 
-export function ProfileForms({ locale, isAdmin, initialProfile }: ProfileFormsProps) {
+export function ProfileForms({ locale, isAdmin, billingPlan, initialProfile }: ProfileFormsProps) {
   const [profileState, profileAction, profilePending] = useActionState(
     updateProfileSettingsAction,
     PROFILE_ACTION_INITIAL_STATE
@@ -85,6 +86,25 @@ export function ProfileForms({ locale, isAdmin, initialProfile }: ProfileFormsPr
             {passwordPending ? translate(locale, "common.updating") : translate(locale, "profile.updatePassword")}
           </button>
         </form>
+      </section>
+
+      <section className={styles.card}>
+        <h2>{translate(locale, "profile.planTitle")}</h2>
+        <p>{translate(locale, "profile.planHint")}</p>
+        <div className={styles.planRow}>
+          <span>{translate(locale, "profile.planCurrent")}</span>
+          <strong className={billingPlan === "pro" ? styles.planBadgePro : styles.planBadgeFree}>
+            {billingPlan === "pro"
+              ? translate(locale, "profile.planPro")
+              : translate(locale, "profile.planFree")}
+          </strong>
+        </div>
+        <p className={styles.planMuted}>{translate(locale, "profile.planManageHint")}</p>
+        {billingPlan !== "pro" ? (
+          <Link href="/feedback" className={styles.adminLink}>
+            {translate(locale, "profile.planUpgradeSoon")}
+          </Link>
+        ) : null}
       </section>
 
       {isAdmin ? (

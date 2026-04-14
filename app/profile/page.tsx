@@ -52,7 +52,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name,last_name,website,country")
+    .select("first_name,last_name,website,country,billing_plan")
     .eq("id", user.id)
     .maybeSingle();
   const isAdmin = isAdminEmail(user.email ?? undefined);
@@ -98,6 +98,9 @@ export default async function ProfilePage() {
           website: (profile?.website as string | null) ?? "",
           country: (profile?.country as string | null) ?? ""
         }}
+        billingPlan={
+          (profile?.billing_plan as string | null)?.toLowerCase() === "pro" ? "pro" : "free"
+        }
       />
     </main>
   );

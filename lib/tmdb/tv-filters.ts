@@ -139,6 +139,22 @@ export function parseTvDiscoverFilters(
   };
 }
 
+export function enforceTvDiscoverPlan(
+  filters: TvDiscoverFilters,
+  isPro: boolean
+): TvDiscoverFilters {
+  if (isPro) {
+    return filters;
+  }
+
+  return {
+    ...filters,
+    voteCountFrom: undefined,
+    originCountry: undefined,
+    originalLanguage: undefined
+  };
+}
+
 export function hasActiveTvDiscoverFilters(
   filters: TvDiscoverFilters,
   defaultSort: TvDiscoverSortBy = DEFAULT_TV_DISCOVER_SORT

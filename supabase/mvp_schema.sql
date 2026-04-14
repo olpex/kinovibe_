@@ -8,6 +8,8 @@ create table if not exists public.profiles (
   website text,
   country text,
   avatar_url text,
+  billing_plan text not null default 'free',
+  plan_expires_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -15,6 +17,8 @@ alter table public.profiles add column if not exists first_name text;
 alter table public.profiles add column if not exists last_name text;
 alter table public.profiles add column if not exists website text;
 alter table public.profiles add column if not exists country text;
+alter table public.profiles add column if not exists billing_plan text not null default 'free';
+alter table public.profiles add column if not exists plan_expires_at timestamptz;
 
 create table if not exists public.movies (
   id bigint generated always as identity primary key,

@@ -4,6 +4,7 @@ export type SessionUser = {
   isConfigured: boolean;
   isAuthenticated: boolean;
   isEmailVerified: boolean;
+  isPro: boolean;
   userId?: string;
   email?: string;
   firstName?: string;
@@ -17,7 +18,8 @@ export async function getSessionUser(): Promise<SessionUser> {
     return {
       isConfigured: false,
       isAuthenticated: false,
-      isEmailVerified: false
+      isEmailVerified: false,
+      isPro: false
     };
   }
 
@@ -26,13 +28,14 @@ export async function getSessionUser(): Promise<SessionUser> {
     return {
       isConfigured: true,
       isAuthenticated: false,
-      isEmailVerified: false
+      isEmailVerified: false,
+      isPro: false
     };
   }
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name,last_name,avatar_url")
+    .select("first_name,last_name,avatar_url,billing_plan")
     .eq("id", data.user.id)
     .maybeSingle();
 
@@ -45,6 +48,7 @@ export async function getSessionUser(): Promise<SessionUser> {
     isConfigured: true,
     isAuthenticated: true,
     isEmailVerified: Boolean(data.user.email_confirmed_at),
+    isPro: (profile?.billing_plan as string | null)?.toLowerCase() === "pro",
     userId: data.user.id,
     email: data.user.email ?? undefined,
     firstName: (profile?.first_name as string | null) ?? undefined,

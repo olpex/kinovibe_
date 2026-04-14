@@ -7,6 +7,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import {
+  enforceMovieDiscoverPlan,
   hasActiveMovieDiscoverFilters,
   movieDiscoverFiltersToQuery,
   parseMovieDiscoverFilters,
@@ -47,10 +48,10 @@ export async function MovieCatalogView({
 }: MovieCatalogViewProps) {
   const params = await searchParams;
   const page = parsePage(params.page);
-  const filters = parseMovieDiscoverFilters(params);
+  const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
+  const filters = enforceMovieDiscoverPlan(parseMovieDiscoverFilters(params), session.isPro);
   const filtersQuery = movieDiscoverFiltersToQuery(filters);
   const useDiscover = category === "popular" && hasActiveMovieDiscoverFilters(filters);
-  const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
 
   let result: Awaited<ReturnType<typeof getTmdbMovieCatalogPage>> | null = null;
   let genres = [] as Awaited<ReturnType<typeof getTmdbMovieGenres>>;
@@ -95,6 +96,7 @@ export async function MovieCatalogView({
               genres={genres}
               watchProviders={watchProviders}
               filters={filters}
+              isPro={session.isPro}
             />
             <div className={styles.mainContent}>{fallbackMessage}</div>
           </div>
@@ -118,6 +120,7 @@ export async function MovieCatalogView({
             genres={genres}
             watchProviders={watchProviders}
             filters={filters}
+            isPro={session.isPro}
           />
           <div className={styles.mainContent}>
             <CatalogMovieGrid locale={locale} items={result.items} hrefPrefix="/movie" />

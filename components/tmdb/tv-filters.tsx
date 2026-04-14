@@ -19,6 +19,7 @@ type TvFiltersProps = {
   countryOptions: TmdbCountryOption[];
   filters: TvDiscoverFilters;
   defaultSort: TvDiscoverSortBy;
+  isPro: boolean;
 };
 
 export function TvFilters({
@@ -27,10 +28,12 @@ export function TvFilters({
   genres,
   countryOptions,
   filters,
-  defaultSort
+  defaultSort,
+  isPro
 }: TvFiltersProps) {
   const selectedGenres = new Set(filters.genreIds);
   const activeCount = countActiveTvDiscoverFilters(filters, defaultSort);
+  const lockProFilters = !isPro;
 
   const languageOptions = [
     { value: "", label: translate(locale, "movie.filters.allLanguages") },
@@ -112,6 +115,7 @@ export function TvFilters({
             max={1000000}
             step={10}
             defaultValue={filters.voteCountFrom ?? ""}
+            disabled={lockProFilters}
           />
         </div>
 
@@ -144,7 +148,12 @@ export function TvFilters({
 
         <div className={styles.group}>
           <label htmlFor="tv-filter-country">{translate(locale, "profile.country")}</label>
-          <select id="tv-filter-country" name="country" defaultValue={filters.originCountry ?? ""}>
+          <select
+            id="tv-filter-country"
+            name="country"
+            defaultValue={filters.originCountry ?? ""}
+            disabled={lockProFilters}
+          >
             <option value="">{translate(locale, "tv.filters.allCountries")}</option>
             {resolvedCountryOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -173,7 +182,12 @@ export function TvFilters({
 
         <div className={styles.group}>
           <label htmlFor="tv-filter-language">{translate(locale, "movie.filters.originalLanguage")}</label>
-          <select id="tv-filter-language" name="lang" defaultValue={filters.originalLanguage ?? ""}>
+          <select
+            id="tv-filter-language"
+            name="lang"
+            defaultValue={filters.originalLanguage ?? ""}
+            disabled={lockProFilters}
+          >
             {languageOptions.map((option) => (
               <option key={option.value || "all"} value={option.value}>
                 {option.label}
@@ -181,6 +195,14 @@ export function TvFilters({
             ))}
           </select>
         </div>
+
+        {lockProFilters ? (
+          <div className={styles.paywallBox}>
+            <strong>{translate(locale, "monetization.proRequiredTitle")}</strong>
+            <p>{translate(locale, "monetization.proFiltersHint")}</p>
+            <a href="/profile">{translate(locale, "monetization.managePlan")}</a>
+          </div>
+        ) : null}
 
         <div className={styles.actions}>
           <button type="submit">{translate(locale, "movie.filters.apply")}</button>
