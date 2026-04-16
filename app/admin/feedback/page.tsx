@@ -97,11 +97,21 @@ export default async function AdminFeedbackPage() {
   // Load all feedback entries
   const { data: entries } = await client
     .from("feedback_entries")
-    .select("id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id")
+    .select("id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id,is_read_by_admin")
     .order("created_at", { ascending: false })
     .limit(200);
 
-  const rows = (entries ?? []) as (FeedbackRow & { parent_reply_id?: number | null })[];
+  const rows = (entries ?? []) as (FeedbackRow & { parent_reply_id?: number | null; is_read_by_admin?: boolean })[];
+
+  // Mark all unread entries as read now that admin has opened the page
+  const unreadIds = rows.filter((r) => !r.is_read_by_admin).map((r) => r.id);
+  if (unreadIds.length > 0) {
+    await client
+      .from("feedback_entries")
+      .update({ is_read_by_admin: true })
+      .in("id", unreadIds);
+  }
+
 
   // Load all admin replies for these entry ids
   const entryIds = rows.map((r) => r.id);

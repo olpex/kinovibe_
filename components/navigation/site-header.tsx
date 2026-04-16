@@ -3,9 +3,13 @@ import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { signOutAction } from "@/lib/auth/actions";
+import { isAdminEmail } from "@/lib/auth/admin";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import { SessionUser } from "@/lib/supabase/session";
-import { getUnreadNotificationCount } from "@/lib/notifications/client";
+import {
+  getAdminUnreadFeedbackCount,
+  getUnreadNotificationCount
+} from "@/lib/notifications/client";
 import { TmdbMenu } from "./tmdb-menu";
 import { HeaderSearchForm } from "./header-search-form";
 import styles from "./site-header.module.css";
@@ -25,10 +29,16 @@ export async function SiteHeader({
   searchPlaceholder,
   searchAction = "/search"
 }: SiteHeaderProps) {
-  const unreadCount =
-    session.isAuthenticated && session.userId
-      ? await getUnreadNotificationCount(session.userId)
-      : 0;
+  const isAdmin = isAdminEmail(session.email);
+
+  let unreadCount = 0;
+  if (session.isAuthenticated && session.userId) {
+    unreadCount = isAdmin
+      ? await getAdminUnreadFeedbackCount()
+      : await getUnreadNotificationCount(session.userId);
+  }
+
+  const bellHref = isAdmin ? "/admin/feedback" : "/profile/inbox";
 
   return (
     <header className={styles.header}>
@@ -46,10 +56,16 @@ export async function SiteHeader({
             </Link>
           ) : null}
           {session.isAuthenticated ? (
-            <Link href="/profile/inbox" className={styles.bellButton} aria-label={translate(locale, "inbox.bellAria")}>
+            <Link
+              href={bellHref}
+              className={styles.bellButton}
+              aria-label={translate(locale, "inbox.bellAria")}
+            >
               <span className={styles.bellIcon}>🔔</span>
               {unreadCount > 0 ? (
-                <span className={styles.bellBadge}>{unreadCount > 99 ? "99+" : unreadCount}</span>
+                <span className={styles.bellBadge}>
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
               ) : null}
             </Link>
           ) : null}
@@ -89,7 +105,9 @@ export async function SiteHeader({
           locale={locale}
           searchAction={searchAction}
           searchQuery={searchQuery}
-          searchPlaceholder={searchPlaceholder ?? translate(locale, "home.searchPlaceholder")}
+          searchPlaceholder={
+            searchPlaceholder ?? translate(locale, "home.searchPlaceholder")
+          }
           formClassName={styles.searchForm}
         />
       </div>
