@@ -91,15 +91,20 @@ export async function submitFeedbackAction(
     };
   }
 
-  const notificationResult = await sendFeedbackNotificationEmail({
-    userEmail: user.email,
-    locale,
-    category,
-    subject,
-    message,
-    pagePath,
-    createdAtIso: (data?.created_at as string | undefined) ?? new Date().toISOString()
-  });
+  let notificationResult: { ok: boolean } = { ok: false };
+  try {
+    notificationResult = await sendFeedbackNotificationEmail({
+      userEmail: user.email,
+      locale,
+      category,
+      subject,
+      message,
+      pagePath,
+      createdAtIso: (data?.created_at as string | undefined) ?? new Date().toISOString()
+    });
+  } catch {
+    notificationResult = { ok: false };
+  }
 
   revalidatePath("/feedback");
 

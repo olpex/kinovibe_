@@ -138,6 +138,43 @@ create index if not exists feedback_entries_user_idx on public.feedback_entries 
 create index if not exists feedback_entries_created_idx on public.feedback_entries (created_at desc);
 create index if not exists feedback_entries_category_idx on public.feedback_entries (category);
 
+-- Admin replies to feedback
+create table if not exists public.feedback_replies (
+  id bigint generated always as identity primary key,
+  feedback_entry_id bigint not null references public.feedback_entries(id) on delete cascade,
+  admin_user_id uuid not null references auth.users(id) on delete cascade,
+  admin_email text not null,
+  body text not null,
+  created_at timestamptz not null default now(),
+  constraint feedback_replies_body_check
+    check (char_length(trim(body)) between 1 and 5000)
+);
+
+-- User replies back to admin (thread continuation)
+alter table public.feedback_entries add column if not exists parent_reply_id bigint references public.feedback_replies(id) on delete set null;
+
+-- Internal inbox notifications (bell icon)
+create table if not exists public.inbox_notifications (
+  id bigint generated always as identity primary key,
+  recipient_user_id uuid not null references auth.users(id) on delete cascade,
+  sender_user_id uuid references auth.users(id) on delete set null,
+  notification_type text not null default 'feedback_reply',
+  title text not null,
+  body text not null,
+  feedback_entry_id bigint references public.feedback_entries(id) on delete cascade,
+  feedback_reply_id bigint references public.feedback_replies(id) on delete cascade,
+  is_read boolean not null default false,
+  created_at timestamptz not null default now(),
+  constraint inbox_notifications_type_check
+    check (notification_type in ('feedback_reply', 'feedback_received', 'user_reply'))
+);
+
+create index if not exists feedback_replies_entry_idx on public.feedback_replies (feedback_entry_id);
+create index if not exists feedback_replies_admin_idx on public.feedback_replies (admin_user_id);
+create index if not exists inbox_notifications_recipient_idx on public.inbox_notifications (recipient_user_id, is_read, created_at desc);
+create index if not exists inbox_notifications_created_idx on public.inbox_notifications (created_at desc);
+
+
 alter table public.profiles enable row level security;
 alter table public.movies enable row level security;
 alter table public.watchlist_items enable row level security;
@@ -304,3 +341,48 @@ create policy "Feedback entries are deletable by owner"
   on public.feedback_entries
   for delete
   using (auth.uid() = user_id);
+
+-- RLS for new tables
+alter table public.feedback_replies enable row level security;
+alter table public.inbox_notifications enable row level security;
+
+-- feedback_replies: owner of original entry + admin can read; only admin inserts
+drop policy if exists "Feedback replies are readable by entry owner" on public.feedback_replies;
+create policy "Feedback replies are readable by entry owner"
+  on public.feedback_replies
+  for select
+  using (
+    exists (
+      select 1 from public.feedback_entries fe
+      where fe.id = feedback_entry_id and fe.user_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Feedback replies are insertable by anyone authenticated" on public.feedback_replies;
+create policy "Feedback replies are insertable by anyone authenticated"
+  on public.feedback_replies
+  for insert
+  to authenticated
+  with check (auth.uid() = admin_user_id);
+
+-- inbox_notifications: only recipient can read; insert allowed for authenticated (admin sends)
+drop policy if exists "Inbox notifications are readable by recipient" on public.inbox_notifications;
+create policy "Inbox notifications are readable by recipient"
+  on public.inbox_notifications
+  for select
+  using (auth.uid() = recipient_user_id);
+
+drop policy if exists "Inbox notifications are insertable by authenticated" on public.inbox_notifications;
+create policy "Inbox notifications are insertable by authenticated"
+  on public.inbox_notifications
+  for insert
+  to authenticated
+  with check (true);
+
+drop policy if exists "Inbox notifications are updatable by recipient" on public.inbox_notifications;
+create policy "Inbox notifications are updatable by recipient"
+  on public.inbox_notifications
+  for update
+  using (auth.uid() = recipient_user_id)
+  with check (auth.uid() = recipient_user_id);
+

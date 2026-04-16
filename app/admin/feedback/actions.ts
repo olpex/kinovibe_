@@ -1,0 +1,85 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { isAdminEmail } from "@/lib/auth/admin";
+import { getRequestLocale } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/shared";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session";
+
+export type AdminReplyState = {
+  ok: boolean;
+  message: string;
+};
+
+export const ADMIN_REPLY_INITIAL: AdminReplyState = { ok: true, message: "" };
+
+export async function replyToFeedbackAction(
+  _prev: AdminReplyState,
+  formData: FormData
+): Promise<AdminReplyState> {
+  const locale = await getRequestLocale();
+  const session = await getSessionUser();
+
+  if (!session.isAuthenticated || !isAdminEmail(session.email)) {
+    return { ok: false, message: translate(locale, "admin.adminRequired") };
+  }
+
+  const entryId = Number(formData.get("entry_id"));
+  const body = (formData.get("body") as string | null)?.trim() ?? "";
+
+  if (!entryId || body.length < 1) {
+    return { ok: false, message: translate(locale, "admin.replyBodyRequired") };
+  }
+  if (body.length > 5000) {
+    return { ok: false, message: translate(locale, "feedback.errorMessageTooLong") };
+  }
+
+  const adminClient = createSupabaseAdminClient();
+  const serverClient = await createSupabaseServerClient();
+  const client = adminClient ?? serverClient;
+
+  if (!client || !session.userId || !session.email) {
+    return { ok: false, message: translate(locale, "admin.supabaseUnavailable") };
+  }
+
+  // Insert reply
+  const { data: reply, error: replyError } = await client
+    .from("feedback_replies")
+    .insert({
+      feedback_entry_id: entryId,
+      admin_user_id: session.userId,
+      admin_email: session.email,
+      body
+    })
+    .select("id")
+    .single();
+
+  if (replyError || !reply) {
+    return { ok: false, message: translate(locale, "admin.replyFailed") };
+  }
+
+  // Find the original entry author to notify
+  const { data: entry } = await client
+    .from("feedback_entries")
+    .select("user_id, subject, category")
+    .eq("id", entryId)
+    .single();
+
+  if (entry?.user_id) {
+    const subject = entry.subject ?? translate(locale, "feedback.email.noSubject");
+    await client.from("inbox_notifications").insert({
+      recipient_user_id: entry.user_id,
+      sender_user_id: session.userId,
+      notification_type: "feedback_reply",
+      title: translate(locale, "admin.replyNotificationTitle"),
+      body: body.slice(0, 420),
+      feedback_entry_id: entryId,
+      feedback_reply_id: reply.id
+    });
+  }
+
+  revalidatePath("/admin/feedback");
+  return { ok: true, message: translate(locale, "admin.replySent") };
+}

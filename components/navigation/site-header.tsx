@@ -5,6 +5,7 @@ import { UserAvatar } from "@/components/user/user-avatar";
 import { signOutAction } from "@/lib/auth/actions";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import { SessionUser } from "@/lib/supabase/session";
+import { getUnreadNotificationCount } from "@/lib/notifications/client";
 import { TmdbMenu } from "./tmdb-menu";
 import { HeaderSearchForm } from "./header-search-form";
 import styles from "./site-header.module.css";
@@ -17,13 +18,18 @@ type SiteHeaderProps = {
   searchAction?: string;
 };
 
-export function SiteHeader({
+export async function SiteHeader({
   locale,
   session,
   searchQuery = "",
   searchPlaceholder,
   searchAction = "/search"
 }: SiteHeaderProps) {
+  const unreadCount =
+    session.isAuthenticated && session.userId
+      ? await getUnreadNotificationCount(session.userId)
+      : 0;
+
   return (
     <header className={styles.header}>
       <div className={styles.topRow}>
@@ -37,6 +43,14 @@ export function SiteHeader({
           {session.isAuthenticated ? (
             <Link href="/profile" className={styles.pill}>
               {translate(locale, "nav.profile")}
+            </Link>
+          ) : null}
+          {session.isAuthenticated ? (
+            <Link href="/profile/inbox" className={styles.bellButton} aria-label={translate(locale, "inbox.bellAria")}>
+              <span className={styles.bellIcon}>🔔</span>
+              {unreadCount > 0 ? (
+                <span className={styles.bellBadge}>{unreadCount > 99 ? "99+" : unreadCount}</span>
+              ) : null}
             </Link>
           ) : null}
           <LanguageToggle className={styles.pill} />
