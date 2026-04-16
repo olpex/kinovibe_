@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { replyToFeedbackAction, ADMIN_REPLY_INITIAL } from "./actions";
+import { replyToFeedbackAction, type AdminReplyState } from "./actions";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./admin-feedback.module.css";
 
@@ -11,9 +11,9 @@ type ReplyFormProps = {
 };
 
 export function ReplyForm({ entryId, locale }: ReplyFormProps) {
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useActionState<AdminReplyState, FormData>(
     replyToFeedbackAction,
-    ADMIN_REPLY_INITIAL
+    { ok: true, message: "" }
   );
 
   return (

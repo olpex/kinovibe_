@@ -13,8 +13,6 @@ export type AdminReplyState = {
   message: string;
 };
 
-export const ADMIN_REPLY_INITIAL: AdminReplyState = { ok: true, message: "" };
-
 export async function replyToFeedbackAction(
   _prev: AdminReplyState,
   formData: FormData

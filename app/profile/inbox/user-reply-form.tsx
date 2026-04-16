@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { replyToAdminAction, USER_REPLY_INITIAL } from "./actions";
+import { replyToAdminAction, type UserReplyState } from "./actions";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./inbox.module.css";
 
@@ -12,7 +12,10 @@ type UserReplyFormProps = {
 };
 
 export function UserReplyForm({ entryId, parentReplyId, locale }: UserReplyFormProps) {
-  const [state, formAction, pending] = useActionState(replyToAdminAction, USER_REPLY_INITIAL);
+  const [state, formAction, pending] = useActionState<UserReplyState, FormData>(
+    replyToAdminAction,
+    { ok: true, message: "" }
+  );
 
   return (
     <div className={styles.replyForm}>

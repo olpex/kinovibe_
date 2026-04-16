@@ -25,8 +25,6 @@ export type UserReplyState = {
   message: string;
 };
 
-export const USER_REPLY_INITIAL: UserReplyState = { ok: true, message: "" };
-
 export async function replyToAdminAction(
   _prev: UserReplyState,
   formData: FormData
