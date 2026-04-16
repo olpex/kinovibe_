@@ -5,22 +5,16 @@ import {
 } from "@/lib/i18n/shared";
 import {
   countActiveMovieDiscoverFilters,
-  MOVIE_WATCH_MONETIZATION_TYPES,
   MOVIE_DISCOVER_SORT_OPTIONS,
   type MovieDiscoverFilters
 } from "@/lib/tmdb/movie-filters";
-import {
-  getTmdbRegionForLocale,
-  type MovieGenreOption,
-  type MovieWatchProviderOption
-} from "@/lib/tmdb/client";
+import { type MovieGenreOption } from "@/lib/tmdb/client";
 import styles from "./movie-filters.module.css";
 
 type MovieFiltersProps = {
   locale: Locale;
   basePath: string;
   genres: MovieGenreOption[];
-  watchProviders: MovieWatchProviderOption[];
   filters: MovieDiscoverFilters;
   isPro: boolean;
 };
@@ -29,15 +23,11 @@ export function MovieFilters({
   locale,
   basePath,
   genres,
-  watchProviders,
   filters,
   isPro
 }: MovieFiltersProps) {
   const selectedGenres = new Set(filters.genreIds);
-  const selectedWatchProviders = new Set(filters.watchProviderIds);
-  const selectedWatchTypes = new Set(filters.watchMonetizationTypes);
   const activeCount = countActiveMovieDiscoverFilters(filters);
-  const defaultRegion = getTmdbRegionForLocale(locale);
   const lockProFilters = !isPro;
   const proOnlySortValues = new Set(["vote_count.desc", "vote_count.asc"]);
 
@@ -52,12 +42,6 @@ export function MovieFilters({
       ).entries()
     ).map(([value, label]) => ({ value, label }))
   ];
-
-  const regionOptions = Array.from(
-    new Set(SUPPORTED_LOCALES.map((entry) => getTmdbRegionForLocale(entry.value)))
-  )
-    .sort((a, b) => a.localeCompare(b))
-    .map((value) => ({ value, label: value }));
 
   return (
     <aside className={styles.sidebar} aria-label={translate(locale, "movie.filters.title")}>
@@ -236,104 +220,7 @@ export function MovieFilters({
           </select>
         </div>
 
-        <fieldset className={styles.genreGroup} disabled={lockProFilters}>
-          <legend>{translate(locale, "movie.filters.watchSection")}</legend>
-          <div className={styles.group}>
-            <label htmlFor="movie-filter-watch-region">
-              {translate(locale, "movie.filters.watchRegion")}
-            </label>
-            <select
-              id="movie-filter-watch-region"
-              name="watchRegion"
-              defaultValue={filters.watchRegion ?? defaultRegion}
-            >
-              {regionOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          <div className={styles.genreGrid}>
-            {MOVIE_WATCH_MONETIZATION_TYPES.map((type) => (
-              <label key={type}>
-                <input
-                  type="checkbox"
-                  name="watchTypes"
-                  value={type}
-                  defaultChecked={selectedWatchTypes.has(type)}
-                />
-                {translate(locale, `movie.filters.watchType.${type}`)}
-              </label>
-            ))}
-          </div>
-
-          {watchProviders.length > 0 ? (
-            <div className={styles.providerGrid}>
-              {watchProviders.map((provider) => (
-                <label key={provider.id}>
-                  <input
-                    type="checkbox"
-                    name="watchProviders"
-                    value={provider.id}
-                    defaultChecked={selectedWatchProviders.has(provider.id)}
-                  />
-                  {provider.name}
-                </label>
-              ))}
-            </div>
-          ) : (
-            <p className={styles.hint}>{translate(locale, "movie.filters.noProviders")}</p>
-          )}
-        </fieldset>
-
-        <fieldset className={styles.genreGroup} disabled={lockProFilters}>
-          <legend>{translate(locale, "movie.filters.certifications")}</legend>
-          <div className={styles.row}>
-            <div className={styles.group}>
-              <label htmlFor="movie-filter-cert-country">
-                {translate(locale, "movie.filters.certCountry")}
-              </label>
-              <select
-                id="movie-filter-cert-country"
-                name="certCountry"
-                defaultValue={filters.certificationCountry ?? defaultRegion}
-              >
-                {regionOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.group}>
-              <label htmlFor="movie-filter-certification">
-                {translate(locale, "movie.filters.certification")}
-              </label>
-              <input
-                id="movie-filter-certification"
-                type="text"
-                name="certification"
-                maxLength={12}
-                defaultValue={filters.certification ?? ""}
-                placeholder={translate(locale, "movie.filters.certificationPlaceholder")}
-              />
-            </div>
-          </div>
-        </fieldset>
-
-        <div className={styles.group}>
-          <label htmlFor="movie-filter-keywords">{translate(locale, "movie.filters.keywords")}</label>
-          <input
-            id="movie-filter-keywords"
-            type="text"
-            name="keywords"
-            defaultValue={filters.keywords.join(", ")}
-            placeholder={translate(locale, "movie.filters.keywordsPlaceholder")}
-            disabled={lockProFilters}
-          />
-        </div>
 
         {lockProFilters ? (
           <div className={styles.paywallBox}>

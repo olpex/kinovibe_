@@ -17,7 +17,6 @@ import {
   discoverTmdbMovieCatalogPage,
   getTmdbMovieCatalogPage,
   getTmdbMovieGenres,
-  getTmdbMovieWatchProviders,
   type MovieMenuCategory
 } from "@/lib/tmdb/client";
 import styles from "@/app/menu-page.module.css";
@@ -55,7 +54,6 @@ export async function MovieCatalogView({
 
   let result: Awaited<ReturnType<typeof getTmdbMovieCatalogPage>> | null = null;
   let genres = [] as Awaited<ReturnType<typeof getTmdbMovieGenres>>;
-  let watchProviders = [] as Awaited<ReturnType<typeof getTmdbMovieWatchProviders>>;
 
   try {
     if (category === "popular") {
@@ -65,7 +63,6 @@ export async function MovieCatalogView({
           : getTmdbMovieCatalogPage(category, locale, page),
         getTmdbMovieGenres(locale).catch(() => [])
       ]);
-      watchProviders = await getTmdbMovieWatchProviders(locale, filters.watchRegion).catch(() => []);
     } else {
       result = await getTmdbMovieCatalogPage(category, locale, page);
     }
@@ -94,7 +91,6 @@ export async function MovieCatalogView({
               locale={locale}
               basePath={basePath}
               genres={genres}
-              watchProviders={watchProviders}
               filters={filters}
               isPro={session.isPro}
             />
@@ -118,7 +114,6 @@ export async function MovieCatalogView({
             locale={locale}
             basePath={basePath}
             genres={genres}
-            watchProviders={watchProviders}
             filters={filters}
             isPro={session.isPro}
           />
