@@ -11,11 +11,6 @@ export type FeedbackFormState = {
   message: string;
 };
 
-export const FEEDBACK_FORM_INITIAL_STATE: FeedbackFormState = {
-  ok: true,
-  message: ""
-};
-
 type FeedbackCategory = "feedback" | "suggestion";
 
 function asString(value: FormDataEntryValue | null): string {

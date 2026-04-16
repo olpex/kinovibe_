@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import {
-  FEEDBACK_FORM_INITIAL_STATE,
-  submitFeedbackAction
+  submitFeedbackAction,
+  type FeedbackFormState
 } from "./actions";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./feedback.module.css";
@@ -16,9 +16,9 @@ type FeedbackFormProps = {
 };
 
 export function FeedbackForm({ locale, isAuthenticated, pagePath }: FeedbackFormProps) {
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useActionState<FeedbackFormState, FormData>(
     submitFeedbackAction,
-    FEEDBACK_FORM_INITIAL_STATE
+    { ok: true, message: "" }
   );
 
   if (!isAuthenticated) {

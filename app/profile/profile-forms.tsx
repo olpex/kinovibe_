@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useActionState } from "react";
 import {
   changePasswordFromProfileAction,
-  PROFILE_ACTION_INITIAL_STATE,
-  updateProfileSettingsAction
+  updateProfileSettingsAction,
+  type ProfileActionState
 } from "./actions";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./profile.module.css";
@@ -23,13 +23,13 @@ type ProfileFormsProps = {
 };
 
 export function ProfileForms({ locale, isAdmin, billingPlan, initialProfile }: ProfileFormsProps) {
-  const [profileState, profileAction, profilePending] = useActionState(
+  const [profileState, profileAction, profilePending] = useActionState<ProfileActionState, FormData>(
     updateProfileSettingsAction,
-    PROFILE_ACTION_INITIAL_STATE
+    { ok: true, message: "" }
   );
-  const [passwordState, passwordAction, passwordPending] = useActionState(
+  const [passwordState, passwordAction, passwordPending] = useActionState<ProfileActionState, FormData>(
     changePasswordFromProfileAction,
-    PROFILE_ACTION_INITIAL_STATE
+    { ok: true, message: "" }
   );
 
   return (

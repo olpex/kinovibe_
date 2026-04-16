@@ -13,11 +13,6 @@ export type RetentionActionState = {
   message: string;
 };
 
-export const RETENTION_ACTION_INITIAL_STATE: RetentionActionState = {
-  ok: true,
-  message: ""
-};
-
 export async function purgeAuditLogsByRetentionAction(
   _previousState: RetentionActionState,
   formData: FormData

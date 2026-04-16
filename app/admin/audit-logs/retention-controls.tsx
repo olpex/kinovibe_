@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import {
   purgeAuditLogsByRetentionAction,
-  RETENTION_ACTION_INITIAL_STATE
+  type RetentionActionState
 } from "./actions";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./audit-logs.module.css";
@@ -14,9 +14,9 @@ type RetentionControlsProps = {
 };
 
 export function RetentionControls({ defaultDays, locale }: RetentionControlsProps) {
-  const [state, formAction, pending] = useActionState(
+  const [state, formAction, pending] = useActionState<RetentionActionState, FormData>(
     purgeAuditLogsByRetentionAction,
-    RETENTION_ACTION_INITIAL_STATE
+    { ok: true, message: "" }
   );
 
   return (

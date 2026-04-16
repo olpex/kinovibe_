@@ -10,11 +10,6 @@ export type ProfileActionState = {
   message: string;
 };
 
-export const PROFILE_ACTION_INITIAL_STATE: ProfileActionState = {
-  ok: true,
-  message: ""
-};
-
 function asString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value.trim() : "";
 }
