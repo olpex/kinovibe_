@@ -1451,13 +1451,25 @@ type TvMazeNetwork = {
 type TvMazeShow = {
   id: number;
   name: string;
+  status?: string | null;
+  runtime?: number | null;
+  averageRuntime?: number | null;
   language?: string | null;
   genres?: string[] | null;
   premiered?: string | null;
+  ended?: string | null;
+  officialSite?: string | null;
+  schedule?: {
+    time?: string | null;
+    days?: string[] | null;
+  } | null;
   rating?: { average?: number | null } | null;
   weight?: number | null;
   network?: TvMazeNetwork | null;
   webChannel?: TvMazeNetwork | null;
+  externals?: {
+    imdb?: string | null;
+  } | null;
   image?: {
     medium?: string | null;
     original?: string | null;
@@ -1471,6 +1483,24 @@ type TvMazeScheduleEntry = {
   airtime?: string | null;
   airstamp?: string | null;
   show: TvMazeShow;
+};
+
+type TvMazeShowCastEntry = {
+  person?: {
+    id: number;
+    name?: string;
+    image?: {
+      medium?: string | null;
+      original?: string | null;
+    } | null;
+  } | null;
+  character?: {
+    name?: string;
+  } | null;
+};
+
+type TmdbFindByImdbResponse = {
+  tv_results?: Array<{ id?: number }>;
 };
 
 type OnAirScheduleCard = {
@@ -1639,6 +1669,168 @@ function applyOnAirSort(items: OnAirScheduleCard[], sortBy: TvDiscoverSortBy): O
   return sorted;
 }
 
+const getTvMazeScheduleByCountryDate = cache(
+  async (countryCode: string, dateIso: string): Promise<TvMazeScheduleEntry[]> => {
+    try {
+      const url = new URL(`${TVMAZE_API_BASE_URL}/schedule`);
+      url.searchParams.set("country", countryCode);
+      url.searchParams.set("date", dateIso);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { accept: "application/json" },
+        next: { revalidate: 600 }
+      });
+
+      if (!response.ok) {
+        return [];
+      }
+
+      const payload = (await response.json()) as TvMazeScheduleEntry[];
+      return Array.isArray(payload) ? payload : [];
+    } catch {
+      return [];
+    }
+  }
+);
+
+const getTvMazeShowById = cache(async (showId: number): Promise<TvMazeShow | null> => {
+  if (!Number.isFinite(showId) || showId <= 0) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${TVMAZE_API_BASE_URL}/shows/${showId}`, {
+      method: "GET",
+      headers: { accept: "application/json" },
+      next: { revalidate: 3600 }
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return (await response.json()) as TvMazeShow;
+  } catch {
+    return null;
+  }
+});
+
+const getTvMazeShowCastById = cache(async (showId: number): Promise<TvMazeShowCastEntry[]> => {
+  if (!Number.isFinite(showId) || showId <= 0) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${TVMAZE_API_BASE_URL}/shows/${showId}/cast`, {
+      method: "GET",
+      headers: { accept: "application/json" },
+      next: { revalidate: 3600 }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as TvMazeShowCastEntry[];
+    return Array.isArray(payload) ? payload : [];
+  } catch {
+    return [];
+  }
+});
+
+const getTmdbTvIdByImdbId = cache(async (imdbId: string): Promise<number | undefined> => {
+  const normalized = imdbId.trim();
+  if (!/^tt\d+$/i.test(normalized)) {
+    return undefined;
+  }
+
+  try {
+    const response = await fetchTmdb<TmdbFindByImdbResponse>(
+      `/find/${normalized}`,
+      { external_source: "imdb_id" },
+      21600
+    );
+    const first = response.tv_results?.find((entry) => typeof entry.id === "number" && entry.id > 0);
+    return first?.id;
+  } catch {
+    return undefined;
+  }
+});
+
+function formatRunPeriodLabel(
+  locale: Locale,
+  premiered: string | null | undefined,
+  ended: string | null | undefined,
+  status: string | null | undefined
+): string {
+  const startYear = parseOptionalYear(premiered);
+  const endYear = parseOptionalYear(ended);
+  if (!startYear && !endYear) {
+    return translate(locale, "tv.runPeriodUnknown");
+  }
+
+  if (startYear && endYear) {
+    return translate(locale, "tv.runPeriodEnded", {
+      start: String(startYear),
+      end: String(endYear)
+    });
+  }
+
+  if (startYear) {
+    const isEnded = (status ?? "").toLowerCase() === "ended";
+    if (isEnded) {
+      return translate(locale, "tv.runPeriodEnded", {
+        start: String(startYear),
+        end: translate(locale, "watchlist.tba")
+      });
+    }
+    return translate(locale, "tv.runPeriodOngoing", { start: String(startYear) });
+  }
+
+  return translate(locale, "tv.runPeriodUnknown");
+}
+
+function formatTvRuntimeLabel(
+  locale: Locale,
+  runtimeMinutes: number | null | undefined,
+  fallbackId: number
+): string {
+  if (typeof runtimeMinutes === "number" && runtimeMinutes > 0) {
+    return `${runtimeMinutes} min`;
+  }
+  return formatRuntime(runtimeMinutes, fallbackId, locale);
+}
+
+export type TvOnAirShowDetails = {
+  tvMazeId: number;
+  tmdbTvId?: number;
+  title: string;
+  year: number;
+  genres: string[];
+  countries: string[];
+  runtime: string;
+  rating: number;
+  status: string;
+  originalLanguage: string;
+  overview: string;
+  historicalNote: string;
+  channel: string;
+  airtime: string;
+  airdate: string;
+  officialSite?: string;
+  posterUrl?: string;
+  backdropUrl?: string;
+  trailerUrl?: string;
+  trailerName?: string;
+  cast: Array<{
+    id: number;
+    name: string;
+    character: string;
+    avatarUrl?: string;
+  }>;
+};
+
 export async function getTvOnAirSchedulePage(
   filters: TvDiscoverFilters,
   locale: Locale = "en",
@@ -1662,25 +1854,7 @@ export async function getTvOnAirSchedulePage(
   }
   const selectedGenres = new Set(filters.genreIds);
 
-  let scheduleEntries: TvMazeScheduleEntry[] = [];
-  try {
-    const url = new URL(`${TVMAZE_API_BASE_URL}/schedule`);
-    url.searchParams.set("country", region);
-    url.searchParams.set("date", dateIso);
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: { accept: "application/json" },
-      next: { revalidate: 600 }
-    });
-
-    if (response.ok) {
-      const payload = (await response.json()) as TvMazeScheduleEntry[];
-      scheduleEntries = Array.isArray(payload) ? payload : [];
-    }
-  } catch {
-    scheduleEntries = [];
-  }
+  const scheduleEntries = await getTvMazeScheduleByCountryDate(region, dateIso);
 
   const filteredCards: OnAirScheduleCard[] = [];
   for (const entry of scheduleEntries) {
@@ -1757,7 +1931,7 @@ export async function getTvOnAirSchedulePage(
       gradient: gradientByMovieId(show.id),
       posterUrl: normalizeImageUrl(show.image?.original ?? show.image?.medium),
       overview: sanitizeNarrativeText(stripHtmlTags(show.summary ?? ""), 420),
-      href: `/search?q=${encodeURIComponent(show.name)}`,
+      href: `/tv/on-the-air/${show.id}`,
       broadcast: {
         channel,
         time: airingTime,
@@ -1793,6 +1967,117 @@ export async function getTvOnAirSchedulePage(
     timezone
   };
 }
+
+export const getTvOnAirShowDetails = cache(
+  async (tvMazeShowId: number, locale: Locale = "en"): Promise<TvOnAirShowDetails | null> => {
+    if (!Number.isFinite(tvMazeShowId) || tvMazeShowId <= 0) {
+      return null;
+    }
+
+    const region = getTmdbRegionForLocale(locale);
+    const timezone = TIMEZONE_BY_REGION[region] ?? "UTC";
+    const dateIso = formatDateForSchedule(timezone);
+    const dateLabel = localizeScheduleDate(dateIso, locale, timezone);
+    const countryName = localizeCountryName(region, region, locale);
+
+    const [show, castEntries, scheduleEntries] = await Promise.all([
+      getTvMazeShowById(tvMazeShowId),
+      getTvMazeShowCastById(tvMazeShowId),
+      getTvMazeScheduleByCountryDate(region, dateIso)
+    ]);
+
+    if (!show) {
+      return null;
+    }
+
+    const scheduleEntry = scheduleEntries.find((entry) => entry.show?.id === tvMazeShowId);
+    const scheduleNetwork = scheduleEntry?.show?.network ?? scheduleEntry?.show?.webChannel ?? null;
+    const showNetwork = show.network ?? show.webChannel ?? null;
+    const resolvedNetwork = scheduleNetwork ?? showNetwork;
+    const preferredTimeZone = resolvedNetwork?.country?.timezone ?? timezone;
+    const channel = resolvedNetwork?.name?.trim() || translate(locale, "common.notAvailable");
+    const airtime = scheduleEntry
+      ? formatAiringTime(locale, scheduleEntry, preferredTimeZone)
+      : show.schedule?.time?.trim() || translate(locale, "common.notAvailable");
+    const airdate = scheduleEntry?.airdate
+      ? localizeScheduleDate(scheduleEntry.airdate, locale, preferredTimeZone)
+      : dateLabel;
+    const countryCode = safeRegionCode(resolvedNetwork?.country?.code, region);
+    const localizedCountry = localizeCountryName(countryCode, countryName, locale);
+
+    const imdbId = show.externals?.imdb?.trim() ?? "";
+    let tmdbTvId: number | undefined;
+    if (imdbId) {
+      tmdbTvId = await getTmdbTvIdByImdbId(imdbId);
+    }
+
+    let trailerUrl: string | undefined;
+    let trailerName: string | undefined;
+    let backdropUrl: string | undefined;
+    if (tmdbTvId) {
+      try {
+        const tmdbDetails = await getTmdbTvDetails(tmdbTvId, locale);
+        trailerUrl = tmdbDetails.trailerUrl;
+        trailerName = tmdbDetails.trailerName;
+        backdropUrl = tmdbDetails.backdropUrl;
+      } catch {
+        trailerUrl = undefined;
+      }
+    }
+
+    if (!trailerUrl) {
+      const fallbackYear = parseYear(show.premiered ?? null);
+      trailerUrl = buildYoutubeTrailerSearchUrl(show.name, fallbackYear || undefined);
+    }
+
+    const cast = castEntries
+      .map((entry) => {
+        const person = entry.person;
+        if (!person?.id || !person.name) {
+          return null;
+        }
+        return {
+          id: person.id,
+          name: person.name,
+          character: entry.character?.name?.trim() || translate(locale, "movie.castUnknownCharacter"),
+          avatarUrl: normalizeImageUrl(person.image?.original ?? person.image?.medium)
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+      .slice(0, 24);
+
+    const fallbackOverview = sanitizeNarrativeText(stripHtmlTags(show.summary ?? ""), 220);
+    const historicalNote = formatRunPeriodLabel(locale, show.premiered, show.ended, show.status);
+    const runtime = formatTvRuntimeLabel(locale, show.averageRuntime ?? show.runtime, show.id);
+    const rating = Number(show.rating?.average ?? 0);
+    const year = parseYear(show.premiered ?? null);
+
+    return {
+      tvMazeId: show.id,
+      tmdbTvId,
+      title: show.name,
+      year,
+      genres: show.genres?.filter(Boolean) ?? [],
+      countries: [localizedCountry],
+      runtime,
+      rating,
+      status: show.status?.trim() || translate(locale, "common.notAvailable"),
+      originalLanguage:
+        normalizeTvMazeLanguageToCode(show.language) ?? show.language?.trim() ?? translate(locale, "common.notAvailable"),
+      overview: fallbackOverview || translate(locale, "home.fallbackOverview"),
+      historicalNote,
+      channel,
+      airtime,
+      airdate,
+      officialSite: show.officialSite?.trim() || undefined,
+      posterUrl: normalizeImageUrl(show.image?.original ?? show.image?.medium),
+      backdropUrl,
+      trailerUrl,
+      trailerName,
+      cast
+    };
+  }
+);
 
 function formatUtcDate(value: Date): string {
   const year = value.getUTCFullYear();
