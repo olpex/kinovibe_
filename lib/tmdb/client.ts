@@ -411,6 +411,64 @@ function hasEnoughBiographyContext(text: string | undefined): boolean {
   return normalized.length >= 220;
 }
 
+function normalizeWhitespace(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function readGoogleTranslateText(payload: unknown): string {
+  if (!Array.isArray(payload) || !Array.isArray(payload[0])) {
+    return "";
+  }
+
+  const chunks = payload[0] as unknown[];
+  return chunks
+    .map((chunk) => (Array.isArray(chunk) && typeof chunk[0] === "string" ? chunk[0] : ""))
+    .join("")
+    .trim();
+}
+
+async function translateFromEnglishToLanguage(
+  text: string,
+  targetLanguageCode: string
+): Promise<string | undefined> {
+  const source = normalizeWhitespace(text);
+  if (!source || targetLanguageCode === "en") {
+    return source || undefined;
+  }
+
+  try {
+    const url = new URL("https://translate.googleapis.com/translate_a/single");
+    url.searchParams.set("client", "gtx");
+    url.searchParams.set("sl", "en");
+    url.searchParams.set("tl", targetLanguageCode);
+    url.searchParams.set("dt", "t");
+    url.searchParams.set("q", source);
+
+    const response = await fetch(url, {
+      method: "GET",
+      next: { revalidate: 86400 }
+    });
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const translated = normalizeWhitespace(readGoogleTranslateText(payload));
+    if (!translated) {
+      return undefined;
+    }
+
+    // If translation result is effectively unchanged, treat it as unavailable.
+    if (translated.toLowerCase() === source.toLowerCase()) {
+      return undefined;
+    }
+
+    return translated;
+  } catch {
+    return undefined;
+  }
+}
+
 function buildFallbackMovieOverview(
   locale: Locale,
   args: {
@@ -2293,12 +2351,16 @@ export const getTmdbPersonDetails = cache(
       normalizedEnglishBiography ?? (locale === "en" ? snapshot.biography : undefined),
       920
     );
+    const translatedEnglishFallbackCandidate =
+      locale === "en" || !englishFallbackCandidate
+        ? englishFallbackCandidate
+        : await translateFromEnglishToLanguage(englishFallbackCandidate, languageCode);
     const preferredBiographySource =
       locale === "en"
         ? localizedCandidate || englishFallbackCandidate
         : hasEnoughBiographyContext(localizedCandidate)
           ? localizedCandidate
-          : englishFallbackCandidate || localizedCandidate;
+          : translatedEnglishFallbackCandidate || localizedCandidate;
 
     const biographySource =
       preferredBiographySource ??
