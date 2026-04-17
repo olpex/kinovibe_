@@ -116,6 +116,7 @@ export async function submitFeedbackAction(
 
   let adminInboxOk = false;
   let adminEmailOk = false;
+  let adminRecipientEmail: string | null = null;
 
   // Create bell notification for admin
   try {
@@ -132,6 +133,14 @@ export async function submitFeedbackAction(
         feedback_entry_id: entryId ?? null
       });
       adminInboxOk = !inboxError;
+      if (adminClient) {
+        const { data: adminUserData, error: adminUserError } = await adminClient.auth.admin.getUserById(
+          adminUserId
+        );
+        if (!adminUserError) {
+          adminRecipientEmail = adminUserData.user?.email ?? null;
+        }
+      }
     } else {
       console.error("[feedback] admin user id is not configured (ADMIN_USER_ID) and cannot be resolved");
     }
@@ -148,7 +157,8 @@ export async function submitFeedbackAction(
       subject,
       message,
       pagePath,
-      createdAtIso: createdAt
+      createdAtIso: createdAt,
+      adminEmailOverride: adminRecipientEmail
     });
     adminEmailOk = adminEmailResult.ok;
     if (!adminEmailResult.ok) {

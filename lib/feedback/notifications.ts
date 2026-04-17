@@ -10,6 +10,7 @@ type SendFeedbackNotificationArgs = {
   message: string;
   pagePath: string | null;
   createdAtIso: string;
+  adminEmailOverride?: string | null;
 };
 
 type SendFeedbackNotificationResult = {
@@ -108,7 +109,14 @@ export async function sendFeedbackNotificationEmail(
     .split(",")
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
-  const recipients = Array.from(new Set([...explicitRecipients, getPrimaryAdminEmail()]));
+  const overrideRecipient = args.adminEmailOverride?.trim().toLowerCase();
+  const recipients = Array.from(
+    new Set([
+      ...explicitRecipients,
+      ...(overrideRecipient ? [overrideRecipient] : []),
+      getPrimaryAdminEmail()
+    ])
+  );
   if (recipients.length === 0) {
     return {
       ok: false,

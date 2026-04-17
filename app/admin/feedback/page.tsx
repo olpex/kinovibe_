@@ -103,16 +103,32 @@ export default async function AdminFeedbackPage() {
   }
 
   // Load all feedback entries
-  const { data: entries, error: entriesError } = await client
+  const { data: entriesWithOptional, error: entriesError } = await client
     .from("feedback_entries")
     .select("id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id,is_read_by_admin")
     .order("created_at", { ascending: false })
     .limit(200);
+  let rows = (entriesWithOptional ?? []) as (FeedbackRow & {
+    parent_reply_id?: number | null;
+    is_read_by_admin?: boolean;
+  })[];
+  let supportsReadFlag = true;
   if (entriesError) {
     console.error("[admin-feedback] failed to load feedback_entries", entriesError);
+    // Backward-compatible fallback for databases without newer optional columns.
+    const { data: entriesLegacy, error: entriesLegacyError } = await client
+      .from("feedback_entries")
+      .select("id,user_id,user_email,locale,category,subject,message,page_path,created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (entriesLegacyError) {
+      console.error("[admin-feedback] failed to load legacy feedback_entries", entriesLegacyError);
+      rows = [];
+    } else {
+      rows = (entriesLegacy ?? []) as FeedbackRow[];
+      supportsReadFlag = false;
+    }
   }
-
-  const rows = (entries ?? []) as (FeedbackRow & { parent_reply_id?: number | null; is_read_by_admin?: boolean })[];
   let fallbackNotifications: AdminNotifRow[] = [];
   if (rows.length === 0 && session.userId && serverClient) {
     const { data: notifs, error: notifsError } = await serverClient
@@ -130,8 +146,8 @@ export default async function AdminFeedbackPage() {
   }
 
   // Mark all unread entries as read now that admin has opened the page
-  const unreadIds = rows.filter((r) => !r.is_read_by_admin).map((r) => r.id);
-  if (unreadIds.length > 0) {
+  const unreadIds = supportsReadFlag ? rows.filter((r) => !r.is_read_by_admin).map((r) => r.id) : [];
+  if (supportsReadFlag && unreadIds.length > 0) {
     await client
       .from("feedback_entries")
       .update({ is_read_by_admin: true })
