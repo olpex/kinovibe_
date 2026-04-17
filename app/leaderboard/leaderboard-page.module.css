@@ -1,0 +1,235 @@
+.filtersCard {
+  border: 1px solid var(--color-border);
+  border-radius: 0.95rem;
+  background: rgba(11, 15, 20, 0.42);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.68rem;
+}
+
+.filterGroup {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.filterLabel {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-soft);
+}
+
+.filterTabs {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.filterTab {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.28rem 0.58rem;
+  background: rgba(26, 34, 48, 0.78);
+  color: var(--color-text-soft);
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.filterTabActive {
+  border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 68%, rgba(26, 34, 48, 0.9));
+  color: #fff;
+}
+
+.topGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.explainerCard {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: rgba(11, 15, 20, 0.5);
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.explainerCard h2 {
+  margin: 0;
+  font-size: 1.14rem;
+  font-family: var(--font-heading);
+}
+
+.explainerCard p {
+  margin: 0;
+  color: var(--color-text-soft);
+}
+
+.rulesList {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-text);
+}
+
+.periodHint {
+  color: var(--color-text-soft);
+  font-size: 0.86rem;
+}
+
+.ctaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.sideColumn {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.kpiCard {
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  background: rgba(11, 15, 20, 0.5);
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.kpiCard h3 {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.kpiCard p {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+}
+
+.selfCard {
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  background: rgba(11, 15, 20, 0.5);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.selfCard h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.selfRankValue {
+  margin: 0;
+  font-size: 1rem;
+  font-family: var(--font-heading);
+}
+
+.selfHint {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 0.95rem;
+  background: rgba(11, 15, 20, 0.45);
+}
+
+.table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+}
+
+.table thead th {
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  letter-spacing: 0.02em;
+  padding: 0.7rem 0.72rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table tbody td {
+  padding: 0.66rem 0.72rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.currentUserRow {
+  background: color-mix(in srgb, var(--color-secondary) 14%, rgba(11, 15, 20, 0.4));
+}
+
+.memberCell {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 200px;
+}
+
+.youBadge {
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 55%, var(--color-border));
+  border-radius: 999px;
+  padding: 0.1rem 0.44rem;
+  font-size: 0.74rem;
+  color: var(--color-text-soft);
+}
+
+.emptyState {
+  border: 1px dashed var(--color-border);
+  border-radius: 0.95rem;
+  padding: 0.95rem;
+  background: rgba(11, 15, 20, 0.38);
+  display: grid;
+  gap: 0.5rem;
+}
+
+.emptyState h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--color-text-soft);
+}
+
+@media (max-width: 980px) {
+  .topGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+}
