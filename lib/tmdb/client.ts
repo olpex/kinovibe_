@@ -1551,12 +1551,13 @@ function inferAwardOutcome(category: string | null | undefined): "winner" | "nom
 function parseAwardCategoryParts(
   category: string,
   locale: Locale
-): { festival: string; awardCategory: string } {
+): { festival: string; awardCategory: string; isStructured: boolean } {
   const normalized = category.trim();
   if (!normalized) {
     return {
       festival: translate(locale, "award.festivalUnknown"),
-      awardCategory: translate(locale, "award.categoryUnknown")
+      awardCategory: translate(locale, "award.categoryUnknown"),
+      isStructured: false
     };
   }
 
@@ -1568,19 +1569,25 @@ function parseAwardCategoryParts(
   if (parts.length >= 2) {
     return {
       festival: parts[0],
-      awardCategory: parts.slice(1).join(" • ")
+      awardCategory: parts.slice(1).join(" • "),
+      isStructured: true
     };
   }
 
   return {
     festival: translate(locale, "award.festivalUnknown"),
-    awardCategory: normalized
+    awardCategory: normalized,
+    isStructured: false
   };
 }
 
-function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard {
+function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard | null {
   const category = item.category ?? translate(locale, "nav.awards");
   const parsed = parseAwardCategoryParts(category, locale);
+  if (!parsed.isStructured) {
+    return null;
+  }
+
   return {
     id: item.id,
     title: item.name,
@@ -1611,7 +1618,11 @@ export async function getTmdbAwards(
     );
     const results = response.results ?? [];
     if (results.length > 0) {
-      return results.slice(0, 24).map((item) => mapAwardResult(item, locale));
+      return results
+        .slice(0, 48)
+        .map((item) => mapAwardResult(item, locale))
+        .filter((item): item is AwardCard => item !== null)
+        .slice(0, 24);
     }
   } catch {
     return [];
