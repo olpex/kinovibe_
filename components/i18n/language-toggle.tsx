@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   getLocaleCookieKey,
   normalizeLocale,
@@ -30,7 +29,6 @@ function readLocaleFromCookie(): Locale {
 
 export function LanguageToggle({ className }: LanguageToggleProps) {
   const [locale, setLocale] = useState<Locale>(() => readLocaleFromCookie());
-  const router = useRouter();
   const label = useMemo(() => translate(locale, "lang.label"), [locale]);
 
   return (
@@ -41,9 +39,13 @@ export function LanguageToggle({ className }: LanguageToggleProps) {
         value={locale}
         onChange={(event) => {
           const nextLocale = normalizeLocale(event.target.value);
-          document.cookie = `${getLocaleCookieKey()}=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+          const secureSegment = window.location.protocol === "https:" ? "; Secure" : "";
+          document.cookie = `${getLocaleCookieKey()}=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=31536000; SameSite=Lax${secureSegment}`;
           setLocale(nextLocale);
-          router.refresh();
+          // Force full document reload so server components read the new locale cookie immediately.
+          window.location.assign(
+            `${window.location.pathname}${window.location.search}${window.location.hash}`
+          );
         }}
       >
         {SUPPORTED_LOCALES.map((item) => (
