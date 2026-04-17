@@ -6,15 +6,23 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export function getPrimaryAdminEmail(): string {
-  const configuredEmail = process.env.ADMIN_PRIMARY_EMAIL ?? process.env.ADMIN_EMAIL_ALLOWLIST;
-  const firstConfiguredEmail = configuredEmail?.split(",")[0] ?? "";
-  const normalized = normalizeEmail(firstConfiguredEmail);
-  if (normalized.length > 0) {
-    return normalized;
+export function getAdminEmails(): string[] {
+  const primary = process.env.ADMIN_PRIMARY_EMAIL ?? "";
+  const allowlist = process.env.ADMIN_EMAIL_ALLOWLIST ?? "";
+  const candidates = [primary, ...allowlist.split(",")]
+    .map((value) => normalizeEmail(value))
+    .filter((value) => value.length > 0);
+
+  const unique = Array.from(new Set(candidates));
+  if (unique.length > 0) {
+    return unique;
   }
 
-  return DEFAULT_PRIMARY_ADMIN_EMAIL;
+  return [DEFAULT_PRIMARY_ADMIN_EMAIL];
+}
+
+export function getPrimaryAdminEmail(): string {
+  return getAdminEmails()[0];
 }
 
 export function isAdminEmail(email: string | undefined): boolean {
@@ -22,5 +30,5 @@ export function isAdminEmail(email: string | undefined): boolean {
     return false;
   }
 
-  return normalizeEmail(email) === getPrimaryAdminEmail();
+  return getAdminEmails().includes(normalizeEmail(email));
 }

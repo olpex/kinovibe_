@@ -8,9 +8,10 @@ import styles from "./reset.module.css";
 
 type ResetPasswordFormProps = {
   locale: Locale;
+  nextPath: string;
 };
 
-export function ResetPasswordForm({ locale }: ResetPasswordFormProps) {
+export function ResetPasswordForm({ locale, nextPath }: ResetPasswordFormProps) {
   const [state, formAction, isPending] = useActionState(
     updatePasswordAction,
     AUTH_FORM_INITIAL_STATE
@@ -24,6 +25,7 @@ export function ResetPasswordForm({ locale }: ResetPasswordFormProps) {
         <p className={state.ok ? styles.feedbackOk : styles.feedbackError}>{state.message}</p>
       ) : null}
       <form action={formAction} className={styles.form}>
+        <input type="hidden" name="next" value={nextPath} />
         <label>
           <span>{translate(locale, "profile.newPassword")}</span>
           <input type="password" name="password" required autoComplete="new-password" />

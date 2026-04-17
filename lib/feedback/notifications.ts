@@ -1,5 +1,5 @@
 import "server-only";
-import { getPrimaryAdminEmail } from "@/lib/auth/admin";
+import { getAdminEmails } from "@/lib/auth/admin";
 import { normalizeLocale, translate, type Locale } from "@/lib/i18n/shared";
 
 type SendFeedbackNotificationArgs = {
@@ -122,7 +122,7 @@ export async function sendFeedbackNotificationEmail(
     new Set([
       ...explicitRecipients,
       ...(overrideRecipient ? [overrideRecipient] : []),
-      getPrimaryAdminEmail()
+      ...getAdminEmails()
     ])
   );
   if (recipients.length === 0) {

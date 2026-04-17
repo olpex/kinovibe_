@@ -9,6 +9,22 @@ import { ResetPasswordForm } from "./reset-form";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "./reset.module.css";
 
+type ResetPasswordPageProps = {
+  searchParams: Promise<{
+    next?: string;
+  }>;
+};
+
+function safeNextPath(value: string | undefined): string {
+  if (!value || value.trim().length === 0) {
+    return "/watchlist";
+  }
+  if (value.startsWith("/") && !value.startsWith("//")) {
+    return value;
+  }
+  return "/watchlist";
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
   const site = translate(locale, "meta.siteTitle");
@@ -18,7 +34,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ResetPasswordPage() {
+export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+  const params = await searchParams;
+  const nextPath = safeNextPath(params.next);
   const [sessionUser, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
 
   if (!sessionUser.isConfigured) {
@@ -41,7 +59,7 @@ export default async function ResetPasswordPage() {
   }
 
   if (!sessionUser.isAuthenticated) {
-    redirect("/auth?next=/auth/reset");
+    redirect(`/auth?next=${encodeURIComponent(`/auth/reset?next=${encodeURIComponent(nextPath)}`)}`);
   }
 
   return (
@@ -66,7 +84,7 @@ export default async function ResetPasswordPage() {
         </p>
       </section>
 
-      <ResetPasswordForm locale={locale} />
+      <ResetPasswordForm locale={locale} nextPath={nextPath} />
     </main>
   );
 }

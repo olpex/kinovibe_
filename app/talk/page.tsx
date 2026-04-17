@@ -20,7 +20,7 @@ export default async function TalkPage() {
         <article className={styles.textCard}>
           <h2>{translate(locale, "menu.supportAuth")}</h2>
           <p>{translate(locale, "menu.supportAuthText")}</p>
-          <Link href="/auth" className={styles.linkButton}>
+          <Link href="/auth?next=/talk" className={styles.linkButton}>
             {translate(locale, "nav.signIn")}
           </Link>
         </article>

@@ -119,6 +119,7 @@ export function AuthForm({ nextPath, locale }: AuthFormProps) {
               </p>
             ) : null}
             <form action={resetAction} className={styles.form}>
+              <input type="hidden" name="next" value={nextPath} />
               <label>
                 <span>{translate(locale, "common.email")}</span>
                 <input type="email" name="email" required autoComplete="email" />

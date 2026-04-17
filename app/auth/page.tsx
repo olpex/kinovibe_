@@ -45,7 +45,7 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
   const hasConfigError = params.error === "config";
 
   if (sessionUser.isAuthenticated) {
-    redirect("/");
+    redirect(nextPath);
   }
 
   return (

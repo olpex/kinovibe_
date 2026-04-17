@@ -11,6 +11,17 @@ function asString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
 }
 
+function safeNextPath(value: string): string {
+  const normalized = value.trim();
+  if (!normalized) {
+    return "/";
+  }
+  if (normalized.startsWith("/") && !normalized.startsWith("//")) {
+    return normalized;
+  }
+  return "/";
+}
+
 async function resolveAppBaseUrl(): Promise<string> {
   const explicitBaseUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (explicitBaseUrl) {
@@ -37,6 +48,7 @@ export async function signInWithPasswordAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const locale = await getRequestLocale();
+  const nextPath = safeNextPath(asString(formData.get("next")));
   const email = asString(formData.get("email")).trim();
   const password = asString(formData.get("password"));
 
@@ -66,7 +78,7 @@ export async function signInWithPasswordAction(
     const isEmailUnverified = error.message.toLowerCase().includes("email not confirmed");
     if (isEmailUnverified) {
       redirect(
-        `/auth/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent("/")}`
+        `/auth/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent(nextPath)}`
       );
     }
 
@@ -77,7 +89,7 @@ export async function signInWithPasswordAction(
     };
   }
 
-  redirect("/");
+  redirect(nextPath);
 }
 
 export async function signUpWithPasswordAction(
@@ -85,6 +97,7 @@ export async function signUpWithPasswordAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const locale = await getRequestLocale();
+  const nextPath = safeNextPath(asString(formData.get("next")));
   const email = asString(formData.get("email")).trim();
   const password = asString(formData.get("password"));
 
@@ -127,10 +140,10 @@ export async function signUpWithPasswordAction(
   }
 
   if (data.session) {
-    redirect("/");
+    redirect(nextPath);
   }
 
-  redirect(`/auth/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent("/")}`);
+  redirect(`/auth/verify?email=${encodeURIComponent(email)}&next=${encodeURIComponent(nextPath)}`);
 }
 
 export async function signInWithGoogleAction(
@@ -138,7 +151,7 @@ export async function signInWithGoogleAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const locale = await getRequestLocale();
-  const nextPath = "/";
+  const nextPath = safeNextPath(asString(formData.get("next")));
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
@@ -172,6 +185,7 @@ export async function requestPasswordResetAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const locale = await getRequestLocale();
+  const nextPath = safeNextPath(asString(formData.get("next")));
   const email = asString(formData.get("email")).trim();
   if (!email) {
     return {
@@ -191,8 +205,9 @@ export async function requestPasswordResetAction(
   }
 
   const baseUrl = await resolveAppBaseUrl();
+  const resetPath = `/auth/reset?next=${encodeURIComponent(nextPath)}`;
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${baseUrl}/auth/callback?next=/auth/reset`
+    redirectTo: `${baseUrl}/auth/callback?next=${encodeURIComponent(resetPath)}`
   });
 
   if (error) {
@@ -215,7 +230,7 @@ export async function resendVerificationEmailAction(
 ): Promise<AuthFormState> {
   const locale = await getRequestLocale();
   const email = asString(formData.get("email")).trim();
-  const nextPath = "/";
+  const nextPath = safeNextPath(asString(formData.get("next")));
   if (!email) {
     return {
       ...previousState,
@@ -261,6 +276,7 @@ export async function updatePasswordAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const locale = await getRequestLocale();
+  const nextPath = safeNextPath(asString(formData.get("next")));
   const password = asString(formData.get("password"));
   const confirmPassword = asString(formData.get("confirmPassword"));
 
@@ -306,7 +322,7 @@ export async function updatePasswordAction(
     };
   }
 
-  redirect("/watchlist");
+  redirect(nextPath === "/auth/reset" ? "/watchlist" : nextPath);
 }
 
 export async function signOutAction() {

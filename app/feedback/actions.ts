@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getAdminEmails } from "@/lib/auth/admin";
 import {
   sendFeedbackConfirmationEmail,
   sendFeedbackNotificationEmail
@@ -31,14 +32,17 @@ async function getAdminUserId(): Promise<string | null> {
   const envId = process.env.ADMIN_USER_ID?.trim();
   if (envId) return envId;
 
-  // Fallback: look up by email via service-role client
-  const adminEmail = process.env.ADMIN_PRIMARY_EMAIL?.trim() || process.env.ADMIN_EMAIL_ALLOWLIST?.split(",")[0]?.trim() || "olppara@gmail.com";
+  // Fallback: look up by admin email allowlist via service-role client
+  const adminEmails = new Set(getAdminEmails().map((value) => value.toLowerCase()));
   const adminClient = createSupabaseAdminClient();
   if (!adminClient) return null;
 
   try {
     const { data } = await adminClient.auth.admin.listUsers({ perPage: 500 });
-    const adminUser = data?.users?.find((u) => u.email?.toLowerCase() === adminEmail.toLowerCase());
+    const adminUser = data?.users?.find((u) => {
+      const email = u.email?.toLowerCase();
+      return Boolean(email && adminEmails.has(email));
+    });
     return adminUser?.id ?? null;
   } catch {
     return null;
