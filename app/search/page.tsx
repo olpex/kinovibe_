@@ -6,6 +6,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { searchTmdbMovies } from "@/lib/tmdb/client";
+import { toCssImageUrl } from "@/lib/ui/css-image";
 import styles from "./search.module.css";
 
 type SearchPageProps = {
@@ -96,25 +97,28 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
       {!searchFailed ? (
         <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
-          {results.items.map((movie) => (
-            <Link key={movie.id} href={`/movie/${movie.id}`} className={styles.movieCard}>
-              <div
-                className={styles.poster}
-                style={{
-                  background: movie.posterUrl
-                    ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), url(${movie.posterUrl}) center / cover no-repeat`
-                    : `linear-gradient(145deg, ${movie.gradient[0]} 0%, ${movie.gradient[1]} 100%)`
-                }}
-              />
-              <div className={styles.cardBody}>
-                <h2>{movie.title}</h2>
-                <p>
-                  {movie.genre} · {movie.year > 0 ? movie.year : translate(locale, "watchlist.tba")}
-                </p>
-                <span>{movie.rating.toFixed(1)}</span>
-              </div>
-            </Link>
-          ))}
+          {results.items.map((movie) => {
+            const posterCss = toCssImageUrl(movie.posterUrl);
+            return (
+              <Link key={movie.id} href={`/movie/${movie.id}`} className={styles.movieCard}>
+                <div
+                  className={styles.poster}
+                  style={{
+                    background: posterCss
+                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${posterCss} center / cover no-repeat`
+                      : `linear-gradient(145deg, ${movie.gradient[0]} 0%, ${movie.gradient[1]} 100%)`
+                  }}
+                />
+                <div className={styles.cardBody}>
+                  <h2>{movie.title}</h2>
+                  <p>
+                    {movie.genre} · {movie.year > 0 ? movie.year : translate(locale, "watchlist.tba")}
+                  </p>
+                  <span>{movie.rating.toFixed(1)}</span>
+                </div>
+              </Link>
+            );
+          })}
         </section>
       ) : null}
 

@@ -1,4 +1,5 @@
 import styles from "./user-avatar.module.css";
+import { toCssImageUrl } from "@/lib/ui/css-image";
 
 type UserAvatarProps = {
   email?: string;
@@ -25,15 +26,15 @@ export function UserAvatar({
   avatarUrl,
   size = "md"
 }: UserAvatarProps) {
-  const safeAvatarUrl = avatarUrl?.trim();
+  const avatarCss = toCssImageUrl(avatarUrl);
 
   return (
     <span
-      className={`${styles.avatar} ${safeAvatarUrl ? styles.withImage : ""} ${size === "sm" ? styles.sm : styles.md}`.trim()}
+      className={`${styles.avatar} ${avatarCss ? styles.withImage : ""} ${size === "sm" ? styles.sm : styles.md}`.trim()}
       style={
-        safeAvatarUrl
+        avatarCss
           ? {
-              backgroundImage: `linear-gradient(145deg, rgba(10, 20, 34, 0.35), rgba(10, 20, 34, 0.08)), url(${safeAvatarUrl})`
+              backgroundImage: `linear-gradient(145deg, rgba(10, 20, 34, 0.35), rgba(10, 20, 34, 0.08)), ${avatarCss}`
             }
           : undefined
       }

@@ -251,6 +251,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "admin.replyNotificationTitle": "New reply from KinoVibe admin",
   "admin.userRepliedTitle": "User replied to your message",
   "admin.newFeedbackTitle": "New feedback/suggestion received",
+  "admin.replySentNoEmail": "Reply sent, but email delivery failed.",
 
   "inbox.title": "Inbox",
   "inbox.subtitle": "{count} message(s)",
@@ -262,6 +263,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "inbox.replyPlaceholder": "Write your reply...",
   "inbox.sendReply": "Send reply",
   "inbox.replySent": "Reply sent successfully.",
+  "inbox.replySentNoEmail": "Reply sent in inbox, but email delivery failed.",
   "inbox.awaitingReply": "Awaiting admin reply...",
 
   "meta.adminFeedbackTitle": "Feedback | {site}",
@@ -978,6 +980,7 @@ const UK_MESSAGES: Record<string, string> = {
   "admin.replyNotificationTitle": "Нова відповідь від KinoVibe",
   "admin.userRepliedTitle": "Користувач відповів на ваше повідомлення",
   "admin.newFeedbackTitle": "Новий відгук або пропозиція від користувача",
+  "admin.replySentNoEmail": "Відповідь надіслано, але доставку email не вдалося виконати.",
 
   "inbox.title": "Вхідні повідомлення",
   "inbox.subtitle": "{count} повідомлень",
@@ -989,6 +992,7 @@ const UK_MESSAGES: Record<string, string> = {
   "inbox.replyPlaceholder": "Напишіть вашу відповідь...",
   "inbox.sendReply": "Надіслати",
   "inbox.replySent": "Відповідь надіслано.",
+  "inbox.replySentNoEmail": "Відповідь збережено у вхідних, але email не вдалося доставити.",
   "inbox.awaitingReply": "Очікуємо відповіді адміна..."
 };
 

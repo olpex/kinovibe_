@@ -7,6 +7,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getTmdbMovieCatalogPage, getTmdbMovieLocalizedSummaries } from "@/lib/tmdb/client";
+import { toCssImageUrl } from "@/lib/ui/css-image";
 import styles from "./watchlist.module.css";
 
 type WatchlistRow = {
@@ -147,31 +148,34 @@ export default async function WatchlistPage() {
               <span>{guestPicks.length}</span>
             </header>
             <div className={styles.grid}>
-              {guestPicks.map((item) => (
-                <Link key={`guest-${item.id}`} href={`/movie/${item.id}`} className={styles.card}>
-                  <div
-                    className={styles.poster}
-                    style={{
-                      background: item.posterUrl
-                        ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), url(${item.posterUrl}) center / cover no-repeat`
-                        : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
-                    }}
-                  >
-                    {!item.posterUrl ? <span className={styles.posterFallback}>{item.title}</span> : null}
-                  </div>
-                  <div className={styles.cardBody}>
-                    <h3>{item.title}</h3>
-                    <p>
-                      {(item.genre || translate(locale, "home.defaultGenre"))} ·{" "}
-                      {item.year ?? translate(locale, "watchlist.tba")}
-                    </p>
-                    <div className={styles.metaRow}>
-                      <span>{item.rating.toFixed(1)}</span>
-                      <b className={styles.previewLabel}>{translate(locale, "home.addToWatchlist")}</b>
+              {guestPicks.map((item) => {
+                const posterCss = toCssImageUrl(item.posterUrl);
+                return (
+                  <Link key={`guest-${item.id}`} href={`/movie/${item.id}`} className={styles.card}>
+                    <div
+                      className={styles.poster}
+                      style={{
+                        background: posterCss
+                          ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), ${posterCss} center / cover no-repeat`
+                          : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
+                      }}
+                    >
+                      {!posterCss ? <span className={styles.posterFallback}>{item.title}</span> : null}
                     </div>
-                  </div>
-                </Link>
-              ))}
+                    <div className={styles.cardBody}>
+                      <h3>{item.title}</h3>
+                      <p>
+                        {(item.genre || translate(locale, "home.defaultGenre"))} ·{" "}
+                        {item.year ?? translate(locale, "watchlist.tba")}
+                      </p>
+                      <div className={styles.metaRow}>
+                        <span>{item.rating.toFixed(1)}</span>
+                        <b className={styles.previewLabel}>{translate(locale, "home.addToWatchlist")}</b>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ) : null}
@@ -274,38 +278,46 @@ export default async function WatchlistPage() {
               <div className={styles.emptyGroup}>{translate(locale, "watchlist.emptySection")}</div>
             ) : (
               <div className={styles.grid}>
-                {group.items.map((item) => (
-                  <Link key={`${group.status}-${item.tmdbId}`} href={`/movie/${item.tmdbId}`} className={styles.card}>
-                    <div
-                      className={styles.poster}
-                      style={{
-                        background: item.posterUrl
-                          ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), url(${item.posterUrl}) center / cover no-repeat`
-                          : "linear-gradient(145deg, #3A0CA3 0%, #4CC9F0 100%)"
-                      }}
+                {group.items.map((item) => {
+                  const posterCss = toCssImageUrl(item.posterUrl);
+                  return (
+                    <Link
+                      key={`${group.status}-${item.tmdbId}`}
+                      href={`/movie/${item.tmdbId}`}
+                      className={styles.card}
                     >
-                      {!item.posterUrl ? <span className={styles.posterFallback}>{item.title}</span> : null}
-                    </div>
-                    <div className={styles.cardBody}>
-                      <h3>{item.title}</h3>
-                      <p>
-                        {(item.genre || translate(locale, "home.defaultGenre"))} · {item.year ?? translate(locale, "watchlist.tba")}
-                      </p>
-                      <div className={styles.metaRow}>
-                        <span>{item.rating.toFixed(1)}</span>
-                        <time dateTime={item.addedAt}>
-                          {new Date(item.addedAt).toLocaleDateString(toIntlLocale(locale), {
-                            month: "short",
-                            day: "numeric"
-                          })}
-                        </time>
+                      <div
+                        className={styles.poster}
+                        style={{
+                          background: posterCss
+                            ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), ${posterCss} center / cover no-repeat`
+                            : "linear-gradient(145deg, #3A0CA3 0%, #4CC9F0 100%)"
+                        }}
+                      >
+                        {!posterCss ? <span className={styles.posterFallback}>{item.title}</span> : null}
                       </div>
-                      <div className={styles.progressTrack}>
-                        <div className={styles.progressFill} style={{ width: `${item.progressPercent}%` }} />
+                      <div className={styles.cardBody}>
+                        <h3>{item.title}</h3>
+                        <p>
+                          {(item.genre || translate(locale, "home.defaultGenre"))} ·{" "}
+                          {item.year ?? translate(locale, "watchlist.tba")}
+                        </p>
+                        <div className={styles.metaRow}>
+                          <span>{item.rating.toFixed(1)}</span>
+                          <time dateTime={item.addedAt}>
+                            {new Date(item.addedAt).toLocaleDateString(toIntlLocale(locale), {
+                              month: "short",
+                              day: "numeric"
+                            })}
+                          </time>
+                        </div>
+                        <div className={styles.progressTrack}>
+                          <div className={styles.progressFill} style={{ width: `${item.progressPercent}%` }} />
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </section>

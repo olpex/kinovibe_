@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import { HomeMovie, PersonCard } from "@/lib/tmdb/client";
+import { toCssImageUrl } from "@/lib/ui/css-image";
 import styles from "./catalog-grid.module.css";
 
 export type CatalogMovieGridProps = {
@@ -23,7 +24,8 @@ export function CatalogMovieGrid({
   return (
     <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
       {items.map((item) => {
-        const hasPoster = Boolean(item.posterUrl);
+        const posterCss = toCssImageUrl(item.posterUrl);
+        const hasPoster = Boolean(posterCss);
         const countriesLabel =
           item.countries.length > 0
             ? item.countries.join(", ")
@@ -34,7 +36,7 @@ export function CatalogMovieGrid({
               className={styles.poster}
               style={{
                 background: hasPoster
-                  ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), url(${item.posterUrl}) center / cover no-repeat`
+                  ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${posterCss} center / cover no-repeat`
                   : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
               }}
             >
@@ -67,35 +69,38 @@ export function CatalogPeopleGrid({ locale, items }: PeopleGridProps) {
 
   return (
     <section className={styles.grid} aria-label={translate(locale, "menu.peopleListAria")}>
-      {items.map((person) => (
-        <Link key={person.id} href={`/person/${person.id}`} className={styles.card}>
-          <div
-            className={styles.poster}
-            style={{
-              background: person.avatarUrl
-                ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), url(${person.avatarUrl}) center / cover no-repeat`
-                : `linear-gradient(145deg, ${person.gradient[0]} 0%, ${person.gradient[1]} 100%)`
-            }}
-          >
-            {!person.avatarUrl ? (
-              <span className={styles.posterFallbackText}>
-                {person.name
-                  .split(/\s+/)
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .map((chunk) => chunk[0]?.toUpperCase() ?? "")
-                  .join("")}
-              </span>
-            ) : null}
-          </div>
-          <div className={styles.body}>
-            <h2>{person.name}</h2>
-            <p>{person.department}</p>
-            <p>{person.knownFor}</p>
-            <span>{person.popularity.toFixed(1)}</span>
-          </div>
-        </Link>
-      ))}
+      {items.map((person) => {
+        const avatarCss = toCssImageUrl(person.avatarUrl);
+        return (
+          <Link key={person.id} href={`/person/${person.id}`} className={styles.card}>
+            <div
+              className={styles.poster}
+              style={{
+                background: avatarCss
+                  ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${avatarCss} center / cover no-repeat`
+                  : `linear-gradient(145deg, ${person.gradient[0]} 0%, ${person.gradient[1]} 100%)`
+              }}
+            >
+              {!avatarCss ? (
+                <span className={styles.posterFallbackText}>
+                  {person.name
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((chunk) => chunk[0]?.toUpperCase() ?? "")
+                    .join("")}
+                </span>
+              ) : null}
+            </div>
+            <div className={styles.body}>
+              <h2>{person.name}</h2>
+              <p>{person.department}</p>
+              <p>{person.knownFor}</p>
+              <span>{person.popularity.toFixed(1)}</span>
+            </div>
+          </Link>
+        );
+      })}
     </section>
   );
 }

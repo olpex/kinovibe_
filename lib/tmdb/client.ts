@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import {
   DEFAULT_LOCALE,
   toIntlLocale,
@@ -1956,7 +1957,7 @@ function mapWikidataUpcoming(bindings: SparqlBinding[]): AwardCard[] {
     const rawCeremonyLabel = getSparqlBindingValue(binding, "ceremonyLabel");
     const seriesLabel = getSparqlBindingValue(binding, "seriesLabel");
     const eventDate = getSparqlBindingValue(binding, "eventDate");
-    const imageUrl = pickWikidataImage(binding);
+    const imageUrl = pickWikidataImage(binding, { allowNonPosterFallback: true });
     const wikipediaTitle = getSparqlBindingValue(binding, "enwikiTitle");
 
     const title =
@@ -1990,7 +1991,7 @@ function mapWikidataUpcoming(bindings: SparqlBinding[]): AwardCard[] {
   return Array.from(unique.values()).slice(0, 24);
 }
 
-const getWikidataAwardsBase = cache(
+const getWikidataAwardsBase = unstable_cache(
   async (category: "popular" | "upcoming"): Promise<AwardCard[]> => {
     if (category === "upcoming") {
       const upcomingBindings = await fetchWikidataSparql(buildWikidataUpcomingQuery(), 21600);
@@ -2004,7 +2005,9 @@ const getWikidataAwardsBase = cache(
     ]);
     const mapped = mapWikidataWinners([...winnerBindings, ...nomineeBindings]);
     return enrichAwardsWithWikipediaPosters(mapped);
-  }
+  },
+  ["wikidata-awards-v1"],
+  { revalidate: 21600 }
 );
 
 function localizeWikidataAwards(items: AwardCard[], locale: Locale): AwardCard[] {

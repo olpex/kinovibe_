@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { translate, type Locale } from "@/lib/i18n/shared";
+import { toCssImageUrl } from "@/lib/ui/css-image";
 import { MovieCard } from "./types";
 import styles from "./home-screen.module.css";
 
@@ -31,7 +32,8 @@ export function MediaRail({
           <li className={styles.emptyRail}>{emptyMessage}</li>
         ) : null}
         {items.map((item) => {
-          const hasPoster = Boolean(item.posterUrl);
+          const posterCss = toCssImageUrl(item.posterUrl);
+          const hasPoster = Boolean(posterCss);
           const countriesLabel =
             item.countries.length > 0
               ? item.countries.join(", ")
@@ -47,7 +49,7 @@ export function MediaRail({
                   className={styles.poster}
                   style={{
                     background: hasPoster
-                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.12)), url(${item.posterUrl}) center / cover no-repeat`
+                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.12)), ${posterCss} center / cover no-repeat`
                       : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
                   }}
                 >

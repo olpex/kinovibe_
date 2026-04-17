@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getPrimaryAdminEmail } from "@/lib/auth/admin";
+import { sendUserReplyEmailToAdmin } from "@/lib/feedback/notifications";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -69,10 +71,11 @@ export async function replyToAdminAction(
   // Notify admin about the user reply
   const { data: reply } = await supabase
     .from("feedback_replies")
-    .select("admin_user_id")
+    .select("admin_user_id, admin_email")
     .eq("id", parentReplyId)
     .single();
 
+  let adminEmailSent = false;
   if (reply?.admin_user_id) {
     await supabase.from("inbox_notifications").insert({
       recipient_user_id: reply.admin_user_id,
@@ -83,8 +86,25 @@ export async function replyToAdminAction(
       feedback_entry_id: entryId,
       feedback_reply_id: parentReplyId
     });
+
+    const adminEmail = (reply.admin_email as string | null | undefined)?.trim() || getPrimaryAdminEmail();
+    if (adminEmail) {
+      const result = await sendUserReplyEmailToAdmin({
+        adminEmail,
+        locale,
+        userEmail: session.email,
+        entryId,
+        replyBody: body
+      });
+      adminEmailSent = result.ok;
+    }
   }
 
   revalidatePath("/profile/inbox");
-  return { ok: true, message: translate(locale, "inbox.replySent") };
+  return {
+    ok: true,
+    message: adminEmailSent
+      ? translate(locale, "inbox.replySent")
+      : translate(locale, "inbox.replySentNoEmail")
+  };
 }

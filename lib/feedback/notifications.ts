@@ -37,6 +37,14 @@ type SendFeedbackConfirmationEmailArgs = {
   createdAtIso: string;
 };
 
+type SendUserReplyEmailArgs = {
+  adminEmail: string;
+  locale: string;
+  userEmail: string;
+  entryId: number;
+  replyBody: string;
+};
+
 function toCategoryLabel(category: "feedback" | "suggestion"): string {
   return category === "suggestion" ? "feedback.type.suggestion" : "feedback.type.feedback";
 }
@@ -129,7 +137,7 @@ export async function sendFeedbackNotificationEmail(
 
   const categoryLabel = translate(locale, toCategoryLabel(args.category));
   const title = args.subject?.trim() || translate(locale, "feedback.email.noSubject");
-  const snippet = truncateForEmail(args.message, 420);
+  const snippet = truncateForEmail(args.message, 5000);
   const subjectLine = `[KinoVibe] ${categoryLabel}: ${truncateForEmail(title, 80)}`;
   const escapedSnippet = escapeHtml(snippet).replace(/\n/g, "<br />");
 
@@ -186,7 +194,7 @@ export async function sendAdminReplyEmail(
   const locale: Locale = normalizeLocale(args.locale);
   const categoryLabel = translate(locale, toCategoryLabel(args.category));
   const subjectLine = `[KinoVibe] ${translate(locale, "admin.replyNotificationTitle")}: ${truncateForEmail(args.subject, 80)}`;
-  const escapedReply = escapeHtml(truncateForEmail(args.replyBody, 2000)).replace(/\n/g, "<br />");
+  const escapedReply = escapeHtml(truncateForEmail(args.replyBody, 5000)).replace(/\n/g, "<br />");
 
   const textLines = [
     translate(locale, "admin.replyNotificationTitle"),
@@ -195,7 +203,7 @@ export async function sendAdminReplyEmail(
     `${translate(locale, "feedback.email.fieldSubject")}: ${args.subject}`,
     "",
     `${translate(locale, "admin.replyThread")}:`,
-    truncateForEmail(args.replyBody, 2000)
+    truncateForEmail(args.replyBody, 5000)
   ];
 
   const htmlBody = [
@@ -261,6 +269,53 @@ export async function sendFeedbackConfirmationEmail(
 
   const result = await sendEmail({
     to: args.userEmail,
+    from,
+    subject: subjectLine,
+    text: textLines.join("\n"),
+    html: htmlBody
+  });
+
+  return result.ok
+    ? { ok: true, skipped: false }
+    : { ok: false, skipped: false, reason: result.reason };
+}
+
+export async function sendUserReplyEmailToAdmin(
+  args: SendUserReplyEmailArgs
+): Promise<{ ok: boolean; skipped: boolean; reason?: string }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    return { ok: false, skipped: true, reason: "missing_api_key" };
+  }
+
+  const from = process.env.RESEND_FROM_EMAIL?.trim() || "KinoVibe <onboarding@resend.dev>";
+  const locale: Locale = normalizeLocale(args.locale);
+  const subjectLine = `[KinoVibe] ${translate(locale, "admin.userRepliedTitle")} #${args.entryId}`;
+  const replyPreview = truncateForEmail(args.replyBody, 5000);
+  const escapedReply = escapeHtml(replyPreview).replace(/\n/g, "<br />");
+
+  const textLines = [
+    translate(locale, "admin.userRepliedTitle"),
+    "",
+    `${translate(locale, "feedback.email.fieldFrom")}: ${args.userEmail}`,
+    `${translate(locale, "feedback.email.fieldSubject")}: #${args.entryId}`,
+    "",
+    `${translate(locale, "feedback.messageLabel")}:`,
+    replyPreview
+  ];
+
+  const htmlBody = [
+    `<h2>${escapeHtml(translate(locale, "admin.userRepliedTitle"))}</h2>`,
+    "<ul>",
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldFrom"))}:</b> ${escapeHtml(args.userEmail)}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldSubject"))}:</b> #${escapeHtml(String(args.entryId))}</li>`,
+    "</ul>",
+    `<p><b>${escapeHtml(translate(locale, "feedback.messageLabel"))}:</b></p>`,
+    `<p>${escapedReply}</p>`
+  ].join("");
+
+  const result = await sendEmail({
+    to: args.adminEmail,
     from,
     subject: subjectLine,
     text: textLines.join("\n"),

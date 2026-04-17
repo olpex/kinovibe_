@@ -68,6 +68,7 @@ export async function replyToFeedbackAction(
 
   if (entry?.user_id) {
     const subject = entry.subject ?? translate(locale, "feedback.email.noSubject");
+    let userEmailSent = false;
 
     // Create inbox notification for the user (bell counter + inbox page)
     await client.from("inbox_notifications").insert({
@@ -83,7 +84,7 @@ export async function replyToFeedbackAction(
     // Send email to the user
     if (entry.user_email) {
       try {
-        await sendAdminReplyEmail({
+        const emailResult = await sendAdminReplyEmail({
           userEmail: entry.user_email,
           adminEmail: session.email,
           locale: (entry.locale as string) ?? locale,
@@ -91,10 +92,19 @@ export async function replyToFeedbackAction(
           replyBody: body,
           category: (entry.category as "feedback" | "suggestion") ?? "feedback"
         });
+        userEmailSent = emailResult.ok;
       } catch {
         // Email is best-effort; inbox notification is already created
       }
     }
+
+    revalidatePath("/admin/feedback");
+    return {
+      ok: true,
+      message: entry.user_email && !userEmailSent
+        ? translate(locale, "admin.replySentNoEmail")
+        : translate(locale, "admin.replySent")
+    };
   }
 
   revalidatePath("/admin/feedback");

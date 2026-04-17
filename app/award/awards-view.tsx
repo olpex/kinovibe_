@@ -4,6 +4,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbAwards } from "@/lib/tmdb/client";
+import { encodeImageUrl, toCssImageUrl } from "@/lib/ui/css-image";
 import shellStyles from "@/app/menu-page.module.css";
 import styles from "./award-page.module.css";
 
@@ -11,8 +12,8 @@ type AwardViewVariant = "popular" | "upcoming";
 
 type AwardsCatalogViewProps = {
   variant: AwardViewVariant;
-  titleKey: "menu.awardsCalendarTitle" | "menu.awardsCeremoniesTitle";
-  subtitleKey: "menu.awardsCalendarSubtitle" | "menu.awardsCeremoniesSubtitle";
+  titleKey: "menu.awardsPopularTitle" | "menu.awardsUpcomingTitle";
+  subtitleKey: "menu.awardsPopularSubtitle" | "menu.awardsUpcomingSubtitle";
 };
 
 const AWARD_TABS: Array<{
@@ -121,7 +122,9 @@ export async function AwardsCatalogView({
         <section className={styles.grid} aria-label={translate(locale, "nav.awards")}>
           {awards.map((award) => {
             const openHref = award.movieTmdbId ? `/movie/${award.movieTmdbId}` : buildSearchHref(award.title);
-            const hasImage = Boolean(award.imageUrl);
+            const awardImageCss = toCssImageUrl(award.imageUrl);
+            const awardImageHref = encodeImageUrl(award.imageUrl);
+            const hasImage = Boolean(awardImageCss);
             const eventDateLabel = formatAwardEventDate(locale, award.eventDate);
 
             return (
@@ -131,9 +134,7 @@ export async function AwardsCatalogView({
                     className={styles.poster}
                     style={{
                       background: hasImage
-                        ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), url(\"${encodeURI(
-                            award.imageUrl as string
-                          )}\") center / cover no-repeat`
+                        ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), ${awardImageCss} center / cover no-repeat`
                         : "linear-gradient(145deg, #1d3557 0%, #457b9d 100%)"
                     }}
                   />
@@ -176,7 +177,7 @@ export async function AwardsCatalogView({
                     </Link>
                     {hasImage ? (
                       <Link
-                        href={award.imageUrl as string}
+                        href={awardImageHref as string}
                         target="_blank"
                         rel="noreferrer"
                         className={shellStyles.linkButton}

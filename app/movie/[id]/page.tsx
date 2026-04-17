@@ -11,6 +11,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbMovieDetails } from "@/lib/tmdb/client";
+import { toCssImageUrl } from "@/lib/ui/css-image";
 import { getMediaVoteSummary } from "@/lib/votes/server";
 import { getUserMovieWatchlistState } from "@/lib/watchlist/server";
 import { WATCHLIST_DEFAULT_STATE } from "@/lib/watchlist/types";
@@ -116,6 +117,8 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   const countriesLabelKey =
     movie.countries.length > 1 ? "movie.productionCountries" : "movie.productionCountry";
   const movieYearLabel = movie.year > 0 ? String(movie.year) : translate(locale, "watchlist.tba");
+  const backdropCss = toCssImageUrl(movie.backdropUrl);
+  const posterCss = toCssImageUrl(movie.posterUrl);
 
   return (
     <main className={styles.page}>
@@ -129,8 +132,8 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
       <section
         className={styles.hero}
         style={{
-          background: movie.backdropUrl
-            ? `linear-gradient(120deg, rgba(11, 15, 20, 0.88), rgba(21, 27, 36, 0.95)), url(${movie.backdropUrl}) center / cover no-repeat`
+          background: backdropCss
+            ? `linear-gradient(120deg, rgba(11, 15, 20, 0.88), rgba(21, 27, 36, 0.95)), ${backdropCss} center / cover no-repeat`
             : "linear-gradient(145deg, #1f2632 0%, #11161f 100%)"
         }}
       >
@@ -138,8 +141,8 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           <div
             className={styles.poster}
             style={{
-              background: movie.posterUrl
-                ? `url(${movie.posterUrl}) center / cover no-repeat`
+              background: posterCss
+                ? `${posterCss} center / cover no-repeat`
                 : "linear-gradient(145deg, #3A0CA3, #4CC9F0)"
             }}
           />
@@ -254,51 +257,57 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
         <h2>{translate(locale, "movie.cast")}</h2>
         <p className={styles.castHint}>{translate(locale, "movie.castPhotoOnlyHint")}</p>
         <div className={styles.castGrid}>
-          {movie.cast.map((person) => (
-            <Link key={person.id} href={`/person/${person.id}`} className={styles.castCard}>
-              <div
-                className={styles.castAvatar}
-                style={{
-                  background: person.avatarUrl
-                    ? `url(${person.avatarUrl}) center / cover no-repeat`
-                    : "linear-gradient(145deg, #5f6675, #2e3442)"
-                }}
-              />
-              <div>
-                <h3>{person.name}</h3>
-                <p>{person.character || translate(locale, "movie.castUnknownCharacter")}</p>
-              </div>
-            </Link>
-          ))}
+          {movie.cast.map((person) => {
+            const avatarCss = toCssImageUrl(person.avatarUrl);
+            return (
+              <Link key={person.id} href={`/person/${person.id}`} className={styles.castCard}>
+                <div
+                  className={styles.castAvatar}
+                  style={{
+                    background: avatarCss
+                      ? `${avatarCss} center / cover no-repeat`
+                      : "linear-gradient(145deg, #5f6675, #2e3442)"
+                  }}
+                />
+                <div>
+                  <h3>{person.name}</h3>
+                  <p>{person.character || translate(locale, "movie.castUnknownCharacter")}</p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
       <section className={styles.section}>
         <h2>{translate(locale, "movie.similarTitles")}</h2>
         <div className={styles.similarGrid}>
-          {movie.similar.map((item) => (
-            <Link key={item.id} href={`/movie/${item.id}`} className={styles.similarCard}>
-              <div
-                className={styles.similarPoster}
-                style={{
-                  background: item.posterUrl
-                    ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), url(${item.posterUrl}) center / cover no-repeat`
-                    : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
-                }}
-              />
-              <div className={styles.similarBody}>
-                <h3>{item.title}</h3>
-                <p>
-                  {item.genre} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
-                </p>
-                <p>
-                  {item.countries.length > 0
-                    ? item.countries.join(", ")
-                    : translate(locale, "common.notAvailable")}
-                </p>
-              </div>
-            </Link>
-          ))}
+          {movie.similar.map((item) => {
+            const similarPosterCss = toCssImageUrl(item.posterUrl);
+            return (
+              <Link key={item.id} href={`/movie/${item.id}`} className={styles.similarCard}>
+                <div
+                  className={styles.similarPoster}
+                  style={{
+                    background: similarPosterCss
+                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${similarPosterCss} center / cover no-repeat`
+                      : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
+                  }}
+                />
+                <div className={styles.similarBody}>
+                  <h3>{item.title}</h3>
+                  <p>
+                    {item.genre} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
+                  </p>
+                  <p>
+                    {item.countries.length > 0
+                      ? item.countries.join(", ")
+                      : translate(locale, "common.notAvailable")}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </main>

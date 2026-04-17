@@ -7,6 +7,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbPersonDetails } from "@/lib/tmdb/client";
+import { toCssImageUrl } from "@/lib/ui/css-image";
 import styles from "./person.module.css";
 
 type PageProps = {
@@ -57,6 +58,8 @@ export default async function PersonDetailsPage({ params }: PageProps) {
     );
   }
 
+  const personAvatarCss = toCssImageUrl(person.avatarUrl);
+
   return (
     <main className={styles.page}>
       <div className={styles.container}>
@@ -65,10 +68,10 @@ export default async function PersonDetailsPage({ params }: PageProps) {
         <section className={styles.hero}>
           <div className={styles.posterWrap}>
             <div
-              className={styles.poster}
-              style={{
-                background: person.avatarUrl
-                  ? `url(${person.avatarUrl}) center / cover no-repeat`
+            className={styles.poster}
+            style={{
+                background: personAvatarCss
+                  ? `${personAvatarCss} center / cover no-repeat`
                   : "linear-gradient(145deg, #4cc9f0, #3a0ca3)"
               }}
             />
@@ -125,33 +128,36 @@ export default async function PersonDetailsPage({ params }: PageProps) {
         <section className={styles.section}>
           <h2>{translate(locale, "menu.knownFor")}</h2>
           <div className={styles.creditsGrid}>
-            {person.knownFor.map((credit) => (
-              <Link
-                key={`${credit.mediaType}-${credit.id}-${credit.title}`}
-                href={credit.mediaType === "movie" ? `/movie/${credit.id}` : `/tv/${credit.id}`}
-                className={styles.creditCard}
-              >
-                <div
-                  className={styles.creditPoster}
-                  style={{
-                    background: credit.posterUrl
-                      ? `url(${credit.posterUrl}) center / cover no-repeat`
-                      : "linear-gradient(145deg, #2b3445, #121a28)"
-                  }}
-                />
-                <div className={styles.creditBody}>
-                  <h3>{credit.title}</h3>
-                  <p>
-                    {credit.mediaType === "movie"
-                      ? translate(locale, "person.mediaTypeMovie")
-                      : translate(locale, "person.mediaTypeTv")}{" "}&middot;{" "}
-                    {credit.year > 0 ? credit.year : translate(locale, "watchlist.tba")}
-                  </p>
-                  <p>{credit.character}</p>
-                  <p>{credit.rating.toFixed(1)}</p>
-                </div>
-              </Link>
-            ))}
+            {person.knownFor.map((credit) => {
+              const creditPosterCss = toCssImageUrl(credit.posterUrl);
+              return (
+                <Link
+                  key={`${credit.mediaType}-${credit.id}-${credit.title}`}
+                  href={credit.mediaType === "movie" ? `/movie/${credit.id}` : `/tv/${credit.id}`}
+                  className={styles.creditCard}
+                >
+                  <div
+                    className={styles.creditPoster}
+                    style={{
+                      background: creditPosterCss
+                        ? `${creditPosterCss} center / cover no-repeat`
+                        : "linear-gradient(145deg, #2b3445, #121a28)"
+                    }}
+                  />
+                  <div className={styles.creditBody}>
+                    <h3>{credit.title}</h3>
+                    <p>
+                      {credit.mediaType === "movie"
+                        ? translate(locale, "person.mediaTypeMovie")
+                        : translate(locale, "person.mediaTypeTv")}{" "}&middot;{" "}
+                      {credit.year > 0 ? credit.year : translate(locale, "watchlist.tba")}
+                    </p>
+                    <p>{credit.character}</p>
+                    <p>{credit.rating.toFixed(1)}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       </div>
