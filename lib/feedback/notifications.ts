@@ -58,7 +58,7 @@ function escapeHtml(value: string): string {
 }
 
 async function sendEmail(args: {
-  to: string;
+  to: string | string[];
   from: string;
   subject: string;
   text: string;
@@ -77,7 +77,7 @@ async function sendEmail(args: {
     },
     body: JSON.stringify({
       from: args.from,
-      to: [args.to],
+      to: Array.isArray(args.to) ? args.to : [args.to],
       subject: args.subject,
       text: args.text,
       html: args.html
@@ -104,7 +104,18 @@ export async function sendFeedbackNotificationEmail(
     };
   }
 
-  const recipient = process.env.FEEDBACK_NOTIFICATION_EMAIL?.trim() || getPrimaryAdminEmail();
+  const explicitRecipients = (process.env.FEEDBACK_NOTIFICATION_EMAIL ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  const recipients = Array.from(new Set([...explicitRecipients, getPrimaryAdminEmail()]));
+  if (recipients.length === 0) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: "missing_recipient"
+    };
+  }
   const from = process.env.RESEND_FROM_EMAIL?.trim() || "KinoVibe <onboarding@resend.dev>";
   const locale: Locale = normalizeLocale(args.locale);
 
@@ -143,7 +154,7 @@ export async function sendFeedbackNotificationEmail(
   ].join("");
 
   const result = await sendEmail({
-    to: recipient,
+    to: recipients,
     from,
     subject: subjectLine,
     text: textLines.join("\n"),

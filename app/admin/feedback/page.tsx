@@ -8,6 +8,7 @@ import { isAdminEmail } from "@/lib/auth/admin";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/supabase/session";
 import { ReplyForm } from "./reply-form";
 import styles from "./admin-feedback.module.css";
@@ -53,6 +54,13 @@ type UserReplyRow = {
   is_admin: false;
 };
 
+type AdminNotifRow = {
+  id: number;
+  title: string;
+  body: string;
+  created_at: string;
+};
+
 export default async function AdminFeedbackPage() {
   const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
   const headingTitle = translate(locale, "feedback.title");
@@ -77,6 +85,7 @@ export default async function AdminFeedbackPage() {
   }
 
   const adminClient = createSupabaseAdminClient();
+  const serverClient = await createSupabaseServerClient();
   const client = adminClient;
 
   if (!client) {
@@ -94,13 +103,31 @@ export default async function AdminFeedbackPage() {
   }
 
   // Load all feedback entries
-  const { data: entries } = await client
+  const { data: entries, error: entriesError } = await client
     .from("feedback_entries")
     .select("id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id,is_read_by_admin")
     .order("created_at", { ascending: false })
     .limit(200);
+  if (entriesError) {
+    console.error("[admin-feedback] failed to load feedback_entries", entriesError);
+  }
 
   const rows = (entries ?? []) as (FeedbackRow & { parent_reply_id?: number | null; is_read_by_admin?: boolean })[];
+  let fallbackNotifications: AdminNotifRow[] = [];
+  if (rows.length === 0 && session.userId && serverClient) {
+    const { data: notifs, error: notifsError } = await serverClient
+      .from("inbox_notifications")
+      .select("id,title,body,created_at")
+      .eq("recipient_user_id", session.userId)
+      .eq("notification_type", "feedback_received")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (notifsError) {
+      console.error("[admin-feedback] failed to load fallback inbox_notifications", notifsError);
+    } else {
+      fallbackNotifications = (notifs ?? []) as AdminNotifRow[];
+    }
+  }
 
   // Mark all unread entries as read now that admin has opened the page
   const unreadIds = rows.filter((r) => !r.is_read_by_admin).map((r) => r.id);
@@ -185,8 +212,28 @@ export default async function AdminFeedbackPage() {
         <p>{translate(locale, "admin.feedbackSubtitle", { count: topLevelRows.length })}</p>
       </section>
 
-      {topLevelRows.length === 0 ? (
+      {topLevelRows.length === 0 && fallbackNotifications.length === 0 ? (
         <p className={styles.emptyState}>{translate(locale, "admin.feedbackEmpty")}</p>
+      ) : topLevelRows.length === 0 ? (
+        <div className={styles.entryList}>
+          {fallbackNotifications.map((notification) => (
+            <article key={notification.id} className={styles.entryCard}>
+              <div className={styles.entryMeta}>
+                <span className={styles.badge}>{translate(locale, "feedback.type.feedback")}</span>
+                <span>
+                  {new Date(notification.created_at).toLocaleString(toIntlLocale(locale), {
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })}
+                </span>
+              </div>
+              <p className={styles.entrySubject}>{notification.title}</p>
+              <p className={styles.entryBody}>{notification.body}</p>
+            </article>
+          ))}
+        </div>
       ) : (
         <div className={styles.entryList}>
           {topLevelRows.map((entry) => {
