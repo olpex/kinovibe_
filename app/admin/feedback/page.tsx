@@ -8,7 +8,6 @@ import { isAdminEmail } from "@/lib/auth/admin";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/supabase/session";
 import { ReplyForm } from "./reply-form";
 import styles from "./admin-feedback.module.css";
@@ -78,8 +77,7 @@ export default async function AdminFeedbackPage() {
   }
 
   const adminClient = createSupabaseAdminClient();
-  const serverClient = await createSupabaseServerClient();
-  const client = adminClient ?? serverClient;
+  const client = adminClient;
 
   if (!client) {
     return (
@@ -89,7 +87,7 @@ export default async function AdminFeedbackPage() {
         </header>
         <section className={styles.notice}>
           <h1>{translate(locale, "admin.supabaseUnavailable")}</h1>
-          <p>{translate(locale, "admin.configureSupabase")}</p>
+          <p>{translate(locale, "admin.configureSupabase")} (SUPABASE_SERVICE_ROLE_KEY)</p>
         </section>
       </main>
     );

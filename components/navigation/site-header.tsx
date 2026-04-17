@@ -34,7 +34,7 @@ export async function SiteHeader({
   let unreadCount = 0;
   if (session.isAuthenticated && session.userId) {
     unreadCount = isAdmin
-      ? await getAdminUnreadFeedbackCount()
+      ? await getAdminUnreadFeedbackCount(session.userId)
       : await getUnreadNotificationCount(session.userId);
   }
 

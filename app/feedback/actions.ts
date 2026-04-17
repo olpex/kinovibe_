@@ -114,62 +114,74 @@ export async function submitFeedbackAction(
   const entryId = data?.id as number | undefined;
   const createdAt = (data?.created_at as string | undefined) ?? new Date().toISOString();
 
-  // Asynchronously notify admin (best-effort, don't block user response)
-  void (async () => {
-    try {
-      // Create bell notification for admin
-      const adminUserId = await getAdminUserId();
-      if (adminUserId) {
-        const adminClient = createSupabaseAdminClient();
-        const client = adminClient ?? supabase;
-        await client.from("inbox_notifications").insert({
-          recipient_user_id: adminUserId,
-          sender_user_id: user.id,
-          notification_type: "feedback_received",
-          title: translate(locale, "admin.newFeedbackTitle"),
-          body: `${userEmail} — ${subject ?? translate(locale, "feedback.email.noSubject")}: ${message.slice(0, 300)}`,
-          feedback_entry_id: entryId ?? null
-        });
-      }
-    } catch {
-      // Bell notification is best-effort
-    }
+  let adminInboxOk = false;
+  let adminEmailOk = false;
 
-    // Send email to admin
-    try {
-      await sendFeedbackNotificationEmail({
-        userEmail,
-        locale,
-        category,
-        subject,
-        message,
-        pagePath,
-        createdAtIso: createdAt
+  // Create bell notification for admin
+  try {
+    const adminUserId = await getAdminUserId();
+    if (adminUserId) {
+      const adminClient = createSupabaseAdminClient();
+      const client = adminClient ?? supabase;
+      const { error: inboxError } = await client.from("inbox_notifications").insert({
+        recipient_user_id: adminUserId,
+        sender_user_id: user.id,
+        notification_type: "feedback_received",
+        title: translate(locale, "admin.newFeedbackTitle"),
+        body: `${userEmail} — ${subject ?? translate(locale, "feedback.email.noSubject")}: ${message.slice(0, 300)}`,
+        feedback_entry_id: entryId ?? null
       });
-    } catch {
-      // Email is best-effort
+      adminInboxOk = !inboxError;
+    } else {
+      console.error("[feedback] admin user id is not configured (ADMIN_USER_ID) and cannot be resolved");
     }
+  } catch (error) {
+    console.error("[feedback] failed to create admin inbox notification", error);
+  }
 
-    // Send confirmation email to the user
-    try {
-      await sendFeedbackConfirmationEmail({
-        userEmail,
-        locale,
-        category,
-        subject,
-        message: message.slice(0, 2000),
-        createdAtIso: createdAt
-      });
-    } catch {
-      // Email is best-effort
+  // Send email to admin
+  try {
+    const adminEmailResult = await sendFeedbackNotificationEmail({
+      userEmail,
+      locale,
+      category,
+      subject,
+      message,
+      pagePath,
+      createdAtIso: createdAt
+    });
+    adminEmailOk = adminEmailResult.ok;
+    if (!adminEmailResult.ok) {
+      console.error("[feedback] failed to send admin email", adminEmailResult.reason ?? "unknown_reason");
     }
-  })();
+  } catch (error) {
+    console.error("[feedback] failed to send admin email", error);
+  }
+
+  // Send confirmation email to the user (non-blocking for response semantics)
+  try {
+    await sendFeedbackConfirmationEmail({
+      userEmail,
+      locale,
+      category,
+      subject,
+      message: message.slice(0, 2000),
+      createdAtIso: createdAt
+    });
+  } catch (error) {
+    console.error("[feedback] failed to send user confirmation email", error);
+  }
 
   revalidatePath("/feedback");
   revalidatePath("/profile/inbox");
 
-  return {
-    ok: true,
-    message: translate(locale, "feedback.submitted")
-  };
+  return adminInboxOk || adminEmailOk
+    ? {
+        ok: true,
+        message: translate(locale, "feedback.submitted")
+      }
+    : {
+        ok: true,
+        message: translate(locale, "feedback.submittedNoEmail")
+      };
 }
