@@ -27,6 +27,15 @@ type SendAdminReplyEmailArgs = {
   category: "feedback" | "suggestion";
 };
 
+type SendFeedbackConfirmationEmailArgs = {
+  userEmail: string;
+  locale: string;
+  category: "feedback" | "suggestion";
+  subject: string | null;
+  message: string;
+  createdAtIso: string;
+};
+
 function toCategoryLabel(category: "feedback" | "suggestion"): string {
   return category === "suggestion" ? "feedback.type.suggestion" : "feedback.type.feedback";
 }
@@ -191,4 +200,55 @@ export async function sendAdminReplyEmail(
   });
 
   return { ok: result.ok };
+}
+
+export async function sendFeedbackConfirmationEmail(
+  args: SendFeedbackConfirmationEmailArgs
+): Promise<{ ok: boolean; skipped: boolean; reason?: string }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    return { ok: false, skipped: true, reason: "missing_api_key" };
+  }
+
+  const from = process.env.RESEND_FROM_EMAIL?.trim() || "KinoVibe <onboarding@resend.dev>";
+  const locale: Locale = normalizeLocale(args.locale);
+  const categoryLabel = translate(locale, toCategoryLabel(args.category));
+  const subjectValue = args.subject?.trim() || translate(locale, "feedback.email.noSubject");
+  const preview = truncateForEmail(args.message, 420);
+  const escapedPreview = escapeHtml(preview).replace(/\n/g, "<br />");
+  const subjectLine = `[KinoVibe] ${translate(locale, "feedback.submitted")}`;
+
+  const textLines = [
+    translate(locale, "feedback.submitted"),
+    "",
+    `${translate(locale, "feedback.email.fieldType")}: ${categoryLabel}`,
+    `${translate(locale, "feedback.email.fieldSubject")}: ${subjectValue}`,
+    `${translate(locale, "feedback.email.fieldCreatedAt")}: ${args.createdAtIso}`,
+    "",
+    `${translate(locale, "feedback.messageLabel")}:`,
+    preview
+  ];
+
+  const htmlBody = [
+    `<h2>${escapeHtml(translate(locale, "feedback.submitted"))}</h2>`,
+    "<ul>",
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldType"))}:</b> ${escapeHtml(categoryLabel)}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldSubject"))}:</b> ${escapeHtml(subjectValue)}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldCreatedAt"))}:</b> ${escapeHtml(args.createdAtIso)}</li>`,
+    "</ul>",
+    `<p><b>${escapeHtml(translate(locale, "feedback.messageLabel"))}:</b></p>`,
+    `<p>${escapedPreview}</p>`
+  ].join("");
+
+  const result = await sendEmail({
+    to: args.userEmail,
+    from,
+    subject: subjectLine,
+    text: textLines.join("\n"),
+    html: htmlBody
+  });
+
+  return result.ok
+    ? { ok: true, skipped: false }
+    : { ok: false, skipped: false, reason: result.reason };
 }

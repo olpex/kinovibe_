@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { sendFeedbackNotificationEmail } from "@/lib/feedback/notifications";
+import {
+  sendFeedbackConfirmationEmail,
+  sendFeedbackNotificationEmail
+} from "@/lib/feedback/notifications";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -57,7 +60,8 @@ export async function submitFeedbackAction(
 
   const auth = await supabase.auth.getUser();
   const user = auth.data.user;
-  if (!user || !user.email) {
+  const userEmail = user?.email;
+  if (!user || !userEmail) {
     return {
       ok: false,
       message: translate(locale, "feedback.authRequired")
@@ -90,7 +94,7 @@ export async function submitFeedbackAction(
     .from("feedback_entries")
     .insert({
       user_id: user.id,
-      user_email: user.email,
+      user_email: userEmail,
       locale,
       category,
       subject,
@@ -123,7 +127,7 @@ export async function submitFeedbackAction(
           sender_user_id: user.id,
           notification_type: "feedback_received",
           title: translate(locale, "admin.newFeedbackTitle"),
-          body: `${user.email} — ${subject ?? translate(locale, "feedback.email.noSubject")}: ${message.slice(0, 300)}`,
+          body: `${userEmail} — ${subject ?? translate(locale, "feedback.email.noSubject")}: ${message.slice(0, 300)}`,
           feedback_entry_id: entryId ?? null
         });
       }
@@ -134,12 +138,26 @@ export async function submitFeedbackAction(
     // Send email to admin
     try {
       await sendFeedbackNotificationEmail({
-        userEmail: user.email,
+        userEmail,
         locale,
         category,
         subject,
         message,
         pagePath,
+        createdAtIso: createdAt
+      });
+    } catch {
+      // Email is best-effort
+    }
+
+    // Send confirmation email to the user
+    try {
+      await sendFeedbackConfirmationEmail({
+        userEmail,
+        locale,
+        category,
+        subject,
+        message: message.slice(0, 2000),
         createdAtIso: createdAt
       });
     } catch {

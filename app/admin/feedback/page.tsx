@@ -56,6 +56,7 @@ type UserReplyRow = {
 
 export default async function AdminFeedbackPage() {
   const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
+  const headingTitle = translate(locale, "feedback.title");
 
   if (!session.isAuthenticated) {
     redirect("/auth?next=/admin/feedback");
@@ -182,7 +183,7 @@ export default async function AdminFeedbackPage() {
       </header>
 
       <section className={styles.headerCard}>
-        <h1>{translate(locale, "admin.feedbackTitle")}</h1>
+        <h1>{headingTitle}</h1>
         <p>{translate(locale, "admin.feedbackSubtitle", { count: topLevelRows.length })}</p>
       </section>
 

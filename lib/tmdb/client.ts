@@ -329,7 +329,7 @@ const getRegionalTvTitle = cache(async (tvId: number, locale: Locale): Promise<s
   }
 });
 
-type LocalizedField = "overview" | "tagline" | "title" | "name";
+type LocalizedField = "overview" | "tagline" | "title" | "name" | "biography";
 
 function normalizeNonEmptyText(value: string | null | undefined): string | undefined {
   const normalized = value?.trim();
@@ -2238,8 +2238,13 @@ async function localizePersonCredit(
 export const getTmdbPersonDetails = cache(
   async (personId: number, locale: Locale = "en"): Promise<PersonDetailsView> => {
     const language = toTmdbLanguage(locale);
-    const [details, credits, snapshot] = await Promise.all([
+    const [details, detailsInEnglish, credits, snapshot] = await Promise.all([
       fetchTmdb<TmdbPersonDetailsResponse>(`/person/${personId}`, { language }, 3600),
+      locale === "en"
+        ? Promise.resolve(null)
+        : fetchTmdb<TmdbPersonDetailsResponse>(`/person/${personId}`, { language: "en-US" }, 3600).catch(
+            () => null
+          ),
       fetchTmdb<TmdbPersonCombinedCreditsResponse>(
         `/person/${personId}/combined_credits`,
         { language },
@@ -2263,10 +2268,19 @@ export const getTmdbPersonDetails = cache(
       }
     }
 
+    const normalizedEnglishBiography = normalizeNonEmptyText(detailsInEnglish?.biography);
+    const localizedDetailsBiography =
+      locale === "en"
+        ? normalizedDetailsBiography
+        : normalizedDetailsBiography &&
+            normalizedDetailsBiography !== normalizedEnglishBiography
+          ? normalizedDetailsBiography
+          : undefined;
+
     const biographySource =
       localizedBiography ??
-      normalizedDetailsBiography ??
-      snapshot.biography ??
+      localizedDetailsBiography ??
+      (locale === "en" ? snapshot.biography : undefined) ??
       "";
     const generatedBiography = shortenInformativeText(
       `${details.name}. ${translate(locale, "person.department")}: ${normalizeNonEmptyText(details.known_for_department) ?? snapshot.department ?? translate(locale, "common.notAvailable")}. ${translate(locale, "menu.knownFor")}: ${credits.cast
