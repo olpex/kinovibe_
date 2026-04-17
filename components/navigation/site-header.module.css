@@ -32,6 +32,31 @@
   justify-content: flex-end;
 }
 
+.dataSourceBadge {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.32rem 0.62rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: rgba(26, 34, 48, 0.82);
+}
+
+.dataSourceTmdb {
+  color: #99f6e4;
+  border-color: rgba(153, 246, 228, 0.45);
+}
+
+.dataSourceFallback {
+  color: #fde68a;
+  border-color: rgba(253, 230, 138, 0.5);
+}
+
+.dataSourceUnavailable {
+  color: #fecaca;
+  border-color: rgba(254, 202, 202, 0.5);
+}
+
 .pill,
 .pillAlt {
   border: 1px solid var(--color-border);
@@ -156,6 +181,10 @@
 
   .rightActions {
     width: 100%;
+  }
+
+  .dataSourceBadge {
+    order: 10;
   }
 
   .searchForm {

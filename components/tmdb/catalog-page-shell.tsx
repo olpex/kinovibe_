@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { SessionUser } from "@/lib/supabase/session";
 import { Locale } from "@/lib/i18n/shared";
+import { DataSourceStatus } from "@/lib/data-source";
 import { SiteHeader } from "@/components/navigation/site-header";
 import styles from "@/app/menu-page.module.css";
 
@@ -10,6 +11,7 @@ type CatalogPageShellProps = {
   title: string;
   subtitle: string;
   children: ReactNode;
+  dataSourceStatus?: DataSourceStatus;
 };
 
 export function CatalogPageShell({
@@ -17,12 +19,13 @@ export function CatalogPageShell({
   session,
   title,
   subtitle,
-  children
+  children,
+  dataSourceStatus
 }: CatalogPageShellProps) {
   return (
     <main className={styles.page}>
       <div className={styles.container}>
-        <SiteHeader locale={locale} session={session} />
+        <SiteHeader locale={locale} session={session} dataSourceStatus={dataSourceStatus} />
         <section className={styles.section}>
           <header className={styles.heading}>
             <h1>{title}</h1>

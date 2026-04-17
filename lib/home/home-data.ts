@@ -173,7 +173,8 @@ const FALLBACK_DATA: HomeScreenData = {
   continueWatching,
   topPicks,
   continueWatchingCaption: translate(DEFAULT_LOCALE, "home.continueCaptionFallback"),
-  featuredUpdatedAt: ""
+  featuredUpdatedAt: "",
+  dataSourceStatus: "fallback"
 };
 
 export async function getHomeScreenData(locale: Locale = "en"): Promise<HomeScreenData> {
@@ -204,13 +205,15 @@ export async function getHomeScreenData(locale: Locale = "en"): Promise<HomeScre
         supabaseContinueWatching.length > 0
           ? translate(locale, "home.continueCaptionSynced")
           : translate(locale, "home.continueCaptionPopular"),
-      featuredUpdatedAt
+      featuredUpdatedAt,
+      dataSourceStatus: "tmdb"
     };
   } catch {
     return {
       ...FALLBACK_DATA,
       continueWatchingCaption: translate(locale, "home.continueCaptionFallback"),
-      featuredUpdatedAt: new Date().toISOString()
+      featuredUpdatedAt: new Date().toISOString(),
+      dataSourceStatus: "fallback"
     };
   }
 }

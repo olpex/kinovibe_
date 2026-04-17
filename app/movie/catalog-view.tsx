@@ -84,7 +84,13 @@ export async function MovieCatalogView({
     );
 
     return (
-      <CatalogPageShell locale={locale} session={session} title={title} subtitle={subtitle}>
+      <CatalogPageShell
+        locale={locale}
+        session={session}
+        title={title}
+        subtitle={subtitle}
+        dataSourceStatus="unavailable"
+      >
         {category === "popular" ? (
           <div className={styles.contentWithSidebar}>
             <MovieFilters
@@ -104,7 +110,13 @@ export async function MovieCatalogView({
   }
 
   return (
-    <CatalogPageShell locale={locale} session={session} title={title} subtitle={subtitle}>
+    <CatalogPageShell
+      locale={locale}
+      session={session}
+      title={title}
+      subtitle={subtitle}
+      dataSourceStatus="tmdb"
+    >
       <p className={styles.inlineMessage}>
         {result.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")} {title}
       </p>

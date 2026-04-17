@@ -96,7 +96,13 @@ export async function TvCatalogView({
     );
 
     return (
-      <CatalogPageShell locale={locale} session={session} title={title} subtitle={subtitle}>
+      <CatalogPageShell
+        locale={locale}
+        session={session}
+        title={title}
+        subtitle={subtitle}
+        dataSourceStatus="unavailable"
+      >
         <div className={styles.contentWithSidebar}>
           <TvFilters
             locale={locale}
@@ -116,7 +122,13 @@ export async function TvCatalogView({
   }
 
   return (
-    <CatalogPageShell locale={locale} session={session} title={title} subtitle={subtitle}>
+    <CatalogPageShell
+      locale={locale}
+      session={session}
+      title={title}
+      subtitle={subtitle}
+      dataSourceStatus="tmdb"
+    >
       <p className={styles.inlineMessage}>
         {result.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")} {title}
       </p>

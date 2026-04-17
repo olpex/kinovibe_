@@ -29,7 +29,7 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
       <div className={styles.bgOrbOne} />
       <div className={styles.bgOrbTwo} />
 
-      <SiteHeader locale={locale} session={session} />
+      <SiteHeader locale={locale} session={session} dataSourceStatus={data.dataSourceStatus} />
       <EmailVerificationBanner session={session} nextPath="/" />
 
       <section

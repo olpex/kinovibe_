@@ -57,21 +57,17 @@ export async function AwardsCatalogView({
   subtitleKey
 }: AwardsCatalogViewProps) {
   const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
-  let awards: Awaited<ReturnType<typeof getTmdbAwards>> | null = null;
+  const awardsResult = await getTmdbAwards(variant, locale);
+  const awards = awardsResult.items;
 
-  try {
-    awards = await getTmdbAwards(variant, locale);
-  } catch {
-    awards = null;
-  }
-
-  if (!awards) {
+  if (awardsResult.dataSourceStatus === "unavailable") {
     return (
       <CatalogPageShell
         locale={locale}
         session={session}
         title={translate(locale, titleKey)}
         subtitle={translate(locale, subtitleKey)}
+        dataSourceStatus={awardsResult.dataSourceStatus}
       >
         <h2>{translate(locale, "movie.detailsUnavailable")}</h2>
         <p className={shellStyles.inlineMessage}>{translate(locale, "movie.tmdbMissing")}</p>
@@ -90,6 +86,7 @@ export async function AwardsCatalogView({
       session={session}
       title={translate(locale, titleKey)}
       subtitle={translate(locale, subtitleKey)}
+      dataSourceStatus={awardsResult.dataSourceStatus}
     >
       <section className={styles.contextPanel}>
         <nav className={styles.tabs} aria-label={translate(locale, "nav.awards")}>

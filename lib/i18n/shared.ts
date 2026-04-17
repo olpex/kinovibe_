@@ -71,6 +71,10 @@ const BASE_MESSAGES: Record<string, string> = {
   "nav.awards": "Awards",
   "nav.more": "More",
   "nav.tmdbMainMenu": "TMDB main menu",
+  "header.dataSourceLabel": "Data source",
+  "header.sourceTmdb": "TMDB",
+  "header.sourceFallback": "Fallback",
+  "header.sourceUnavailable": "Unavailable",
 
   "theme.switchToLight": "Switch to light theme",
   "theme.switchToDark": "Switch to dark theme",
@@ -680,6 +684,10 @@ const UK_MESSAGES: Record<string, string> = {
   "nav.people": "Персони",
   "nav.awards": "Нагороди",
   "nav.more": "Ще",
+  "header.dataSourceLabel": "Джерело даних",
+  "header.sourceTmdb": "TMDB",
+  "header.sourceFallback": "Fallback",
+  "header.sourceUnavailable": "Недоступно",
   "menu.awardsPopularTitle": "Лауреати та номінанти",
   "menu.awardsPopularSubtitle": "Зафіксовані лауреати й номінанти з award-feed TMDB.",
   "menu.awardsUpcomingTitle": "Найближчі церемонії",
@@ -1636,6 +1644,104 @@ const AWARDS_UI_OVERRIDES: Record<Locale, Record<string, string>> = {
   }
 };
 
+const HEADER_DATA_SOURCE_OVERRIDES: Partial<Record<Locale, Record<string, string>>> = {
+  uk: {
+    "header.dataSourceLabel": "Джерело даних",
+    "header.sourceFallback": "Резервні дані",
+    "header.sourceUnavailable": "Недоступно"
+  },
+  de: {
+    "header.dataSourceLabel": "Datenquelle",
+    "header.sourceFallback": "Ersatzdaten",
+    "header.sourceUnavailable": "Nicht verfügbar"
+  },
+  fr: {
+    "header.dataSourceLabel": "Source des données",
+    "header.sourceFallback": "Secours",
+    "header.sourceUnavailable": "Indisponible"
+  },
+  it: {
+    "header.dataSourceLabel": "Fonte dati",
+    "header.sourceFallback": "Riserva",
+    "header.sourceUnavailable": "Non disponibile"
+  },
+  es: {
+    "header.dataSourceLabel": "Fuente de datos",
+    "header.sourceFallback": "Respaldo",
+    "header.sourceUnavailable": "No disponible"
+  },
+  pt: {
+    "header.dataSourceLabel": "Fonte de dados",
+    "header.sourceFallback": "Reserva",
+    "header.sourceUnavailable": "Indisponível"
+  },
+  nl: {
+    "header.dataSourceLabel": "Gegevensbron",
+    "header.sourceFallback": "Reserve",
+    "header.sourceUnavailable": "Niet beschikbaar"
+  },
+  sv: {
+    "header.dataSourceLabel": "Datakälla",
+    "header.sourceFallback": "Reservdata",
+    "header.sourceUnavailable": "Inte tillgänglig"
+  },
+  fi: {
+    "header.dataSourceLabel": "Tietolähde",
+    "header.sourceFallback": "Varatieto",
+    "header.sourceUnavailable": "Ei saatavilla"
+  },
+  no: {
+    "header.dataSourceLabel": "Datakilde",
+    "header.sourceFallback": "Reservedata",
+    "header.sourceUnavailable": "Ikke tilgjengelig"
+  },
+  da: {
+    "header.dataSourceLabel": "Datakilde",
+    "header.sourceFallback": "Reservedata",
+    "header.sourceUnavailable": "Ikke tilgængelig"
+  },
+  cs: {
+    "header.dataSourceLabel": "Zdroj dat",
+    "header.sourceFallback": "Záložní data",
+    "header.sourceUnavailable": "Nedostupné"
+  },
+  pl: {
+    "header.dataSourceLabel": "Źródło danych",
+    "header.sourceFallback": "Dane zapasowe",
+    "header.sourceUnavailable": "Niedostępne"
+  },
+  sk: {
+    "header.dataSourceLabel": "Zdroj dát",
+    "header.sourceFallback": "Záložné údaje",
+    "header.sourceUnavailable": "Nedostupné"
+  },
+  hu: {
+    "header.dataSourceLabel": "Adatforrás",
+    "header.sourceFallback": "Tartalék adatok",
+    "header.sourceUnavailable": "Nem elérhető"
+  },
+  ro: {
+    "header.dataSourceLabel": "Sursa datelor",
+    "header.sourceFallback": "Date de rezervă",
+    "header.sourceUnavailable": "Indisponibil"
+  },
+  el: {
+    "header.dataSourceLabel": "Πηγή δεδομένων",
+    "header.sourceFallback": "Εφεδρικά δεδομένα",
+    "header.sourceUnavailable": "Μη διαθέσιμο"
+  },
+  hr: {
+    "header.dataSourceLabel": "Izvor podataka",
+    "header.sourceFallback": "Rezervni podaci",
+    "header.sourceUnavailable": "Nedostupno"
+  },
+  me: {
+    "header.dataSourceLabel": "Извор података",
+    "header.sourceFallback": "Резервни подаци",
+    "header.sourceUnavailable": "Недоступно"
+  }
+};
+
 const LEADERBOARD_UI_OVERRIDES: Partial<Record<Locale, Record<string, string>>> = {
   de: {
     "leaderboard.notConfigured":
@@ -2457,6 +2563,7 @@ function buildLocaleMessages(
     ...(CORE_NAV_MENU_OVERRIDES[locale] ?? {}),
     ...(CORE_CATALOG_LABEL_OVERRIDES[locale] ?? {}),
     ...(AWARDS_UI_OVERRIDES[locale] ?? {}),
+    ...(HEADER_DATA_SOURCE_OVERRIDES[locale] ?? {}),
     ...(LEADERBOARD_UI_OVERRIDES[locale] ?? {}),
     ...(I18N_MANUAL_OVERRIDES_BY_LOCALE[locale] ?? {}),
     ...(LOCALE_QUALITY_OVERRIDES[locale] ?? {})

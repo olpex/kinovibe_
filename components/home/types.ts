@@ -1,3 +1,5 @@
+import { DataSourceStatus } from "@/lib/data-source";
+
 export type MovieCard = {
   id: number;
   title: string;
@@ -25,6 +27,7 @@ export type HomeScreenData = {
   topPicks: MovieCard[];
   continueWatchingCaption: string;
   featuredUpdatedAt: string;
+  dataSourceStatus: DataSourceStatus;
 };
 
 export type HomeSession = {

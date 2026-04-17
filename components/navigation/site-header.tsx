@@ -6,6 +6,7 @@ import { signOutAction } from "@/lib/auth/actions";
 import { isAdminEmail } from "@/lib/auth/admin";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import { SessionUser } from "@/lib/supabase/session";
+import { DataSourceStatus } from "@/lib/data-source";
 import {
   getAdminUnreadFeedbackCount,
   getUnreadNotificationCount
@@ -20,6 +21,7 @@ type SiteHeaderProps = {
   searchQuery?: string;
   searchPlaceholder?: string;
   searchAction?: string;
+  dataSourceStatus?: DataSourceStatus;
 };
 
 export async function SiteHeader({
@@ -27,7 +29,8 @@ export async function SiteHeader({
   session,
   searchQuery = "",
   searchPlaceholder,
-  searchAction = "/search"
+  searchAction = "/search",
+  dataSourceStatus
 }: SiteHeaderProps) {
   const isAdmin = isAdminEmail(session.email);
 
@@ -39,6 +42,14 @@ export async function SiteHeader({
   }
 
   const bellHref = isAdmin ? "/admin/feedback" : "/profile/inbox";
+  const dataSourceLabel =
+    dataSourceStatus === "tmdb"
+      ? translate(locale, "header.sourceTmdb")
+      : dataSourceStatus === "fallback"
+        ? translate(locale, "header.sourceFallback")
+        : dataSourceStatus === "unavailable"
+          ? translate(locale, "header.sourceUnavailable")
+          : null;
 
   return (
     <header className={styles.header}>
@@ -47,6 +58,19 @@ export async function SiteHeader({
           <KinoVibeLogo />
         </Link>
         <div className={styles.rightActions}>
+          {dataSourceLabel ? (
+            <span
+              className={`${styles.dataSourceBadge} ${
+                dataSourceStatus === "tmdb"
+                  ? styles.dataSourceTmdb
+                  : dataSourceStatus === "fallback"
+                    ? styles.dataSourceFallback
+                    : styles.dataSourceUnavailable
+              }`}
+            >
+              {translate(locale, "header.dataSourceLabel")}: {dataSourceLabel}
+            </span>
+          ) : null}
           <Link href="/watchlist" className={styles.pill}>
             {translate(locale, "nav.watchlist")}
           </Link>

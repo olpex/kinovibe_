@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { toIntlLocale, toTmdbLanguage, translate, type Locale } from "@/lib/i18n/shared";
+import { DataSourceStatus } from "@/lib/data-source";
 import {
   TmdbAwardResult,
   TmdbAwardsResponse,
@@ -1055,19 +1056,35 @@ export type TmdbHomeCatalog = {
 
 export async function getTmdbHomeCatalog(locale: Locale = "en"): Promise<TmdbHomeCatalog> {
   const language = toTmdbLanguage(locale);
-  const genresMap = await getGenresMap(locale);
+  let genresMap = new Map<number, string>();
+  try {
+    genresMap = await getGenresMap(locale);
+  } catch {
+    genresMap = new Map<number, string>();
+  }
 
   const [trendingResponse, popularResponse, topRatedResponse] = await Promise.all([
-    fetchTmdb<TmdbMoviesResponse>("/trending/movie/day", { language }, 600),
-    fetchTmdb<TmdbMoviesResponse>("/movie/popular", { language, page: "1" }, 600),
-    fetchTmdb<TmdbMoviesResponse>("/movie/top_rated", { language, page: "1" }, 600)
+    fetchTmdb<TmdbMoviesResponse>("/trending/movie/day", { language }, 600).catch(() => null),
+    fetchTmdb<TmdbMoviesResponse>("/movie/popular", { language, page: "1" }, 600).catch(() => null),
+    fetchTmdb<TmdbMoviesResponse>("/movie/top_rated", { language, page: "1" }, 600).catch(() => null)
   ]);
 
-  const trendingNow = trendingResponse.results
+  if (!trendingResponse && !popularResponse && !topRatedResponse) {
+    throw new Error("TMDB home catalog unavailable");
+  }
+
+  const trendingSource =
+    trendingResponse?.results ?? popularResponse?.results ?? topRatedResponse?.results ?? [];
+  const popularSource =
+    popularResponse?.results ?? trendingResponse?.results ?? topRatedResponse?.results ?? [];
+  const topRatedSource =
+    topRatedResponse?.results ?? popularResponse?.results ?? trendingResponse?.results ?? [];
+
+  const trendingNow = trendingSource
     .slice(0, 8)
     .map((movie) => mapTmdbMovieToCard(movie, genresMap, locale));
 
-  const popular = popularResponse.results
+  const popular = popularSource
     .slice(0, 8)
     .map((movie, index) => ({
       ...mapTmdbMovieToCard(movie, genresMap, locale),
@@ -1075,7 +1092,7 @@ export async function getTmdbHomeCatalog(locale: Locale = "en"): Promise<TmdbHom
     }))
     .slice(0, 6);
 
-  const topRated = topRatedResponse.results
+  const topRated = topRatedSource
     .slice(0, 8)
     .map((movie) => mapTmdbMovieToCard(movie, genresMap, locale));
 
@@ -1088,7 +1105,15 @@ export async function getTmdbHomeCatalog(locale: Locale = "en"): Promise<TmdbHom
   const genres = pickHomeGenres(genresMap);
 
   return {
-    genres,
+    genres:
+      genres.length > 0
+        ? genres
+        : [
+            { id: 28, name: translate(locale, "home.defaultGenre") },
+            { id: 12, name: translate(locale, "nav.movies") },
+            { id: 18, name: translate(locale, "menu.topRated") },
+            { id: 35, name: translate(locale, "menu.popular") }
+          ],
     trendingNow: localizedTrendingNow,
     popular: localizedPopular,
     topRated: localizedTopRated
@@ -1473,6 +1498,11 @@ export type AwardCard = {
   outcome: "winner" | "nominee" | "highlight";
 };
 
+export type TmdbAwardsResult = {
+  items: AwardCard[];
+  dataSourceStatus: DataSourceStatus;
+};
+
 function parseAwardMovieTmdbId(rawId: string): number | undefined {
   const normalized = rawId.trim();
   if (!/^\d+$/.test(normalized)) {
@@ -1607,7 +1637,7 @@ function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard | null
 export async function getTmdbAwards(
   category: "popular" | "upcoming",
   locale: Locale = "en"
-): Promise<AwardCard[]> {
+): Promise<TmdbAwardsResult> {
   try {
     const language = toTmdbLanguage(locale);
     const path = category === "upcoming" ? "/award/upcoming" : "/award";
@@ -1618,17 +1648,20 @@ export async function getTmdbAwards(
     );
     const results = response.results ?? [];
     if (results.length > 0) {
-      return results
-        .slice(0, 48)
-        .map((item) => mapAwardResult(item, locale))
-        .filter((item): item is AwardCard => item !== null)
-        .slice(0, 24);
+      return {
+        items: results
+          .slice(0, 48)
+          .map((item) => mapAwardResult(item, locale))
+          .filter((item): item is AwardCard => item !== null)
+          .slice(0, 24),
+        dataSourceStatus: "tmdb"
+      };
     }
   } catch {
-    return [];
+    return { items: [], dataSourceStatus: "unavailable" };
   }
 
-  return [];
+  return { items: [], dataSourceStatus: "tmdb" };
 }
 
 export type TmdbSearchResult = {
