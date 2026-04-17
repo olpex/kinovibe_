@@ -11,8 +11,8 @@ type AwardViewVariant = "popular" | "upcoming";
 
 type AwardsCatalogViewProps = {
   variant: AwardViewVariant;
-  titleKey: "menu.awardsPopularTitle" | "menu.awardsUpcomingTitle";
-  subtitleKey: "menu.awardsPopularSubtitle" | "menu.awardsUpcomingSubtitle";
+  titleKey: "menu.awardsCalendarTitle" | "menu.awardsCeremoniesTitle";
+  subtitleKey: "menu.awardsCalendarSubtitle" | "menu.awardsCeremoniesSubtitle";
 };
 
 const AWARD_TABS: Array<{
@@ -103,30 +103,22 @@ export async function AwardsCatalogView({
             </Link>
           ))}
         </nav>
-        <div className={styles.summaryGrid}>
-          <article className={styles.summaryCard}>
-            <h2>{translate(locale, "menu.awardsPopularTitle")}</h2>
-            <p>{translate(locale, "menu.awardsPopularSubtitle")}</p>
-            <Link href="/award" className={shellStyles.linkButton}>
-              {translate(locale, "menu.awardsPopularTitle")}
-            </Link>
-          </article>
-          <article className={styles.summaryCard}>
-            <h2>{translate(locale, "menu.awardsUpcomingTitle")}</h2>
-            <p>{translate(locale, "menu.awardsUpcomingSubtitle")}</p>
-            <Link href="/award/upcoming" className={shellStyles.linkButton}>
-              {translate(locale, "menu.awardsUpcomingTitle")}
-            </Link>
-          </article>
-        </div>
       </section>
 
       <p className={shellStyles.inlineMessage}>{translate(locale, "menu.awardsHint")}</p>
 
       {awards.length === 0 ? (
         <section className={styles.emptyState}>
-          <h2>{translate(locale, "home.noTitlesFound")}</h2>
-          <p>{translate(locale, "menu.awardsHint")}</p>
+          <h2>
+            {variant === "popular"
+              ? translate(locale, "award.emptyResultsTitle")
+              : translate(locale, "award.emptyUpcomingTitle")}
+          </h2>
+          <p>
+            {variant === "popular"
+              ? translate(locale, "award.emptyResultsBody")
+              : translate(locale, "award.emptyUpcomingBody")}
+          </p>
         </section>
       ) : (
         <section className={styles.grid} aria-label={translate(locale, "nav.awards")}>
@@ -175,7 +167,9 @@ export async function AwardsCatalogView({
                         <span>{translate(locale, "award.ceremonyDateLabel")}:</span> {eventDateLabel}
                       </p>
                     ) : null}
-                    <p>{award.year}</p>
+                    <p>
+                      <span>{translate(locale, "award.yearLabel")}:</span> {award.year}
+                    </p>
                   </div>
                   <div className={styles.actions}>
                     <Link href={openHref} className={shellStyles.linkButton}>

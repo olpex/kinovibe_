@@ -4,8 +4,8 @@ export default async function AwardsPopularPage() {
   return (
     <AwardsCatalogView
       variant="popular"
-      titleKey="menu.awardsPopularTitle"
-      subtitleKey="menu.awardsPopularSubtitle"
+      titleKey="menu.awardsCalendarTitle"
+      subtitleKey="menu.awardsCalendarSubtitle"
     />
   );
 }

@@ -1464,7 +1464,6 @@ export async function getTmdbPopularPeople(
 export type AwardCard = {
   id: string;
   title: string;
-  category: string;
   festival: string;
   awardCategory: string;
   year: string;
@@ -1585,7 +1584,6 @@ function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard {
   return {
     id: item.id,
     title: item.name,
-    category,
     festival: parsed.festival,
     awardCategory: parsed.awardCategory,
     year:
@@ -1597,25 +1595,6 @@ function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard {
     movieTmdbId: parseAwardMovieTmdbId(item.id),
     outcome: inferAwardOutcome(category)
   };
-}
-
-function awardFallbackFromMovies(
-  items: HomeMovie[],
-  prefix: string,
-  locale: Locale
-): AwardCard[] {
-  return items.map((item, index) => ({
-    id: `${prefix}-${item.id}-${index}`,
-    title: item.title,
-    category: translate(locale, "award.editorialSpotlight"),
-    festival: translate(locale, "award.festivalEditorial"),
-    awardCategory: translate(locale, "award.categorySeasonPick"),
-    year: String(item.year),
-    eventDate: undefined,
-    imageUrl: item.posterUrl,
-    movieTmdbId: item.id,
-    outcome: "highlight"
-  }));
 }
 
 export async function getTmdbAwards(
@@ -1635,14 +1614,10 @@ export async function getTmdbAwards(
       return results.slice(0, 24).map((item) => mapAwardResult(item, locale));
     }
   } catch {
-    // TMDB public APIs may not expose awards in every environment.
+    return [];
   }
 
-  const fallbackSource =
-    category === "upcoming"
-      ? await getTmdbMovieCatalogPage("upcoming", locale, 1)
-      : await getTmdbMovieCatalogPage("top_rated", locale, 1);
-  return awardFallbackFromMovies(fallbackSource.items.slice(0, 20), category, locale);
+  return [];
 }
 
 export type TmdbSearchResult = {

@@ -4,8 +4,8 @@ export default async function AwardsUpcomingPage() {
   return (
     <AwardsCatalogView
       variant="upcoming"
-      titleKey="menu.awardsUpcomingTitle"
-      subtitleKey="menu.awardsUpcomingSubtitle"
+      titleKey="menu.awardsCeremoniesTitle"
+      subtitleKey="menu.awardsCeremoniesSubtitle"
     />
   );
 }
