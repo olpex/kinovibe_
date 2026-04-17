@@ -2254,34 +2254,34 @@ export const getTmdbPersonDetails = cache(
     ]);
 
     const normalizedDetailsBiography = normalizeNonEmptyText(details.biography);
+    const { languageCode, regionCode } = parseTmdbLanguageParts(language);
 
     // Try to get biography in user's language via translations endpoint
     let localizedBiography: string | undefined;
     if (locale !== "en") {
       const translations = await fetchPersonTranslations(personId);
       if (translations.length > 0) {
-        const { languageCode, regionCode } = parseTmdbLanguageParts(language);
         const picked = pickTranslationText(translations, "biography", languageCode, regionCode);
-        if (picked && picked.text) {
+        // Accept only truly localized biography for the active language.
+        if (picked && picked.text && picked.sourceLanguageCode === languageCode) {
           localizedBiography = picked.text;
         }
       }
     }
 
     const normalizedEnglishBiography = normalizeNonEmptyText(detailsInEnglish?.biography);
-    const localizedDetailsBiography =
-      locale === "en"
-        ? normalizedDetailsBiography
-        : normalizedDetailsBiography &&
-            normalizedDetailsBiography !== normalizedEnglishBiography
-          ? normalizedDetailsBiography
-          : undefined;
+    const safeLocalizedBiography =
+      locale !== "en" &&
+      localizedBiography &&
+      normalizedEnglishBiography &&
+      localizedBiography.trim() === normalizedEnglishBiography.trim()
+        ? undefined
+        : localizedBiography;
 
     const biographySource =
-      localizedBiography ??
-      localizedDetailsBiography ??
-      (locale === "en" ? snapshot.biography : undefined) ??
-      "";
+      locale === "en"
+        ? normalizedDetailsBiography ?? snapshot.biography ?? ""
+        : safeLocalizedBiography ?? "";
     const generatedBiography = shortenInformativeText(
       `${details.name}. ${translate(locale, "person.department")}: ${normalizeNonEmptyText(details.known_for_department) ?? snapshot.department ?? translate(locale, "common.notAvailable")}. ${translate(locale, "menu.knownFor")}: ${credits.cast
         .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
