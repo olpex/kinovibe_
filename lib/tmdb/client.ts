@@ -1058,9 +1058,9 @@ export async function getTmdbHomeCatalog(locale: Locale = "en"): Promise<TmdbHom
   const genresMap = await getGenresMap(locale);
 
   const [trendingResponse, popularResponse, topRatedResponse] = await Promise.all([
-    fetchTmdb<TmdbMoviesResponse>("/trending/movie/week", { language }),
-    fetchTmdb<TmdbMoviesResponse>("/movie/popular", { language, page: "1" }),
-    fetchTmdb<TmdbMoviesResponse>("/movie/top_rated", { language, page: "1" })
+    fetchTmdb<TmdbMoviesResponse>("/trending/movie/day", { language }, 600),
+    fetchTmdb<TmdbMoviesResponse>("/movie/popular", { language, page: "1" }, 600),
+    fetchTmdb<TmdbMoviesResponse>("/movie/top_rated", { language, page: "1" }, 600)
   ]);
 
   const trendingNow = trendingResponse.results
@@ -1614,7 +1614,7 @@ export async function getTmdbAwards(
     const response = await fetchTmdb<TmdbAwardsResponse>(
       path,
       { language, page: "1" },
-      1800
+      900
     );
     const results = response.results ?? [];
     if (results.length > 0) {

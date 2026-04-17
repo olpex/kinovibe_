@@ -132,7 +132,11 @@ async function getSupabaseTopPicks(
     return [];
   }
 
-  const { data, error } = await supabase.from("movies").select("*").limit(8);
+  const { data, error } = await supabase
+    .from("movies")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(8);
   if (error || !data) {
     return [];
   }
