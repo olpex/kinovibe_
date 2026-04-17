@@ -62,6 +62,11 @@ const TMDB_READ_TOKEN = process.env.TMDB_API_READ_ACCESS_TOKEN;
 const TMDB_IMAGE_BASE_URL =
   process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL ?? DEFAULT_IMAGE_BASE_URL;
 const WIKIPEDIA_MENTION_PATTERN = /wikipedia|wiki\b|вікіпед|википед|wikip[eé]dia/iu;
+const WIKIDATA_SPARQL_ENDPOINT =
+  process.env.WIKIDATA_SPARQL_ENDPOINT ?? "https://query.wikidata.org/sparql";
+const WIKIDATA_USER_AGENT = process.env.WIKIDATA_USER_AGENT ?? "KinoVibe/1.0";
+const WIKIDATA_FILM_AWARD_QID = "Q4220917";
+const WIKIDATA_TV_AWARD_QID = "Q1407225";
 
 const REGION_BY_LOCALE: Record<Locale, string> = {
   en: "US",
@@ -1503,6 +1508,18 @@ export type TmdbAwardsResult = {
   dataSourceStatus: DataSourceStatus;
 };
 
+type SparqlBindingValue = {
+  value: string;
+};
+
+type SparqlBinding = Record<string, SparqlBindingValue | undefined>;
+
+type SparqlResponse = {
+  results?: {
+    bindings?: SparqlBinding[];
+  };
+};
+
 function parseAwardMovieTmdbId(rawId: string): number | undefined {
   const normalized = rawId.trim();
   if (!/^\d+$/.test(normalized)) {
@@ -1611,6 +1628,257 @@ function parseAwardCategoryParts(
   };
 }
 
+function getSparqlBindingValue(binding: SparqlBinding, key: string): string | undefined {
+  const value = binding[key]?.value?.trim();
+  return value ? value : undefined;
+}
+
+function toWikidataLanguageChain(locale: Locale): string {
+  const normalized = locale.trim().toLowerCase();
+  return `${normalized},en`;
+}
+
+function parseWikidataEntityId(entityUri: string | undefined): string | undefined {
+  if (!entityUri) {
+    return undefined;
+  }
+
+  const match = /\/(Q\d+)$/i.exec(entityUri.trim());
+  return match?.[1];
+}
+
+function looksLikeWikidataQidLabel(value: string | undefined): boolean {
+  if (!value) {
+    return false;
+  }
+
+  return /^Q\d+$/i.test(value.trim());
+}
+
+function normalizeWikidataImageUrl(rawUrl: string | undefined): string | undefined {
+  if (!rawUrl) {
+    return undefined;
+  }
+
+  return rawUrl.replace(/^http:\/\//i, "https://");
+}
+
+function parseAwardYearFromDate(rawDate: string | undefined, locale: Locale): string {
+  if (!rawDate) {
+    return translate(locale, "watchlist.tba");
+  }
+
+  const year = Number(rawDate.slice(0, 4));
+  if (!Number.isFinite(year) || year <= 0) {
+    return translate(locale, "watchlist.tba");
+  }
+
+  return String(year);
+}
+
+async function fetchWikidataSparql(
+  query: string,
+  revalidateInSeconds = 21600
+): Promise<SparqlBinding[]> {
+  try {
+    const url = new URL(WIKIDATA_SPARQL_ENDPOINT);
+    url.searchParams.set("query", query);
+    url.searchParams.set("format", "json");
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/sparql-results+json",
+        "User-Agent": WIKIDATA_USER_AGENT
+      },
+      next: { revalidate: revalidateInSeconds }
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as SparqlResponse;
+    return payload.results?.bindings ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function buildWikidataOutcomeQuery(
+  locale: Locale,
+  outcome: "winner" | "nominee"
+): string {
+  const languageChain = toWikidataLanguageChain(locale);
+  const minYear = Math.max(1990, new Date().getUTCFullYear() - 15);
+  const statementPath = outcome === "winner" ? "p:P166" : "p:P1411";
+  const statementMainValue = outcome === "winner" ? "ps:P166" : "ps:P1411";
+  const statementDateQualifier = outcome === "winner" ? "pq:P585" : "pq:P585";
+  const statementAlias = outcome === "winner" ? "awardStatement" : "nominationStatement";
+  const dateAlias = outcome === "winner" ? "awardDate" : "nominationDate";
+
+  return `
+SELECT DISTINCT ?film ?filmLabel ?awardLabel ?categoryLabel ?date ?image ?tmdbId ?outcome WHERE {
+  ?film wdt:P31/wdt:P279* wd:Q11424;
+        ${statementPath} ?${statementAlias}.
+  ?${statementAlias} ${statementMainValue} ?award.
+  OPTIONAL { ?${statementAlias} ${statementDateQualifier} ?${dateAlias}. }
+  OPTIONAL { ?${statementAlias} pq:P805 ?categoryItem. }
+  OPTIONAL { ?film wdt:P577 ?releaseDate. }
+  BIND(COALESCE(?${dateAlias}, ?releaseDate) AS ?date)
+  BIND("${outcome}" AS ?outcome)
+  FILTER(BOUND(?date))
+  FILTER(YEAR(?date) >= ${minYear})
+  OPTIONAL { ?film wdt:P18 ?image. }
+  OPTIONAL { ?film wdt:P4947 ?tmdbId. }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "${languageChain}".
+    ?film rdfs:label ?filmLabel.
+    ?award rdfs:label ?awardLabel.
+    ?categoryItem rdfs:label ?categoryLabel.
+  }
+}
+ORDER BY DESC(?date)
+LIMIT 140
+`.trim();
+}
+
+function buildWikidataUpcomingQuery(locale: Locale): string {
+  const languageChain = toWikidataLanguageChain(locale);
+
+  return `
+SELECT DISTINCT ?ceremony ?ceremonyLabel ?seriesLabel ?eventDate ?image WHERE {
+  ?ceremony wdt:P31/wdt:P279* wd:Q4504495;
+            wdt:P585 ?eventDate;
+            wdt:P179 ?series.
+  ?series wdt:P279* ?seriesClass.
+  FILTER(?seriesClass IN (wd:${WIKIDATA_FILM_AWARD_QID}, wd:${WIKIDATA_TV_AWARD_QID}))
+  FILTER(?eventDate >= NOW())
+  OPTIONAL { ?ceremony wdt:P18 ?image. }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "${languageChain}".
+    ?ceremony rdfs:label ?ceremonyLabel.
+    ?series rdfs:label ?seriesLabel.
+  }
+}
+ORDER BY ASC(?eventDate)
+LIMIT 80
+`.trim();
+}
+
+function mapWikidataWinners(bindings: SparqlBinding[], locale: Locale): AwardCard[] {
+  const sortedBindings = [...bindings].sort((left, right) => {
+    const rightDate = Date.parse(getSparqlBindingValue(right, "date") ?? "");
+    const leftDate = Date.parse(getSparqlBindingValue(left, "date") ?? "");
+    if (Number.isNaN(rightDate) && Number.isNaN(leftDate)) {
+      return 0;
+    }
+    if (Number.isNaN(rightDate)) {
+      return -1;
+    }
+    if (Number.isNaN(leftDate)) {
+      return 1;
+    }
+    return rightDate - leftDate;
+  });
+  const unique = new Map<string, AwardCard>();
+
+  for (const binding of sortedBindings) {
+    const title = getSparqlBindingValue(binding, "filmLabel");
+    const festival = getSparqlBindingValue(binding, "awardLabel");
+    const categoryLabel = getSparqlBindingValue(binding, "categoryLabel");
+    const rawDate = getSparqlBindingValue(binding, "date");
+    const rawOutcome = getSparqlBindingValue(binding, "outcome");
+
+    if (!title || !festival) {
+      continue;
+    }
+
+    const outcome: AwardCard["outcome"] =
+      rawOutcome === "winner" || rawOutcome === "nominee" ? rawOutcome : "highlight";
+    const year = parseAwardYearFromDate(rawDate, locale);
+    const awardCategory = categoryLabel ?? translate(locale, "award.categoryUnknown");
+
+    const dedupeKey = `${title}|${festival}|${awardCategory}|${year}|${outcome}`;
+    if (unique.has(dedupeKey)) {
+      continue;
+    }
+
+    const filmEntityId = parseWikidataEntityId(getSparqlBindingValue(binding, "film"));
+    const tmdbMovieId = parseAwardMovieTmdbId(getSparqlBindingValue(binding, "tmdbId") ?? "");
+    const imageUrl = normalizeWikidataImageUrl(getSparqlBindingValue(binding, "image"));
+
+    unique.set(dedupeKey, {
+      id: `wikidata-film-${filmEntityId ?? title}-${year}-${outcome}`,
+      title,
+      festival,
+      awardCategory,
+      year,
+      eventDate: rawDate,
+      imageUrl,
+      movieTmdbId: tmdbMovieId,
+      outcome
+    });
+  }
+
+  return Array.from(unique.values()).slice(0, 24);
+}
+
+function mapWikidataUpcoming(bindings: SparqlBinding[], locale: Locale): AwardCard[] {
+  const unique = new Map<string, AwardCard>();
+
+  for (const binding of bindings) {
+    const ceremonyEntityId = parseWikidataEntityId(getSparqlBindingValue(binding, "ceremony"));
+    const rawCeremonyLabel = getSparqlBindingValue(binding, "ceremonyLabel");
+    const seriesLabel = getSparqlBindingValue(binding, "seriesLabel");
+    const eventDate = getSparqlBindingValue(binding, "eventDate");
+
+    const title =
+      rawCeremonyLabel && !looksLikeWikidataQidLabel(rawCeremonyLabel)
+        ? rawCeremonyLabel
+        : seriesLabel;
+    if (!title || !eventDate) {
+      continue;
+    }
+
+    const dedupeKey = ceremonyEntityId ?? title;
+    if (unique.has(dedupeKey)) {
+      continue;
+    }
+
+    const year = parseAwardYearFromDate(eventDate, locale);
+
+    unique.set(dedupeKey, {
+      id: `wikidata-ceremony-${ceremonyEntityId ?? title}-${eventDate}`,
+      title,
+      festival: seriesLabel ?? title,
+      awardCategory: translate(locale, "menu.awardsCeremoniesTitle"),
+      year,
+      eventDate,
+      imageUrl: normalizeWikidataImageUrl(getSparqlBindingValue(binding, "image")),
+      outcome: "highlight"
+    });
+  }
+
+  return Array.from(unique.values()).slice(0, 24);
+}
+
+async function getWikidataAwards(
+  category: "popular" | "upcoming",
+  locale: Locale
+): Promise<AwardCard[]> {
+  if (category === "upcoming") {
+    const upcomingBindings = await fetchWikidataSparql(buildWikidataUpcomingQuery(locale), 21600);
+    return mapWikidataUpcoming(upcomingBindings, locale);
+  }
+
+  const [winnerBindings, nomineeBindings] = await Promise.all([
+    fetchWikidataSparql(buildWikidataOutcomeQuery(locale, "winner"), 21600),
+    fetchWikidataSparql(buildWikidataOutcomeQuery(locale, "nominee"), 21600)
+  ]);
+  return mapWikidataWinners([...winnerBindings, ...nomineeBindings], locale);
+}
+
 function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard | null {
   const category = item.category ?? translate(locale, "nav.awards");
   const parsed = parseAwardCategoryParts(category, locale);
@@ -1638,6 +1906,8 @@ export async function getTmdbAwards(
   category: "popular" | "upcoming",
   locale: Locale = "en"
 ): Promise<TmdbAwardsResult> {
+  let tmdbRequestFailed = false;
+
   try {
     const language = toTmdbLanguage(locale);
     const path = category === "upcoming" ? "/award/upcoming" : "/award";
@@ -1648,16 +1918,32 @@ export async function getTmdbAwards(
     );
     const results = response.results ?? [];
     if (results.length > 0) {
-      return {
-        items: results
-          .slice(0, 48)
-          .map((item) => mapAwardResult(item, locale))
-          .filter((item): item is AwardCard => item !== null)
-          .slice(0, 24),
-        dataSourceStatus: "tmdb"
-      };
+      const tmdbItems = results
+        .slice(0, 48)
+        .map((item) => mapAwardResult(item, locale))
+        .filter((item): item is AwardCard => item !== null)
+        .slice(0, 24);
+
+      if (tmdbItems.length > 0) {
+        return {
+          items: tmdbItems,
+          dataSourceStatus: "tmdb"
+        };
+      }
     }
   } catch {
+    tmdbRequestFailed = true;
+  }
+
+  const wikidataItems = await getWikidataAwards(category, locale);
+  if (wikidataItems.length > 0) {
+    return {
+      items: wikidataItems,
+      dataSourceStatus: "fallback"
+    };
+  }
+
+  if (tmdbRequestFailed) {
     return { items: [], dataSourceStatus: "unavailable" };
   }
 

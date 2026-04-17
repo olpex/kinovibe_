@@ -342,15 +342,18 @@ const BASE_MESSAGES: Record<string, string> = {
   "menu.knownFor": "Known for",
 
   "menu.awardsPopularTitle": "Winners & Nominees",
-  "menu.awardsPopularSubtitle": "Recorded winners and nominees from the TMDB awards feed.",
+  "menu.awardsPopularSubtitle":
+    "Recorded winners and nominees from available awards sources (TMDB, and fallback providers when needed).",
   "menu.awardsUpcomingTitle": "Upcoming Ceremonies",
-  "menu.awardsUpcomingSubtitle": "Scheduled ceremonies and upcoming award events from TMDB.",
+  "menu.awardsUpcomingSubtitle":
+    "Scheduled ceremonies and upcoming award events from available awards sources.",
   "menu.awardsCalendarTitle": "Awards Calendar",
-  "menu.awardsCalendarSubtitle": "Festival and competition awards with source metadata from TMDB.",
+  "menu.awardsCalendarSubtitle":
+    "Festival and competition awards with source metadata from connected providers.",
   "menu.awardsCeremoniesTitle": "Upcoming Award Ceremonies",
   "menu.awardsCeremoniesSubtitle": "What ceremonies are coming next and when they are scheduled.",
   "menu.awardsHint":
-    "Data is sourced from the TMDB awards feed. Only records with explicit festival/award and category metadata are shown. This section is informational only and does not include KinoVibe user voting.",
+    "Data is sourced from connected awards providers (TMDB with automatic fallback). Only records with explicit festival/award and category metadata are shown. This section is informational only and does not include KinoVibe user voting.",
   "menu.openPoster": "Open poster",
 
   "award.festivalLabel": "Festival/Award",
@@ -364,10 +367,10 @@ const BASE_MESSAGES: Record<string, string> = {
   "award.badgeHighlight": "Spotlight",
   "award.emptyResultsTitle": "No winners or nominees found",
   "award.emptyResultsBody":
-    "TMDB did not return records with explicit festival/award and category metadata for this selection.",
+    "No connected provider returned records with explicit festival/award and category metadata for this selection.",
   "award.emptyUpcomingTitle": "No upcoming ceremonies found",
   "award.emptyUpcomingBody":
-    "TMDB did not return upcoming ceremonies with explicit festival/award and category metadata.",
+    "No connected provider returned upcoming ceremonies with explicit festival/award and category metadata.",
 
   "menu.discussTitle": "Discuss",
   "menu.discussSubtitle": "Community threads and topic hubs.",
@@ -689,15 +692,18 @@ const UK_MESSAGES: Record<string, string> = {
   "header.sourceFallback": "Fallback",
   "header.sourceUnavailable": "Недоступно",
   "menu.awardsPopularTitle": "Лауреати та номінанти",
-  "menu.awardsPopularSubtitle": "Зафіксовані лауреати й номінанти з award-feed TMDB.",
+  "menu.awardsPopularSubtitle":
+    "Зафіксовані лауреати й номінанти з доступних джерел нагород (TMDB та резервні провайдери).",
   "menu.awardsUpcomingTitle": "Найближчі церемонії",
-  "menu.awardsUpcomingSubtitle": "Заплановані церемонії та майбутні події нагород із TMDB.",
+  "menu.awardsUpcomingSubtitle":
+    "Заплановані церемонії та майбутні події нагород із доступних джерел.",
   "menu.awardsCalendarTitle": "Календар нагород",
-  "menu.awardsCalendarSubtitle": "Фестивальні та конкурсні відзнаки з джерелом даних TMDB.",
+  "menu.awardsCalendarSubtitle":
+    "Фестивальні та конкурсні відзнаки з метаданими джерела від підключених провайдерів.",
   "menu.awardsCeremoniesTitle": "Найближчі нагородні церемонії",
   "menu.awardsCeremoniesSubtitle": "Які церемонії попереду та коли вони заплановані.",
   "menu.awardsHint":
-    "Дані надходять із award-feed TMDB. Показуються лише записи, де вказано і фестиваль/премію, і категорію відзнаки. Це інформаційний розділ без внутрішнього голосування користувачів KinoVibe.",
+    "Дані надходять із підключених джерел нагород (TMDB з автоматичним fallback). Показуються лише записи, де вказано і фестиваль/премію, і категорію відзнаки. Це інформаційний розділ без внутрішнього голосування користувачів KinoVibe.",
   "menu.openPoster": "Відкрити постер",
   "award.festivalLabel": "Фестиваль/Премія",
   "award.categoryLabel": "Категорія відзнаки",
@@ -710,10 +716,10 @@ const UK_MESSAGES: Record<string, string> = {
   "award.badgeHighlight": "Фокус",
   "award.emptyResultsTitle": "Не знайдено лауреатів або номінантів",
   "award.emptyResultsBody":
-    "TMDB не повернув записи з явно вказаними фестивалем/премією та категорією відзнаки для цієї вибірки.",
+    "Жоден підключений провайдер не повернув записи з явно вказаними фестивалем/премією та категорією відзнаки для цієї вибірки.",
   "award.emptyUpcomingTitle": "Не знайдено найближчих церемоній",
   "award.emptyUpcomingBody":
-    "TMDB не повернув найближчі церемонії з явно вказаними фестивалем/премією та категорією відзнаки.",
+    "Жоден підключений провайдер не повернув найближчі церемонії з явно вказаними фестивалем/премією та категорією відзнаки.",
   "menu.popular": "Популярні",
   "menu.nowPlaying": "Зараз у кіно",
   "menu.upcoming": "Очікувані",
@@ -1456,28 +1462,34 @@ const CORE_CATALOG_LABEL_OVERRIDES: Record<Locale, Record<string, string>> = {
 const AWARDS_UI_OVERRIDES: Record<Locale, Record<string, string>> = {
   en: {
     "menu.awardsPopularTitle": "Winners & Nominees",
-    "menu.awardsPopularSubtitle": "Recorded winners and nominees from the TMDB awards feed.",
+    "menu.awardsPopularSubtitle":
+      "Recorded winners and nominees from available awards sources (TMDB, and fallback providers when needed).",
     "menu.awardsUpcomingTitle": "Upcoming Ceremonies",
-    "menu.awardsUpcomingSubtitle": "Scheduled ceremonies and upcoming award events from TMDB.",
+    "menu.awardsUpcomingSubtitle":
+      "Scheduled ceremonies and upcoming award events from available awards sources.",
     "menu.awardsCalendarTitle": "Awards Calendar",
-    "menu.awardsCalendarSubtitle": "Festival and competition awards with source metadata from TMDB.",
+    "menu.awardsCalendarSubtitle":
+      "Festival and competition awards with source metadata from connected providers.",
     "menu.awardsCeremoniesTitle": "Upcoming Award Ceremonies",
     "menu.awardsCeremoniesSubtitle": "What ceremonies are coming next and when they are scheduled.",
     "menu.awardsHint":
-      "Data is sourced from the TMDB awards feed. Only records with explicit festival/award and category metadata are shown. This section is informational only and does not include KinoVibe user voting.",
+      "Data is sourced from connected awards providers (TMDB with automatic fallback). Only records with explicit festival/award and category metadata are shown. This section is informational only and does not include KinoVibe user voting.",
     "menu.openPoster": "Open poster"
   },
   uk: {
     "menu.awardsPopularTitle": "Лауреати та номінанти",
-    "menu.awardsPopularSubtitle": "Зафіксовані лауреати й номінанти з award-feed TMDB.",
+    "menu.awardsPopularSubtitle":
+      "Зафіксовані лауреати й номінанти з доступних джерел нагород (TMDB та резервні провайдери).",
     "menu.awardsUpcomingTitle": "Найближчі церемонії",
-    "menu.awardsUpcomingSubtitle": "Заплановані церемонії та майбутні події нагород із TMDB.",
+    "menu.awardsUpcomingSubtitle":
+      "Заплановані церемонії та майбутні події нагород із доступних джерел.",
     "menu.awardsCalendarTitle": "Календар нагород",
-    "menu.awardsCalendarSubtitle": "Фестивальні та конкурсні відзнаки з джерелом даних TMDB.",
+    "menu.awardsCalendarSubtitle":
+      "Фестивальні та конкурсні відзнаки з метаданими джерела від підключених провайдерів.",
     "menu.awardsCeremoniesTitle": "Найближчі нагородні церемонії",
     "menu.awardsCeremoniesSubtitle": "Які церемонії попереду та коли вони заплановані.",
     "menu.awardsHint":
-      "Дані надходять із award-feed TMDB. Показуються лише записи, де вказано і фестиваль/премію, і категорію відзнаки. Це інформаційний розділ без внутрішнього голосування користувачів KinoVibe.",
+      "Дані надходять із підключених джерел нагород (TMDB з автоматичним fallback). Показуються лише записи, де вказано і фестиваль/премію, і категорію відзнаки. Це інформаційний розділ без внутрішнього голосування користувачів KinoVibe.",
     "menu.openPoster": "Відкрити постер"
   },
   de: {
