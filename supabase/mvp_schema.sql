@@ -110,12 +110,16 @@ create table if not exists public.feedback_entries (
   subject text,
   message text not null,
   page_path text,
+  is_read_by_admin boolean not null default false,
   created_at timestamptz not null default now(),
   constraint feedback_entries_category_check
     check (category in ('feedback', 'suggestion')),
   constraint feedback_entries_message_check
     check (char_length(trim(message)) between 10 and 5000)
 );
+
+-- Add is_read_by_admin if running against an existing DB
+alter table public.feedback_entries add column if not exists is_read_by_admin boolean not null default false;
 
 create index if not exists movies_tmdb_id_idx on public.movies (tmdb_id);
 create index if not exists watchlist_user_idx on public.watchlist_items (user_id);

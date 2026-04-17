@@ -112,10 +112,16 @@ export type TmdbTranslationEntry = {
     name?: string;
     overview?: string;
     tagline?: string;
+    biography?: string;
   };
 };
 
 export type TmdbMovieTranslationsResponse = {
+  id: number;
+  translations: TmdbTranslationEntry[];
+};
+
+export type TmdbPersonTranslationsResponse = {
   id: number;
   translations: TmdbTranslationEntry[];
 };

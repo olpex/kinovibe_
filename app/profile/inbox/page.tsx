@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
@@ -20,22 +21,29 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = "force-dynamic";
 
+type FeedbackRow = {
+  id: number;
+  category: string;
+  subject: string | null;
+  message: string;
+  created_at: string;
+};
+
+type ReplyRow = {
+  id: number;
+  feedback_entry_id: number;
+  admin_email: string;
+  body: string;
+  created_at: string;
+};
+
 type NotifRow = {
   id: number;
   notification_type: string;
-  title: string;
-  body: string;
   is_read: boolean;
-  created_at: string;
   feedback_entry_id: number | null;
   feedback_reply_id: number | null;
-};
-
-type EntryRow = {
-  id: number;
-  subject: string | null;
-  message: string;
-  category: string;
+  created_at: string;
 };
 
 export default async function InboxPage() {
@@ -61,37 +69,67 @@ export default async function InboxPage() {
     );
   }
 
-  // Load notifications for this user
-  const { data: notifications } = await supabase
-    .from("inbox_notifications")
-    .select("id,notification_type,title,body,is_read,created_at,feedback_entry_id,feedback_reply_id")
-    .eq("recipient_user_id", session.userId)
+  // 1. Load all top-level feedback entries by this user
+  const { data: feedbackRaw } = await supabase
+    .from("feedback_entries")
+    .select("id,category,subject,message,created_at")
+    .eq("user_id", session.userId)
+    .is("parent_reply_id", null)
     .order("created_at", { ascending: false })
     .limit(100);
 
-  const notifs = (notifications ?? []) as NotifRow[];
-  const unreadCount = notifs.filter((n) => !n.is_read).length;
+  const feedbackEntries = (feedbackRaw ?? []) as FeedbackRow[];
 
-  // Load original feedback entries referenced in notifications
-  const entryIds = [...new Set(notifs.map((n) => n.feedback_entry_id).filter(Boolean))] as number[];
-  const { data: entries } = entryIds.length
+  // 2. Load admin replies for all these entries
+  const entryIds = feedbackEntries.map((e) => e.id);
+  const { data: repliesRaw } = entryIds.length
     ? await supabase
-        .from("feedback_entries")
-        .select("id,subject,message,category")
-        .in("id", entryIds)
+        .from("feedback_replies")
+        .select("id,feedback_entry_id,admin_email,body,created_at")
+        .in("feedback_entry_id", entryIds)
+        .order("created_at", { ascending: true })
     : { data: [] };
 
-  const entriesMap = new Map<number, EntryRow>();
-  for (const e of (entries ?? []) as EntryRow[]) {
-    entriesMap.set(e.id, e);
+  const repliesMap = new Map<number, ReplyRow[]>();
+  for (const r of (repliesRaw ?? []) as ReplyRow[]) {
+    const list = repliesMap.get(r.feedback_entry_id) ?? [];
+    list.push(r);
+    repliesMap.set(r.feedback_entry_id, list);
   }
+
+  // 3. Load inbox notifications for unread count and reading state
+  const { data: notifsRaw } = await supabase
+    .from("inbox_notifications")
+    .select("id,notification_type,is_read,feedback_entry_id,feedback_reply_id,created_at")
+    .eq("recipient_user_id", session.userId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const notifs = (notifsRaw ?? []) as NotifRow[];
+  const unreadCount = notifs.filter((n) => !n.is_read).length;
+
+  // Map: feedback_entry_id -> set of unread notification reply IDs
+  const unreadReplyIds = new Set<number>();
+  for (const n of notifs) {
+    if (!n.is_read && n.feedback_reply_id) {
+      unreadReplyIds.add(n.feedback_reply_id);
+    }
+  }
+
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleString(toIntlLocale(locale), {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
   return (
     <CatalogPageShell
       locale={locale}
       session={session}
       title={translate(locale, "inbox.title")}
-      subtitle={translate(locale, "inbox.subtitle", { count: notifs.length })}
+      subtitle={translate(locale, "inbox.subtitle", { count: feedbackEntries.length })}
     >
       <div className={styles.page}>
         <div className={styles.headerCard}>
@@ -99,63 +137,88 @@ export default async function InboxPage() {
             {translate(locale, "inbox.title")}
             {unreadCount > 0 ? ` (${unreadCount})` : ""}
           </h1>
-          {unreadCount > 0 ? (
-            <form action={markAllReadAction}>
-              <button type="submit" className={styles.markReadBtn}>
-                {translate(locale, "inbox.markAllRead")}
-              </button>
-            </form>
-          ) : null}
+          <div className={styles.headerActions}>
+            {unreadCount > 0 ? (
+              <form action={markAllReadAction}>
+                <button type="submit" className={styles.markReadBtn}>
+                  {translate(locale, "inbox.markAllRead")}
+                </button>
+              </form>
+            ) : null}
+            <Link href="/feedback" className={styles.newFeedbackLink}>
+              + {translate(locale, "feedback.formTitle")}
+            </Link>
+          </div>
         </div>
 
-        {notifs.length === 0 ? (
-          <p className={styles.emptyState}>{translate(locale, "inbox.empty")}</p>
+        {feedbackEntries.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>{translate(locale, "inbox.empty")}</p>
+            <Link href="/feedback" className={styles.newFeedbackLink}>
+              {translate(locale, "feedback.submit")}
+            </Link>
+          </div>
         ) : (
           <div className={styles.notificationList}>
-            {notifs.map((notif) => {
-              const entry = notif.feedback_entry_id ? entriesMap.get(notif.feedback_entry_id) : null;
+            {feedbackEntries.map((entry) => {
+              const replies = repliesMap.get(entry.id) ?? [];
+              const hasUnread = replies.some((r) => unreadReplyIds.has(r.id));
+              const lastReply = replies[replies.length - 1];
 
               return (
                 <article
-                  key={notif.id}
-                  className={`${styles.notifCard} ${!notif.is_read ? styles.unread : ""}`}
+                  key={entry.id}
+                  className={`${styles.notifCard} ${hasUnread ? styles.unread : ""}`}
                 >
+                  {/* Entry header */}
                   <div className={styles.notifMeta}>
-                    {!notif.is_read ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
-                    <span>
-                      {new Date(notif.created_at).toLocaleString(toIntlLocale(locale), {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}
+                    {hasUnread ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
+                    <span className={styles.categoryBadge} data-category={entry.category}>
+                      {translate(locale, `feedback.type.${entry.category}`)}
                     </span>
+                    <span>{formatDate(entry.created_at)}</span>
                   </div>
 
-                  <p className={styles.notifTitle}>{notif.title}</p>
-                  <p className={styles.notifBody}>{notif.body}</p>
-
-                  {entry ? (
-                    <div className={styles.originalEntry}>
-                      <strong>
-                        {translate(locale, "inbox.yourOriginalMessage")} —{" "}
-                        {entry.subject ?? translate(locale, "feedback.email.noSubject")}
-                      </strong>
-                      {entry.message.slice(0, 200)}
-                      {entry.message.length > 200 ? "…" : ""}
-                    </div>
+                  {entry.subject ? (
+                    <p className={styles.notifTitle}>{entry.subject}</p>
                   ) : null}
+                  <p className={styles.notifBody}>{entry.message}</p>
 
-                  {notif.feedback_reply_id && notif.feedback_entry_id ? (
-                    <div className={styles.replySection}>
-                      <h4>{translate(locale, "inbox.replyToAdmin")}</h4>
-                      <UserReplyForm
-                        entryId={notif.feedback_entry_id}
-                        parentReplyId={notif.feedback_reply_id}
-                        locale={locale}
-                      />
+                  {/* Admin replies thread */}
+                  {replies.length > 0 ? (
+                    <div className={styles.repliesThread}>
+                      <p className={styles.repliesThreadLabel}>
+                        {translate(locale, "admin.replyThread")}
+                      </p>
+                      {replies.map((reply) => (
+                        <div
+                          key={reply.id}
+                          className={`${styles.replyBubble} ${unreadReplyIds.has(reply.id) ? styles.replyBubbleUnread : ""}`}
+                        >
+                          <p className={styles.replyBubbleBody}>{reply.body}</p>
+                          <p className={styles.replyBubbleMeta}>
+                            👤 {reply.admin_email} · {formatDate(reply.created_at)}
+                          </p>
+                        </div>
+                      ))}
+
+                      {/* Reply form to continue the thread */}
+                      {lastReply ? (
+                        <div className={styles.replySection}>
+                          <h4>{translate(locale, "inbox.replyToAdmin")}</h4>
+                          <UserReplyForm
+                            entryId={entry.id}
+                            parentReplyId={lastReply.id}
+                            locale={locale}
+                          />
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+                  ) : (
+                    <p className={styles.awaitingReply}>
+                      {translate(locale, "inbox.awaitingReply")}
+                    </p>
+                  )}
                 </article>
               );
             })}

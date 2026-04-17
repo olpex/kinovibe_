@@ -18,6 +18,15 @@ type SendFeedbackNotificationResult = {
   reason?: string;
 };
 
+type SendAdminReplyEmailArgs = {
+  userEmail: string;
+  adminEmail: string;
+  locale: string;
+  subject: string;
+  replyBody: string;
+  category: "feedback" | "suggestion";
+};
+
 function toCategoryLabel(category: "feedback" | "suggestion"): string {
   return category === "suggestion" ? "feedback.type.suggestion" : "feedback.type.feedback";
 }
@@ -37,6 +46,41 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+async function sendEmail(args: {
+  to: string;
+  from: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<{ ok: boolean; reason?: string }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    return { ok: false, reason: "missing_api_key" };
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: args.from,
+      to: [args.to],
+      subject: args.subject,
+      text: args.text,
+      html: args.html
+    }),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    return { ok: false, reason: `resend_${response.status}` };
+  }
+
+  return { ok: true };
 }
 
 export async function sendFeedbackNotificationEmail(
@@ -89,32 +133,62 @@ export async function sendFeedbackNotificationEmail(
     `<p>${escapedSnippet}</p>`
   ].join("");
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from,
-      to: [recipient],
-      subject: subjectLine,
-      text: textLines.join("\n"),
-      html: htmlBody
-    }),
-    cache: "no-store"
+  const result = await sendEmail({
+    to: recipient,
+    from,
+    subject: subjectLine,
+    text: textLines.join("\n"),
+    html: htmlBody
   });
 
-  if (!response.ok) {
-    return {
-      ok: false,
-      skipped: false,
-      reason: `resend_${response.status}`
-    };
+  return result.ok
+    ? { ok: true, skipped: false }
+    : { ok: false, skipped: false, reason: result.reason };
+}
+
+export async function sendAdminReplyEmail(
+  args: SendAdminReplyEmailArgs
+): Promise<{ ok: boolean }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    return { ok: false };
   }
 
-  return {
-    ok: true,
-    skipped: false
-  };
+  const from = process.env.RESEND_FROM_EMAIL?.trim() || "KinoVibe <onboarding@resend.dev>";
+  const locale: Locale = normalizeLocale(args.locale);
+  const categoryLabel = translate(locale, toCategoryLabel(args.category));
+  const subjectLine = `[KinoVibe] ${translate(locale, "admin.replyNotificationTitle")}: ${truncateForEmail(args.subject, 80)}`;
+  const escapedReply = escapeHtml(truncateForEmail(args.replyBody, 2000)).replace(/\n/g, "<br />");
+
+  const textLines = [
+    translate(locale, "admin.replyNotificationTitle"),
+    "",
+    `${translate(locale, "feedback.email.fieldType")}: ${categoryLabel}`,
+    `${translate(locale, "feedback.email.fieldSubject")}: ${args.subject}`,
+    "",
+    `${translate(locale, "admin.replyThread")}:`,
+    truncateForEmail(args.replyBody, 2000)
+  ];
+
+  const htmlBody = [
+    `<h2>${escapeHtml(translate(locale, "admin.replyNotificationTitle"))}</h2>`,
+    "<ul>",
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldType"))}:</b> ${escapeHtml(categoryLabel)}</li>`,
+    `<li><b>${escapeHtml(translate(locale, "feedback.email.fieldSubject"))}:</b> ${escapeHtml(args.subject)}</li>`,
+    "</ul>",
+    `<p><b>${escapeHtml(translate(locale, "admin.replyThread"))}:</b></p>`,
+    `<p>${escapedReply}</p>`,
+    `<hr/>`,
+    `<p style="font-size:0.85em;color:#888">${escapeHtml(translate(locale, "feedback.email.fieldFrom"))}: ${escapeHtml(args.adminEmail)}</p>`
+  ].join("");
+
+  const result = await sendEmail({
+    to: args.userEmail,
+    from,
+    subject: subjectLine,
+    text: textLines.join("\n"),
+    html: htmlBody
+  });
+
+  return { ok: result.ok };
 }

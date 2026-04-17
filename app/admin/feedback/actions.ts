@@ -7,6 +7,7 @@ import { translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/supabase/session";
+import { sendAdminReplyEmail } from "@/lib/feedback/notifications";
 
 export type AdminReplyState = {
   ok: boolean;
@@ -61,12 +62,14 @@ export async function replyToFeedbackAction(
   // Find the original entry author to notify
   const { data: entry } = await client
     .from("feedback_entries")
-    .select("user_id, subject, category")
+    .select("user_id, user_email, subject, category, locale")
     .eq("id", entryId)
     .single();
 
   if (entry?.user_id) {
     const subject = entry.subject ?? translate(locale, "feedback.email.noSubject");
+
+    // Create inbox notification for the user (bell counter + inbox page)
     await client.from("inbox_notifications").insert({
       recipient_user_id: entry.user_id,
       sender_user_id: session.userId,
@@ -76,6 +79,22 @@ export async function replyToFeedbackAction(
       feedback_entry_id: entryId,
       feedback_reply_id: reply.id
     });
+
+    // Send email to the user
+    if (entry.user_email) {
+      try {
+        await sendAdminReplyEmail({
+          userEmail: entry.user_email,
+          adminEmail: session.email,
+          locale: (entry.locale as string) ?? locale,
+          subject,
+          replyBody: body,
+          category: (entry.category as "feedback" | "suggestion") ?? "feedback"
+        });
+      } catch {
+        // Email is best-effort; inbox notification is already created
+      }
+    }
   }
 
   revalidatePath("/admin/feedback");

@@ -246,6 +246,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "admin.replyBodyRequired": "Reply body is required.",
   "admin.replyNotificationTitle": "New reply from KinoVibe admin",
   "admin.userRepliedTitle": "User replied to your message",
+  "admin.newFeedbackTitle": "New feedback/suggestion received",
 
   "inbox.title": "Inbox",
   "inbox.subtitle": "{count} message(s)",
@@ -257,6 +258,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "inbox.replyPlaceholder": "Write your reply...",
   "inbox.sendReply": "Send reply",
   "inbox.replySent": "Reply sent successfully.",
+  "inbox.awaitingReply": "Awaiting admin reply...",
 
   "meta.adminFeedbackTitle": "Feedback | {site}",
   "meta.adminFeedbackDescription": "View and reply to user feedback and suggestions.",
@@ -889,6 +891,7 @@ const UK_MESSAGES: Record<string, string> = {
   "admin.replyBodyRequired": "Текст відповіді є обов'язковим.",
   "admin.replyNotificationTitle": "Нова відповідь від KinoVibe",
   "admin.userRepliedTitle": "Користувач відповів на ваше повідомлення",
+  "admin.newFeedbackTitle": "Новий відгук або пропозиція від користувача",
 
   "inbox.title": "Вхідні повідомлення",
   "inbox.subtitle": "{count} повідомлень",
@@ -899,7 +902,8 @@ const UK_MESSAGES: Record<string, string> = {
   "inbox.replyToAdmin": "Відповісти адміну",
   "inbox.replyPlaceholder": "Напишіть вашу відповідь...",
   "inbox.sendReply": "Надіслати",
-  "inbox.replySent": "Відповідь надіслано."
+  "inbox.replySent": "Відповідь надіслано.",
+  "inbox.awaitingReply": "Очікуємо відповіді адміна..."
 };
 
 

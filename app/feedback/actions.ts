@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { sendFeedbackNotificationEmail } from "@/lib/feedback/notifications";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type FeedbackFormState = {
@@ -19,6 +20,26 @@ function asString(value: FormDataEntryValue | null): string {
 
 function parseCategory(value: string): FeedbackCategory {
   return value === "suggestion" ? "suggestion" : "feedback";
+}
+
+/** Look up admin user_id from env or via admin DB */
+async function getAdminUserId(): Promise<string | null> {
+  // Preferred: set ADMIN_USER_ID in your .env
+  const envId = process.env.ADMIN_USER_ID?.trim();
+  if (envId) return envId;
+
+  // Fallback: look up by email via service-role client
+  const adminEmail = process.env.ADMIN_PRIMARY_EMAIL?.trim() || process.env.ADMIN_EMAIL_ALLOWLIST?.split(",")[0]?.trim() || "olppara@gmail.com";
+  const adminClient = createSupabaseAdminClient();
+  if (!adminClient) return null;
+
+  try {
+    const { data } = await adminClient.auth.admin.listUsers({ perPage: 500 });
+    const adminUser = data?.users?.find((u) => u.email?.toLowerCase() === adminEmail.toLowerCase());
+    return adminUser?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function submitFeedbackAction(
@@ -76,7 +97,7 @@ export async function submitFeedbackAction(
       message,
       page_path: pagePath
     })
-    .select("created_at")
+    .select("id,created_at")
     .single();
 
   if (error) {
@@ -86,29 +107,48 @@ export async function submitFeedbackAction(
     };
   }
 
-  let notificationResult: { ok: boolean } = { ok: false };
-  try {
-    notificationResult = await sendFeedbackNotificationEmail({
-      userEmail: user.email,
-      locale,
-      category,
-      subject,
-      message,
-      pagePath,
-      createdAtIso: (data?.created_at as string | undefined) ?? new Date().toISOString()
-    });
-  } catch {
-    notificationResult = { ok: false };
-  }
+  const entryId = data?.id as number | undefined;
+  const createdAt = (data?.created_at as string | undefined) ?? new Date().toISOString();
+
+  // Asynchronously notify admin (best-effort, don't block user response)
+  void (async () => {
+    try {
+      // Create bell notification for admin
+      const adminUserId = await getAdminUserId();
+      if (adminUserId) {
+        const adminClient = createSupabaseAdminClient();
+        const client = adminClient ?? supabase;
+        await client.from("inbox_notifications").insert({
+          recipient_user_id: adminUserId,
+          sender_user_id: user.id,
+          notification_type: "feedback_received",
+          title: translate(locale, "admin.newFeedbackTitle"),
+          body: `${user.email} — ${subject ?? translate(locale, "feedback.email.noSubject")}: ${message.slice(0, 300)}`,
+          feedback_entry_id: entryId ?? null
+        });
+      }
+    } catch {
+      // Bell notification is best-effort
+    }
+
+    // Send email to admin
+    try {
+      await sendFeedbackNotificationEmail({
+        userEmail: user.email,
+        locale,
+        category,
+        subject,
+        message,
+        pagePath,
+        createdAtIso: createdAt
+      });
+    } catch {
+      // Email is best-effort
+    }
+  })();
 
   revalidatePath("/feedback");
-
-  if (!notificationResult.ok) {
-    return {
-      ok: true,
-      message: translate(locale, "feedback.submittedNoEmail")
-    };
-  }
+  revalidatePath("/profile/inbox");
 
   return {
     ok: true,

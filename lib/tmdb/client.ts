@@ -18,6 +18,7 @@ import {
   TmdbPersonDetailsResponse,
   TmdbPersonDetailsWithImagesResponse,
   TmdbPersonKnownForItem,
+  TmdbPersonTranslationsResponse,
   TmdbKeywordSearchResponse,
   TmdbTv,
   TmdbTvAggregateCreditsResponse,
@@ -711,6 +712,19 @@ async function fetchTvVideosWithFallback(
 async function fetchTvTranslations(tvId: number): Promise<TmdbTranslationEntry[]> {
   try {
     const response = await fetchTmdb<TmdbTvTranslationsResponse>(`/tv/${tvId}/translations`, {}, 3600);
+    return response.translations ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function fetchPersonTranslations(personId: number): Promise<TmdbTranslationEntry[]> {
+  try {
+    const response = await fetchTmdb<TmdbPersonTranslationsResponse>(
+      `/person/${personId}/translations`,
+      {},
+      86400
+    );
     return response.translations ?? [];
   } catch {
     return [];
@@ -2235,7 +2249,25 @@ export const getTmdbPersonDetails = cache(
     ]);
 
     const normalizedDetailsBiography = normalizeNonEmptyText(details.biography);
-    const biographySource = normalizedDetailsBiography ?? snapshot.biography ?? "";
+
+    // Try to get biography in user's language via translations endpoint
+    let localizedBiography: string | undefined;
+    if (locale !== "en") {
+      const translations = await fetchPersonTranslations(personId);
+      if (translations.length > 0) {
+        const { languageCode, regionCode } = parseTmdbLanguageParts(language);
+        const picked = pickTranslationText(translations, "biography", languageCode, regionCode);
+        if (picked && picked.text) {
+          localizedBiography = picked.text;
+        }
+      }
+    }
+
+    const biographySource =
+      localizedBiography ??
+      normalizedDetailsBiography ??
+      snapshot.biography ??
+      "";
     const generatedBiography = shortenInformativeText(
       `${details.name}. ${translate(locale, "person.department")}: ${normalizeNonEmptyText(details.known_for_department) ?? snapshot.department ?? translate(locale, "common.notAvailable")}. ${translate(locale, "menu.knownFor")}: ${credits.cast
         .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
