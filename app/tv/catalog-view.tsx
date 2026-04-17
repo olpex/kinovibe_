@@ -8,6 +8,7 @@ import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import {
   discoverTmdbTvCatalogPage,
+  getTvOnAirSchedulePage,
   getTmdbCountries,
   getTmdbTvCatalogPage,
   getTmdbTvGenres,
@@ -68,16 +69,39 @@ export async function TvCatalogView({
   const hasFilters = hasActiveTvDiscoverFilters(filters, defaultSort);
   const filtersQuery = tvDiscoverFiltersToQuery(filters, defaultSort);
   let result: Awaited<ReturnType<typeof getTmdbTvCatalogPage>> | null = null;
+  let onAirMeta: { countryName: string; dateLabel: string } | null = null;
+  let dataSourceStatus: "tmdb" | "fallback" = "tmdb";
   let genres = [] as Awaited<ReturnType<typeof getTmdbTvGenres>>;
   let countries = [] as Awaited<ReturnType<typeof getTmdbCountries>>;
   try {
-    [result, genres, countries] = await Promise.all([
-      hasFilters
-        ? discoverTmdbTvCatalogPage(category, filters, locale, page)
-        : getTmdbTvCatalogPage(category, locale, page),
-      getTmdbTvGenres(locale).catch(() => []),
-      getTmdbCountries(locale).catch(() => [])
-    ]);
+    if (category === "on_the_air") {
+      const [scheduleResult, loadedGenres, loadedCountries] = await Promise.all([
+        getTvOnAirSchedulePage(filters, locale, page),
+        getTmdbTvGenres(locale).catch(() => []),
+        getTmdbCountries(locale).catch(() => [])
+      ]);
+      result = {
+        page: scheduleResult.page,
+        totalPages: scheduleResult.totalPages,
+        totalResults: scheduleResult.totalResults,
+        items: scheduleResult.items
+      };
+      onAirMeta = {
+        countryName: scheduleResult.countryName,
+        dateLabel: scheduleResult.dateLabel
+      };
+      dataSourceStatus = "fallback";
+      genres = loadedGenres;
+      countries = loadedCountries;
+    } else {
+      [result, genres, countries] = await Promise.all([
+        hasFilters
+          ? discoverTmdbTvCatalogPage(category, filters, locale, page)
+          : getTmdbTvCatalogPage(category, locale, page),
+        getTmdbTvGenres(locale).catch(() => []),
+        getTmdbCountries(locale).catch(() => [])
+      ]);
+    }
   } catch {
     result = null;
   }
@@ -122,16 +146,25 @@ export async function TvCatalogView({
   }
 
   return (
-    <CatalogPageShell
-      locale={locale}
-      session={session}
-      title={title}
-      subtitle={subtitle}
-      dataSourceStatus="tmdb"
-    >
+      <CatalogPageShell
+        locale={locale}
+        session={session}
+        title={title}
+        subtitle={subtitle}
+        dataSourceStatus={dataSourceStatus}
+      >
       <p className={styles.inlineMessage}>
-        {result.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")} {title}
+        {category === "on_the_air" && onAirMeta
+          ? translate(locale, "tv.onAirScheduleSummary", {
+              count: result.totalResults.toLocaleString(toIntlLocale(locale)),
+              country: onAirMeta.countryName,
+              date: onAirMeta.dateLabel
+            })
+          : `${result.totalResults.toLocaleString(toIntlLocale(locale))} ${translate(locale, "search.resultsFor")} ${title}`}
       </p>
+      {category === "on_the_air" ? (
+        <p className={styles.inlineMessage}>{translate(locale, "tv.onAirCardHint")}</p>
+      ) : null}
       <div className={styles.contentWithSidebar}>
         <TvFilters
           locale={locale}
@@ -143,7 +176,19 @@ export async function TvCatalogView({
           isPro={session.isPro}
         />
         <div className={styles.mainContent}>
-          <CatalogMovieGrid locale={locale} items={result.items} hrefPrefix="/tv" />
+          <CatalogMovieGrid
+            locale={locale}
+            items={result.items}
+            hrefPrefix="/tv"
+            emptyMessage={
+              category === "on_the_air" && onAirMeta
+                ? translate(locale, "tv.onAirEmpty", {
+                    country: onAirMeta.countryName,
+                    date: onAirMeta.dateLabel
+                  })
+                : undefined
+            }
+          />
           <CatalogPagination
             locale={locale}
             basePath={basePath}

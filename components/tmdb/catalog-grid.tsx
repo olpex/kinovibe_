@@ -26,12 +26,13 @@ export function CatalogMovieGrid({
       {items.map((item) => {
         const posterCss = toCssImageUrl(item.posterUrl);
         const hasPoster = Boolean(posterCss);
+        const cardHref = item.href ?? `${hrefPrefix}/${item.id}`;
         const countriesLabel =
           item.countries.length > 0
             ? item.countries.join(", ")
             : translate(locale, "common.notAvailable");
         return (
-          <Link key={item.id} href={`${hrefPrefix}/${item.id}`} className={styles.card}>
+          <Link key={item.id} href={cardHref} className={styles.card}>
             <div
               className={styles.poster}
               style={{
@@ -48,6 +49,19 @@ export function CatalogMovieGrid({
                 {item.genre} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
               </p>
               <p>{countriesLabel}</p>
+              {item.broadcast ? (
+                <>
+                  <p>
+                    {translate(locale, "tv.broadcastChannel")}: {item.broadcast.channel}
+                  </p>
+                  <p>
+                    {translate(locale, "tv.broadcastTime")}: {item.broadcast.time}
+                  </p>
+                  <p>
+                    {translate(locale, "tv.broadcastDate")}: {item.broadcast.date}
+                  </p>
+                </>
+              ) : null}
               <span>{item.rating.toFixed(1)}</span>
             </div>
           </Link>

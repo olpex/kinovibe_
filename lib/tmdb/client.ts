@@ -45,7 +45,8 @@ import {
 } from "./movie-filters";
 import {
   tvDiscoverFiltersToTmdbParams,
-  type TvDiscoverFilters
+  type TvDiscoverFilters,
+  type TvDiscoverSortBy
 } from "./tv-filters";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
@@ -68,6 +69,8 @@ const PALETTE = [
 const TMDB_READ_TOKEN = process.env.TMDB_API_READ_ACCESS_TOKEN;
 const TMDB_IMAGE_BASE_URL =
   process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL ?? DEFAULT_IMAGE_BASE_URL;
+const TVMAZE_API_BASE_URL = process.env.TVMAZE_API_BASE_URL ?? "https://api.tvmaze.com";
+const ON_AIR_PAGE_SIZE = 20;
 const WIKIPEDIA_MENTION_PATTERN = /wikipedia|wiki\b|вікіпед|википед|wikip[eé]dia/iu;
 const WIKIDATA_SPARQL_ENDPOINT =
   process.env.WIKIDATA_SPARQL_ENDPOINT ?? "https://query.wikidata.org/sparql";
@@ -101,6 +104,29 @@ const COMMONS_NON_POSTER_HINTS = [
 ] as const;
 const AWARD_CATEGORY_UNKNOWN_SENTINEL = "__award_category_unknown__";
 const AWARD_UPCOMING_CATEGORY_SENTINEL = "__award_upcoming_category__";
+const TIMEZONE_BY_REGION: Record<string, string> = {
+  US: "America/New_York",
+  GB: "Europe/London",
+  UA: "Europe/Kyiv",
+  DE: "Europe/Berlin",
+  FR: "Europe/Paris",
+  IT: "Europe/Rome",
+  ES: "Europe/Madrid",
+  PT: "Europe/Lisbon",
+  NL: "Europe/Amsterdam",
+  SE: "Europe/Stockholm",
+  FI: "Europe/Helsinki",
+  NO: "Europe/Oslo",
+  DK: "Europe/Copenhagen",
+  CZ: "Europe/Prague",
+  PL: "Europe/Warsaw",
+  SK: "Europe/Bratislava",
+  HU: "Europe/Budapest",
+  RO: "Europe/Bucharest",
+  GR: "Europe/Athens",
+  HR: "Europe/Zagreb",
+  ME: "Europe/Podgorica"
+};
 
 const REGION_BY_LOCALE: Record<Locale, string> = {
   en: "US",
@@ -1020,6 +1046,12 @@ export type HomeMovie = {
   posterUrl?: string;
   backdropUrl?: string;
   overview?: string;
+  href?: string;
+  broadcast?: {
+    channel: string;
+    time: string;
+    date: string;
+  };
 };
 
 export function mapTmdbMovieToCard(
@@ -1407,6 +1439,360 @@ export const getTmdbCountries = cache(
       .sort((a, b) => a.name.localeCompare(b.name));
   }
 );
+
+type TvMazeNetwork = {
+  name?: string;
+  country?: {
+    code?: string;
+    timezone?: string;
+  };
+};
+
+type TvMazeShow = {
+  id: number;
+  name: string;
+  language?: string | null;
+  genres?: string[] | null;
+  premiered?: string | null;
+  rating?: { average?: number | null } | null;
+  weight?: number | null;
+  network?: TvMazeNetwork | null;
+  webChannel?: TvMazeNetwork | null;
+  image?: {
+    medium?: string | null;
+    original?: string | null;
+  } | null;
+  summary?: string | null;
+};
+
+type TvMazeScheduleEntry = {
+  id: number;
+  airdate?: string | null;
+  airtime?: string | null;
+  airstamp?: string | null;
+  show: TvMazeShow;
+};
+
+type OnAirScheduleCard = {
+  card: HomeMovie;
+  popularity: number;
+  rating: number;
+  year: number;
+  airTimestamp: number;
+};
+
+export type TvOnAirScheduleResult = TmdbPagedCards & {
+  countryCode: string;
+  countryName: string;
+  dateIso: string;
+  dateLabel: string;
+  timezone: string;
+};
+
+function normalizeTvMazeLanguageToCode(value: string | null | undefined): string | undefined {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) {
+    return undefined;
+  }
+
+  const directCodeMap: Record<string, string> = {
+    english: "en",
+    ukrainian: "uk",
+    german: "de",
+    french: "fr",
+    italian: "it",
+    spanish: "es",
+    portuguese: "pt",
+    dutch: "nl",
+    swedish: "sv",
+    finnish: "fi",
+    norwegian: "no",
+    danish: "da",
+    czech: "cs",
+    polish: "pl",
+    slovak: "sk",
+    hungarian: "hu",
+    romanian: "ro",
+    greek: "el",
+    croatian: "hr",
+    montenegrin: "me",
+    serbian: "me"
+  };
+
+  if (directCodeMap[normalized]) {
+    return directCodeMap[normalized];
+  }
+
+  if (/^[a-z]{2,3}$/i.test(normalized)) {
+    return normalized;
+  }
+
+  return undefined;
+}
+
+function stripHtmlTags(value: string): string {
+  return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function safeRegionCode(value: string | undefined, fallback: string): string {
+  const normalized = value?.trim().toUpperCase();
+  if (!normalized || !/^[A-Z]{2}$/.test(normalized)) {
+    return fallback;
+  }
+  return normalized;
+}
+
+function datePartsInTimeZone(date: Date, timeZone: string): { year: number; month: number; day: number } {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+  const parts = formatter.formatToParts(date);
+  const year = Number(parts.find((part) => part.type === "year")?.value ?? "0");
+  const month = Number(parts.find((part) => part.type === "month")?.value ?? "0");
+  const day = Number(parts.find((part) => part.type === "day")?.value ?? "0");
+  return { year, month, day };
+}
+
+function formatDateForSchedule(timeZone: string): string {
+  const { year, month, day } = datePartsInTimeZone(new Date(), timeZone);
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function localizeScheduleDate(dateIso: string, locale: Locale, timeZone: string): string {
+  const parsed = new Date(`${dateIso}T12:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return dateIso;
+  }
+  return new Intl.DateTimeFormat(toIntlLocale(locale), {
+    dateStyle: "long",
+    timeZone
+  }).format(parsed);
+}
+
+function normalizeImageUrl(rawUrl: string | null | undefined): string | undefined {
+  if (!rawUrl) {
+    return undefined;
+  }
+  return rawUrl.replace(/^http:\/\//i, "https://");
+}
+
+function normalizeGenreToken(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s-]+/g, " ");
+}
+
+function parseAiringTimestamp(entry: TvMazeScheduleEntry): number {
+  const parsedFromStamp = Date.parse(entry.airstamp ?? "");
+  if (!Number.isNaN(parsedFromStamp)) {
+    return parsedFromStamp;
+  }
+  const combined = `${entry.airdate ?? ""}T${entry.airtime ?? "00:00"}:00`;
+  const parsedCombined = Date.parse(combined);
+  return Number.isNaN(parsedCombined) ? 0 : parsedCombined;
+}
+
+function formatAiringTime(
+  locale: Locale,
+  entry: TvMazeScheduleEntry,
+  preferredTimeZone: string
+): string {
+  const timestamp = parseAiringTimestamp(entry);
+  if (timestamp > 0) {
+    return new Intl.DateTimeFormat(toIntlLocale(locale), {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: preferredTimeZone
+    }).format(new Date(timestamp));
+  }
+
+  const fallback = entry.airtime?.trim();
+  return fallback || translate(locale, "common.notAvailable");
+}
+
+function applyOnAirSort(items: OnAirScheduleCard[], sortBy: TvDiscoverSortBy): OnAirScheduleCard[] {
+  const sorted = [...items];
+  const byTitle = (left: OnAirScheduleCard, right: OnAirScheduleCard): number =>
+    left.card.title.localeCompare(right.card.title);
+
+  sorted.sort((left, right) => {
+    if (sortBy === "popularity.asc") {
+      return left.popularity - right.popularity || byTitle(left, right);
+    }
+    if (sortBy === "vote_average.desc") {
+      return right.rating - left.rating || byTitle(left, right);
+    }
+    if (sortBy === "vote_average.asc") {
+      return left.rating - right.rating || byTitle(left, right);
+    }
+    if (sortBy === "first_air_date.asc") {
+      return left.airTimestamp - right.airTimestamp || left.year - right.year || byTitle(left, right);
+    }
+    if (sortBy === "first_air_date.desc") {
+      return right.airTimestamp - left.airTimestamp || right.year - left.year || byTitle(left, right);
+    }
+    // popularity.desc default
+    return right.popularity - left.popularity || byTitle(left, right);
+  });
+
+  return sorted;
+}
+
+export async function getTvOnAirSchedulePage(
+  filters: TvDiscoverFilters,
+  locale: Locale = "en",
+  page = 1
+): Promise<TvOnAirScheduleResult> {
+  const safePage = Math.max(1, page);
+  const region = safeRegionCode(filters.originCountry, getTmdbRegionForLocale(locale));
+  const timezone = TIMEZONE_BY_REGION[region] ?? "UTC";
+  const dateIso = formatDateForSchedule(timezone);
+  const dateLabel = localizeScheduleDate(dateIso, locale, timezone);
+  const countryName = localizeCountryName(region, region, locale);
+
+  const [localizedGenresMap, englishGenresMap] = await Promise.all([
+    getTvGenresMap(locale),
+    getTvGenresMap(DEFAULT_LOCALE)
+  ]);
+
+  const englishGenreToId = new Map<string, number>();
+  for (const [id, name] of englishGenresMap.entries()) {
+    englishGenreToId.set(normalizeGenreToken(name), id);
+  }
+  const selectedGenres = new Set(filters.genreIds);
+
+  let scheduleEntries: TvMazeScheduleEntry[] = [];
+  try {
+    const url = new URL(`${TVMAZE_API_BASE_URL}/schedule`);
+    url.searchParams.set("country", region);
+    url.searchParams.set("date", dateIso);
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { accept: "application/json" },
+      next: { revalidate: 600 }
+    });
+
+    if (response.ok) {
+      const payload = (await response.json()) as TvMazeScheduleEntry[];
+      scheduleEntries = Array.isArray(payload) ? payload : [];
+    }
+  } catch {
+    scheduleEntries = [];
+  }
+
+  const filteredCards: OnAirScheduleCard[] = [];
+  for (const entry of scheduleEntries) {
+    const show = entry.show;
+    if (!show || !show.name) {
+      continue;
+    }
+
+    const network = show.network ?? show.webChannel ?? null;
+    const networkCountryCode = safeRegionCode(network?.country?.code, region);
+    if (filters.originCountry && networkCountryCode !== safeRegionCode(filters.originCountry, region)) {
+      continue;
+    }
+
+    const genreIds = Array.from(
+      new Set(
+        (show.genres ?? [])
+          .map((genre) => englishGenreToId.get(normalizeGenreToken(genre)) ?? null)
+          .filter((genreId): genreId is number => genreId !== null)
+      )
+    );
+    if (selectedGenres.size > 0 && !genreIds.some((id) => selectedGenres.has(id))) {
+      continue;
+    }
+
+    const rating = Number(show.rating?.average ?? 0);
+    if (filters.ratingFrom !== undefined && rating < filters.ratingFrom) {
+      continue;
+    }
+    if (filters.ratingTo !== undefined && rating > filters.ratingTo) {
+      continue;
+    }
+
+    const year = parseYear(show.premiered ?? null);
+    if (filters.yearFrom !== undefined && year > 0 && year < filters.yearFrom) {
+      continue;
+    }
+    if (filters.yearTo !== undefined && year > 0 && year > filters.yearTo) {
+      continue;
+    }
+
+    const languageCode = normalizeTvMazeLanguageToCode(show.language);
+    if (filters.originalLanguage !== undefined && languageCode !== filters.originalLanguage) {
+      continue;
+    }
+
+    const popularity = Number(show.weight ?? rating);
+    if (filters.voteCountFrom !== undefined && popularity < filters.voteCountFrom) {
+      continue;
+    }
+
+    const preferredTimeZone = network?.country?.timezone ?? timezone;
+    const airingTime = formatAiringTime(locale, entry, preferredTimeZone);
+    const airingDate = entry.airdate
+      ? localizeScheduleDate(entry.airdate, locale, preferredTimeZone)
+      : dateLabel;
+    const channel = network?.name?.trim() || translate(locale, "common.notAvailable");
+    const localizedCountry = localizeCountryName(networkCountryCode, countryName, locale);
+
+    const firstGenreId = genreIds[0];
+    const genre =
+      (firstGenreId ? localizedGenresMap.get(firstGenreId) : undefined) ??
+      show.genres?.[0] ??
+      translate(locale, "home.defaultGenre");
+
+    const card: HomeMovie = {
+      id: entry.id,
+      title: show.name,
+      year,
+      genre,
+      countries: [localizedCountry],
+      runtime: translate(locale, "nav.tvShows"),
+      rating,
+      gradient: gradientByMovieId(show.id),
+      posterUrl: normalizeImageUrl(show.image?.original ?? show.image?.medium),
+      overview: sanitizeNarrativeText(stripHtmlTags(show.summary ?? ""), 420),
+      href: `/search?q=${encodeURIComponent(show.name)}`,
+      broadcast: {
+        channel,
+        time: airingTime,
+        date: airingDate
+      }
+    };
+
+    filteredCards.push({
+      card,
+      popularity,
+      rating,
+      year,
+      airTimestamp: parseAiringTimestamp(entry)
+    });
+  }
+
+  const sortedCards = applyOnAirSort(filteredCards, filters.sortBy);
+  const totalResults = sortedCards.length;
+  const totalPages = Math.max(1, Math.ceil(totalResults / ON_AIR_PAGE_SIZE));
+  const boundedPage = Math.min(safePage, totalPages);
+  const start = (boundedPage - 1) * ON_AIR_PAGE_SIZE;
+  const items = sortedCards.slice(start, start + ON_AIR_PAGE_SIZE).map((entry) => entry.card);
+
+  return {
+    page: boundedPage,
+    totalPages,
+    totalResults,
+    items,
+    countryCode: region,
+    countryName,
+    dateIso,
+    dateLabel,
+    timezone
+  };
+}
 
 function formatUtcDate(value: Date): string {
   const year = value.getUTCFullYear();

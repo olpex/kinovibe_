@@ -633,6 +633,13 @@ const BASE_MESSAGES: Record<string, string> = {
   "movie.filters.sort.voteCountAsc": "Vote count ascending",
   "tv.filters.title": "Filter TV shows",
   "tv.filters.allCountries": "Any country",
+  "tv.onAirScheduleSummary": "{count} series airing in {country} on {date}.",
+  "tv.onAirCardHint":
+    "Each card shows channel, airtime, and today's broadcast date for the selected country.",
+  "tv.onAirEmpty": "No TV broadcasts found for {country} on {date} with current filters.",
+  "tv.broadcastChannel": "Channel",
+  "tv.broadcastTime": "Airtime",
+  "tv.broadcastDate": "Broadcast date",
 
   "person.mediaTypeMovie": "Movie",
   "person.mediaTypeTv": "TV Series",
@@ -917,6 +924,13 @@ const UK_MESSAGES: Record<string, string> = {
   "movie.filters.sort.voteCountAsc": "За кількістю голосів (зростання)",
   "tv.filters.title": "Фільтр серіалів",
   "tv.filters.allCountries": "Будь-яка країна",
+  "tv.onAirScheduleSummary": "{count} серіал(ів) в ефірі у {country} на дату {date}.",
+  "tv.onAirCardHint":
+    "У кожній картці показано канал, час трансляції та дату ефіру для вибраної країни.",
+  "tv.onAirEmpty": "Для {country} на {date} за поточними фільтрами трансляцій не знайдено.",
+  "tv.broadcastChannel": "Канал",
+  "tv.broadcastTime": "Час трансляції",
+  "tv.broadcastDate": "Дата ефіру",
 
   "person.mediaTypeMovie": "Фільм",
   "person.mediaTypeTv": "Серіал",
