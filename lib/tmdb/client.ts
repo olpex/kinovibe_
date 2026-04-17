@@ -1467,18 +1467,98 @@ export type AwardCard = {
   category: string;
   year: string;
   imageUrl?: string;
+  movieTmdbId?: number;
+  outcome: "winner" | "nominee" | "highlight";
 };
 
+function parseAwardMovieTmdbId(rawId: string): number | undefined {
+  const normalized = rawId.trim();
+  if (!/^\d+$/.test(normalized)) {
+    return undefined;
+  }
+
+  const parsed = Number(normalized);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+function normalizeAwardText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function inferAwardOutcome(category: string | null | undefined): "winner" | "nominee" | "highlight" {
+  if (!category) {
+    return "highlight";
+  }
+
+  const normalized = normalizeAwardText(category);
+  const winnerMarkers = [
+    "winner",
+    "won",
+    "laureat",
+    "перемож",
+    "лауреат",
+    "gewinner",
+    "gagnant",
+    "vincitore",
+    "ganador",
+    "vencedor",
+    "winnaar",
+    "vinnare",
+    "voittaja",
+    "vinder",
+    "vinner",
+    "kazi",
+    "nyertes",
+    "castigator",
+    "νικητ",
+    "pobjednik",
+    "pobednik"
+  ];
+  const nomineeMarkers = [
+    "nominee",
+    "nominated",
+    "номін",
+    "nomine",
+    "nominat",
+    "kandidat",
+    "kandydat",
+    "jelolt",
+    "nominalizat",
+    "υποψηφ",
+    "nominovan",
+    "nominirani",
+    "nominovan"
+  ];
+
+  if (winnerMarkers.some((marker) => normalized.includes(marker))) {
+    return "winner";
+  }
+  if (nomineeMarkers.some((marker) => normalized.includes(marker))) {
+    return "nominee";
+  }
+  return "highlight";
+}
+
 function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard {
+  const category = item.category ?? translate(locale, "nav.awards");
   return {
     id: item.id,
     title: item.name,
-    category: item.category ?? translate(locale, "nav.awards"),
+    category,
     year:
       typeof item.year === "number"
         ? String(item.year)
         : parseDisplayYear(item.event_date ?? null, locale),
-    imageUrl: item.image_url ?? undefined
+    imageUrl: item.image_url ?? undefined,
+    movieTmdbId: parseAwardMovieTmdbId(item.id),
+    outcome: inferAwardOutcome(category)
   };
 }
 
@@ -1492,7 +1572,9 @@ function awardFallbackFromMovies(
     title: item.title,
     category: translate(locale, "award.editorialSpotlight"),
     year: String(item.year),
-    imageUrl: item.posterUrl
+    imageUrl: item.posterUrl,
+    movieTmdbId: item.id,
+    outcome: "highlight"
   }));
 }
 

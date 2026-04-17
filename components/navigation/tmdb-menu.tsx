@@ -44,8 +44,8 @@ const MENU_SECTIONS: MenuSection[] = [
     href: "/award",
     labelKey: "nav.awards",
     links: [
-      { href: "/award", labelKey: "menu.popular" },
-      { href: "/award/upcoming", labelKey: "menu.upcoming" }
+      { href: "/award", labelKey: "menu.awardsPopularTitle" },
+      { href: "/award/upcoming", labelKey: "menu.awardsUpcomingTitle" }
     ]
   },
   {

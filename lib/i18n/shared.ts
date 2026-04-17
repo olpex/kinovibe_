@@ -345,6 +345,9 @@ const BASE_MESSAGES: Record<string, string> = {
   "menu.openPoster": "Open poster",
 
   "award.editorialSpotlight": "Editorial spotlight",
+  "award.badgeWinner": "Winner",
+  "award.badgeNominee": "Nominee",
+  "award.badgeHighlight": "Spotlight",
 
   "menu.discussTitle": "Discuss",
   "menu.discussSubtitle": "Community threads and topic hubs.",
@@ -668,6 +671,9 @@ const UK_MESSAGES: Record<string, string> = {
   "menu.awardsHint": "Дані залежать від доступності TMDB endpoint.",
   "menu.openPoster": "Відкрити постер",
   "award.editorialSpotlight": "Редакційний вибір",
+  "award.badgeWinner": "Переможець",
+  "award.badgeNominee": "Номінант",
+  "award.badgeHighlight": "Фокус",
   "menu.popular": "Популярні",
   "menu.nowPlaying": "Зараз у кіно",
   "menu.upcoming": "Очікувані",
