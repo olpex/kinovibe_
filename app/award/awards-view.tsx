@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { getRequestLocale } from "@/lib/i18n/server";
-import { translate, type Locale } from "@/lib/i18n/shared";
+import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbAwards } from "@/lib/tmdb/client";
 import shellStyles from "@/app/menu-page.module.css";
@@ -26,6 +26,19 @@ const AWARD_TABS: Array<{
 
 function buildSearchHref(title: string): string {
   return `/search?q=${encodeURIComponent(title)}`;
+}
+
+function formatAwardEventDate(locale: Locale, rawDate?: string): string | null {
+  if (!rawDate) {
+    return null;
+  }
+
+  const parsed = new Date(rawDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return rawDate;
+  }
+
+  return new Intl.DateTimeFormat(toIntlLocale(locale), { dateStyle: "long" }).format(parsed);
 }
 
 function getOutcomeLabel(locale: Locale, outcome: "winner" | "nominee" | "highlight"): string {
@@ -95,14 +108,14 @@ export async function AwardsCatalogView({
             <h2>{translate(locale, "menu.awardsPopularTitle")}</h2>
             <p>{translate(locale, "menu.awardsPopularSubtitle")}</p>
             <Link href="/award" className={shellStyles.linkButton}>
-              {translate(locale, "menu.popular")}
+              {translate(locale, "menu.awardsPopularTitle")}
             </Link>
           </article>
           <article className={styles.summaryCard}>
             <h2>{translate(locale, "menu.awardsUpcomingTitle")}</h2>
             <p>{translate(locale, "menu.awardsUpcomingSubtitle")}</p>
             <Link href="/award/upcoming" className={shellStyles.linkButton}>
-              {translate(locale, "menu.upcoming")}
+              {translate(locale, "menu.awardsUpcomingTitle")}
             </Link>
           </article>
         </div>
@@ -120,6 +133,7 @@ export async function AwardsCatalogView({
           {awards.map((award) => {
             const openHref = award.movieTmdbId ? `/movie/${award.movieTmdbId}` : buildSearchHref(award.title);
             const hasImage = Boolean(award.imageUrl);
+            const eventDateLabel = formatAwardEventDate(locale, award.eventDate);
 
             return (
               <article key={award.id} className={styles.card}>
@@ -149,8 +163,20 @@ export async function AwardsCatalogView({
                   <h3>
                     <Link href={openHref}>{award.title}</Link>
                   </h3>
-                  <p>{award.category}</p>
-                  <p>{award.year}</p>
+                  <div className={styles.metaList}>
+                    <p>
+                      <span>{translate(locale, "award.festivalLabel")}:</span> {award.festival}
+                    </p>
+                    <p>
+                      <span>{translate(locale, "award.categoryLabel")}:</span> {award.awardCategory}
+                    </p>
+                    {eventDateLabel ? (
+                      <p>
+                        <span>{translate(locale, "award.ceremonyDateLabel")}:</span> {eventDateLabel}
+                      </p>
+                    ) : null}
+                    <p>{award.year}</p>
+                  </div>
                   <div className={styles.actions}>
                     <Link href={openHref} className={shellStyles.linkButton}>
                       {award.movieTmdbId ? translate(locale, "movie.details") : translate(locale, "nav.search")}

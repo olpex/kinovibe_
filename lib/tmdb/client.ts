@@ -1465,7 +1465,10 @@ export type AwardCard = {
   id: string;
   title: string;
   category: string;
+  festival: string;
+  awardCategory: string;
   year: string;
+  eventDate?: string;
   imageUrl?: string;
   movieTmdbId?: number;
   outcome: "winner" | "nominee" | "highlight";
@@ -1546,16 +1549,50 @@ function inferAwardOutcome(category: string | null | undefined): "winner" | "nom
   return "highlight";
 }
 
+function parseAwardCategoryParts(
+  category: string,
+  locale: Locale
+): { festival: string; awardCategory: string } {
+  const normalized = category.trim();
+  if (!normalized) {
+    return {
+      festival: translate(locale, "award.festivalUnknown"),
+      awardCategory: translate(locale, "award.categoryUnknown")
+    };
+  }
+
+  const parts = normalized
+    .split(/\s*(?:•|\||—|-|:|\/)\s*/g)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 2) {
+    return {
+      festival: parts[0],
+      awardCategory: parts.slice(1).join(" • ")
+    };
+  }
+
+  return {
+    festival: translate(locale, "award.festivalUnknown"),
+    awardCategory: normalized
+  };
+}
+
 function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard {
   const category = item.category ?? translate(locale, "nav.awards");
+  const parsed = parseAwardCategoryParts(category, locale);
   return {
     id: item.id,
     title: item.name,
     category,
+    festival: parsed.festival,
+    awardCategory: parsed.awardCategory,
     year:
       typeof item.year === "number"
         ? String(item.year)
         : parseDisplayYear(item.event_date ?? null, locale),
+    eventDate: item.event_date ?? undefined,
     imageUrl: item.image_url ?? undefined,
     movieTmdbId: parseAwardMovieTmdbId(item.id),
     outcome: inferAwardOutcome(category)
@@ -1571,7 +1608,10 @@ function awardFallbackFromMovies(
     id: `${prefix}-${item.id}-${index}`,
     title: item.title,
     category: translate(locale, "award.editorialSpotlight"),
+    festival: translate(locale, "award.festivalEditorial"),
+    awardCategory: translate(locale, "award.categorySeasonPick"),
     year: String(item.year),
+    eventDate: undefined,
     imageUrl: item.posterUrl,
     movieTmdbId: item.id,
     outcome: "highlight"
