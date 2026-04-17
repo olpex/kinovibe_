@@ -131,7 +131,9 @@ export async function AwardsCatalogView({
                     className={styles.poster}
                     style={{
                       background: hasImage
-                        ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), url(${award.imageUrl}) center / cover no-repeat`
+                        ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), url(\"${encodeURI(
+                            award.imageUrl as string
+                          )}\") center / cover no-repeat`
                         : "linear-gradient(145deg, #1d3557 0%, #457b9d 100%)"
                     }}
                   />

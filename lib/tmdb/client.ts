@@ -1,5 +1,11 @@
 import { cache } from "react";
-import { toIntlLocale, toTmdbLanguage, translate, type Locale } from "@/lib/i18n/shared";
+import {
+  DEFAULT_LOCALE,
+  toIntlLocale,
+  toTmdbLanguage,
+  translate,
+  type Locale
+} from "@/lib/i18n/shared";
 import { DataSourceStatus } from "@/lib/data-source";
 import {
   TmdbAwardResult,
@@ -92,6 +98,8 @@ const COMMONS_NON_POSTER_HINTS = [
   "trailer",
   "set photo"
 ] as const;
+const AWARD_CATEGORY_UNKNOWN_SENTINEL = "__award_category_unknown__";
+const AWARD_UPCOMING_CATEGORY_SENTINEL = "__award_upcoming_category__";
 
 const REGION_BY_LOCALE: Record<Locale, string> = {
   en: "US",
@@ -1218,9 +1226,13 @@ export async function getTmdbMovieCatalogPage(
   const language = toTmdbLanguage(locale);
   const genresMap = await getGenresMap(locale);
   const config = MOVIE_CATEGORY_CONFIG[category];
+  const regionParams: Record<string, string> =
+    category === "now_playing"
+      ? { region: getTmdbRegionForLocale(locale) }
+      : {};
   const response = await fetchTmdb<TmdbMoviesResponse>(
     config.path,
-    { language, page: String(safePage), ...(config.params ?? {}) },
+    { language, page: String(safePage), ...(config.params ?? {}), ...regionParams },
     900
   );
 
@@ -1659,9 +1671,9 @@ function getSparqlBindingValue(binding: SparqlBinding, key: string): string | un
   return value ? value : undefined;
 }
 
-function toWikidataLanguageChain(locale: Locale): string {
-  const normalized = locale.trim().toLowerCase();
-  return `${normalized},en`;
+function toWikidataLanguageChain(): string {
+  // Keep labels language stable so all locales share the same cached response.
+  return "en";
 }
 
 function parseWikidataEntityId(entityUri: string | undefined): string | undefined {
@@ -1729,7 +1741,10 @@ function isLikelyPosterImage(imageUrl: string | undefined): boolean {
   return !fileName.endsWith(".svg");
 }
 
-function pickWikidataImage(binding: SparqlBinding): string | undefined {
+function pickWikidataImage(
+  binding: SparqlBinding,
+  options?: { allowNonPosterFallback?: boolean }
+): string | undefined {
   const posterCandidate = normalizeWikidataImageUrl(getSparqlBindingValue(binding, "poster"));
   if (posterCandidate) {
     return posterCandidate;
@@ -1737,6 +1752,10 @@ function pickWikidataImage(binding: SparqlBinding): string | undefined {
 
   const genericImage = normalizeWikidataImageUrl(getSparqlBindingValue(binding, "image"));
   if (isLikelyPosterImage(genericImage)) {
+    return genericImage;
+  }
+
+  if (options?.allowNonPosterFallback && genericImage) {
     return genericImage;
   }
 
@@ -1785,11 +1804,8 @@ async function fetchWikidataSparql(
   }
 }
 
-function buildWikidataOutcomeQuery(
-  locale: Locale,
-  outcome: "winner" | "nominee"
-): string {
-  const languageChain = toWikidataLanguageChain(locale);
+function buildWikidataOutcomeQuery(outcome: "winner" | "nominee"): string {
+  const languageChain = toWikidataLanguageChain();
   const minYear = Math.max(1990, new Date().getUTCFullYear() - 15);
   const statementPath = outcome === "winner" ? "p:P166" : "p:P1411";
   const statementMainValue = outcome === "winner" ? "ps:P166" : "ps:P1411";
@@ -1829,18 +1845,24 @@ LIMIT 140
 `.trim();
 }
 
-function buildWikidataUpcomingQuery(locale: Locale): string {
-  const languageChain = toWikidataLanguageChain(locale);
+function buildWikidataUpcomingQuery(): string {
+  const languageChain = toWikidataLanguageChain();
 
   return `
-SELECT DISTINCT ?ceremony ?ceremonyLabel ?seriesLabel ?eventDate ?image WHERE {
+SELECT DISTINCT ?ceremony ?ceremonyLabel ?seriesLabel ?eventDate ?poster ?image ?enwikiTitle WHERE {
   ?ceremony wdt:P31/wdt:P279* wd:Q4504495;
             wdt:P585 ?eventDate;
             wdt:P179 ?series.
   ?series wdt:P279* ?seriesClass.
   FILTER(?seriesClass IN (wd:${WIKIDATA_FILM_AWARD_QID}, wd:${WIKIDATA_TV_AWARD_QID}))
   FILTER(?eventDate >= NOW())
+  OPTIONAL { ?ceremony wdt:P3383 ?poster. }
   OPTIONAL { ?ceremony wdt:P18 ?image. }
+  OPTIONAL {
+    ?enwiki <http://schema.org/about> ?ceremony;
+            <http://schema.org/isPartOf> <https://en.wikipedia.org/>;
+            <http://schema.org/name> ?enwikiTitle.
+  }
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "${languageChain}".
     ?ceremony rdfs:label ?ceremonyLabel.
@@ -1852,7 +1874,7 @@ LIMIT 80
 `.trim();
 }
 
-function mapWikidataWinners(bindings: SparqlBinding[], locale: Locale): AwardCard[] {
+function mapWikidataWinners(bindings: SparqlBinding[]): AwardCard[] {
   const sortedBindings = [...bindings].sort((left, right) => {
     const rightDate = Date.parse(getSparqlBindingValue(right, "date") ?? "");
     const leftDate = Date.parse(getSparqlBindingValue(left, "date") ?? "");
@@ -1882,12 +1904,12 @@ function mapWikidataWinners(bindings: SparqlBinding[], locale: Locale): AwardCar
 
     const outcome: AwardCard["outcome"] =
       rawOutcome === "winner" || rawOutcome === "nominee" ? rawOutcome : "highlight";
-    const year = parseAwardYearFromDate(rawDate, locale);
-    const awardCategory = categoryLabel ?? translate(locale, "award.categoryUnknown");
+    const year = parseAwardYearFromDate(rawDate, DEFAULT_LOCALE);
+    const awardCategory = categoryLabel ?? AWARD_CATEGORY_UNKNOWN_SENTINEL;
 
     const filmEntityId = parseWikidataEntityId(getSparqlBindingValue(binding, "film"));
     const tmdbMovieId = parseAwardMovieTmdbId(getSparqlBindingValue(binding, "tmdbId") ?? "");
-    const imageUrl = pickWikidataImage(binding);
+    const imageUrl = pickWikidataImage(binding, { allowNonPosterFallback: true });
     const wikipediaTitle = getSparqlBindingValue(binding, "enwikiTitle");
     const dedupeKey = `${filmEntityId ?? title.toLowerCase()}|${outcome}`;
     const previous = unique.get(dedupeKey);
@@ -1926,7 +1948,7 @@ function mapWikidataWinners(bindings: SparqlBinding[], locale: Locale): AwardCar
   return Array.from(unique.values()).slice(0, 24);
 }
 
-function mapWikidataUpcoming(bindings: SparqlBinding[], locale: Locale): AwardCard[] {
+function mapWikidataUpcoming(bindings: SparqlBinding[]): AwardCard[] {
   const unique = new Map<string, AwardCard>();
 
   for (const binding of bindings) {
@@ -1934,6 +1956,8 @@ function mapWikidataUpcoming(bindings: SparqlBinding[], locale: Locale): AwardCa
     const rawCeremonyLabel = getSparqlBindingValue(binding, "ceremonyLabel");
     const seriesLabel = getSparqlBindingValue(binding, "seriesLabel");
     const eventDate = getSparqlBindingValue(binding, "eventDate");
+    const imageUrl = pickWikidataImage(binding);
+    const wikipediaTitle = getSparqlBindingValue(binding, "enwikiTitle");
 
     const title =
       rawCeremonyLabel && !looksLikeWikidataQidLabel(rawCeremonyLabel)
@@ -1948,16 +1972,17 @@ function mapWikidataUpcoming(bindings: SparqlBinding[], locale: Locale): AwardCa
       continue;
     }
 
-    const year = parseAwardYearFromDate(eventDate, locale);
+    const year = parseAwardYearFromDate(eventDate, DEFAULT_LOCALE);
 
     unique.set(dedupeKey, {
       id: `wikidata-ceremony-${ceremonyEntityId ?? title}-${eventDate}`,
       title,
       festival: seriesLabel ?? title,
-      awardCategory: translate(locale, "menu.awardsCeremoniesTitle"),
+      awardCategory: AWARD_UPCOMING_CATEGORY_SENTINEL,
       year,
       eventDate,
-      imageUrl: normalizeWikidataImageUrl(getSparqlBindingValue(binding, "image")),
+      imageUrl,
+      wikipediaTitle: wikipediaTitle ?? seriesLabel ?? title,
       outcome: "highlight"
     });
   }
@@ -1965,127 +1990,149 @@ function mapWikidataUpcoming(bindings: SparqlBinding[], locale: Locale): AwardCa
   return Array.from(unique.values()).slice(0, 24);
 }
 
+const getWikidataAwardsBase = cache(
+  async (category: "popular" | "upcoming"): Promise<AwardCard[]> => {
+    if (category === "upcoming") {
+      const upcomingBindings = await fetchWikidataSparql(buildWikidataUpcomingQuery(), 21600);
+      const mappedUpcoming = mapWikidataUpcoming(upcomingBindings);
+      return enrichAwardsWithWikipediaPosters(mappedUpcoming);
+    }
+
+    const [winnerBindings, nomineeBindings] = await Promise.all([
+      fetchWikidataSparql(buildWikidataOutcomeQuery("winner"), 21600),
+      fetchWikidataSparql(buildWikidataOutcomeQuery("nominee"), 21600)
+    ]);
+    const mapped = mapWikidataWinners([...winnerBindings, ...nomineeBindings]);
+    return enrichAwardsWithWikipediaPosters(mapped);
+  }
+);
+
+function localizeWikidataAwards(items: AwardCard[], locale: Locale): AwardCard[] {
+  const tbaInEnglish = translate(DEFAULT_LOCALE, "watchlist.tba");
+
+  return items.map((item) => ({
+    ...item,
+    year: item.year === tbaInEnglish ? translate(locale, "watchlist.tba") : item.year,
+    awardCategory:
+      item.awardCategory === AWARD_CATEGORY_UNKNOWN_SENTINEL
+        ? translate(locale, "award.categoryUnknown")
+        : item.awardCategory === AWARD_UPCOMING_CATEGORY_SENTINEL
+          ? translate(locale, "menu.awardsCeremoniesTitle")
+          : item.awardCategory
+  }));
+}
+
 async function getWikidataAwards(
   category: "popular" | "upcoming",
   locale: Locale
 ): Promise<AwardCard[]> {
-  if (category === "upcoming") {
-    const upcomingBindings = await fetchWikidataSparql(buildWikidataUpcomingQuery(locale), 21600);
-    return mapWikidataUpcoming(upcomingBindings, locale);
-  }
-
-  const [winnerBindings, nomineeBindings] = await Promise.all([
-    fetchWikidataSparql(buildWikidataOutcomeQuery(locale, "winner"), 21600),
-    fetchWikidataSparql(buildWikidataOutcomeQuery(locale, "nominee"), 21600)
-  ]);
-  const mapped = mapWikidataWinners([...winnerBindings, ...nomineeBindings], locale);
-  const tmdbEnriched = await enrichAwardsWithTmdbPosters(mapped, locale);
-  return enrichAwardsWithWikipediaPosters(tmdbEnriched);
+  const base = await getWikidataAwardsBase(category);
+  return localizeWikidataAwards(base, locale);
 }
 
-const getTmdbPosterForAwardMovie = cache(
-  async (movieId: number, locale: Locale): Promise<string | undefined> => {
-    try {
-      const language = toTmdbLanguage(locale);
-      const movie = await fetchTmdb<TmdbMovieDetailsResponse>(
-        `/movie/${movieId}`,
-        { language },
-        86400
-      );
-      return posterUrl(movie.poster_path ?? null);
-    } catch {
-      return undefined;
-    }
-  }
-);
-
-async function enrichAwardsWithTmdbPosters(
-  items: AwardCard[],
-  locale: Locale
-): Promise<AwardCard[]> {
-  if (!TMDB_READ_TOKEN) {
-    return items;
-  }
-
-  const movieIds = Array.from(
-    new Set(
-      items
-        .filter((item) => !item.imageUrl && typeof item.movieTmdbId === "number")
-        .map((item) => item.movieTmdbId as number)
-    )
-  );
-
-  if (movieIds.length === 0) {
-    return items;
-  }
-
-  const posterByMovieId = new Map<number, string>();
-  await Promise.all(
-    movieIds.map(async (movieId) => {
-      const tmdbPoster = await getTmdbPosterForAwardMovie(movieId, locale);
-      if (tmdbPoster) {
-        posterByMovieId.set(movieId, tmdbPoster);
+type WikipediaBatchResponse = {
+  query?: {
+    pages?: Record<
+      string,
+      {
+        title?: string;
+        original?: { source?: string | null } | null;
+        thumbnail?: { source?: string | null } | null;
       }
-    })
-  );
-
-  if (posterByMovieId.size === 0) {
-    return items;
-  }
-
-  return items.map((item) => {
-    if (item.imageUrl || typeof item.movieTmdbId !== "number") {
-      return item;
-    }
-
-    const poster = posterByMovieId.get(item.movieTmdbId);
-    if (!poster) {
-      return item;
-    }
-
-    return {
-      ...item,
-      imageUrl: poster
-    };
-  });
-}
-
-type WikipediaSummaryResponse = {
-  thumbnail?: { source?: string | null } | null;
-  originalimage?: { source?: string | null } | null;
+    >;
+    normalized?: Array<{ from: string; to: string }>;
+    redirects?: Array<{ from: string; to: string }>;
+  };
 };
 
-const getWikipediaPosterByTitle = cache(
-  async (title: string): Promise<string | undefined> => {
-    const normalized = title.trim();
-    if (!normalized) {
-      return undefined;
+function normalizeWikipediaTitle(value: string): string {
+  return value.replace(/_/g, " ").trim().toLowerCase();
+}
+
+function chunkArray<T>(items: T[], chunkSize: number): T[][] {
+  const output: T[][] = [];
+  for (let index = 0; index < items.length; index += chunkSize) {
+    output.push(items.slice(index, index + chunkSize));
+  }
+  return output;
+}
+
+const getWikipediaPosterMapBySignature = cache(
+  async (signature: string): Promise<Record<string, string>> => {
+    const uniqueTitles = signature.split("\u001f").map((value) => value.trim()).filter(Boolean);
+    if (uniqueTitles.length === 0) {
+      return {};
     }
 
-    const safeTitle = encodeURIComponent(normalized.replace(/\s+/g, "_"));
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${safeTitle}`;
+    const output: Record<string, string> = {};
+    const chunks = chunkArray(uniqueTitles, 20);
 
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "User-Agent": WIKIDATA_USER_AGENT
-        },
-        next: { revalidate: 86400 }
-      });
+    await Promise.all(
+      chunks.map(async (chunk) => {
+        const url = new URL("https://en.wikipedia.org/w/api.php");
+        url.searchParams.set("action", "query");
+        url.searchParams.set("format", "json");
+        url.searchParams.set("redirects", "1");
+        url.searchParams.set("prop", "pageimages");
+        url.searchParams.set("piprop", "original|thumbnail");
+        url.searchParams.set("pithumbsize", "780");
+        url.searchParams.set("titles", chunk.join("|"));
 
-      if (!response.ok) {
-        return undefined;
-      }
+        try {
+          const response = await fetch(url, {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "User-Agent": WIKIDATA_USER_AGENT
+            },
+            next: { revalidate: 86400 }
+          });
 
-      const payload = (await response.json()) as WikipediaSummaryResponse;
-      const original = payload.originalimage?.source ?? undefined;
-      const thumb = payload.thumbnail?.source ?? undefined;
-      return normalizeWikidataImageUrl(original ?? thumb);
-    } catch {
-      return undefined;
-    }
+          if (!response.ok) {
+            return;
+          }
+
+          const payload = (await response.json()) as WikipediaBatchResponse;
+          const pages = payload.query?.pages ?? {};
+          const canonicalToPoster = new Map<string, string>();
+
+          for (const page of Object.values(pages)) {
+            const title = page.title?.trim();
+            if (!title) {
+              continue;
+            }
+            const source = normalizeWikidataImageUrl(
+              page.original?.source ?? page.thumbnail?.source ?? undefined
+            );
+            if (!source) {
+              continue;
+            }
+            canonicalToPoster.set(normalizeWikipediaTitle(title), source);
+          }
+
+          for (const [canonicalTitle, poster] of canonicalToPoster.entries()) {
+            output[canonicalTitle] = poster;
+          }
+
+          const aliases = [
+            ...(payload.query?.normalized ?? []),
+            ...(payload.query?.redirects ?? [])
+          ];
+          for (const alias of aliases) {
+            const from = normalizeWikipediaTitle(alias.from ?? "");
+            const to = normalizeWikipediaTitle(alias.to ?? "");
+            const poster = canonicalToPoster.get(to);
+            if (from && poster) {
+              output[from] = poster;
+            }
+          }
+        } catch {
+          // noop
+        }
+      })
+    );
+
+    return output;
   }
 );
 
@@ -2111,17 +2158,14 @@ async function enrichAwardsWithWikipediaPosters(items: AwardCard[]): Promise<Awa
     return items;
   }
 
-  const posterByTitle = new Map<string, string>();
-  await Promise.all(
-    titleKeys.map(async (title) => {
-      const poster = await getWikipediaPosterByTitle(title);
-      if (poster) {
-        posterByTitle.set(title, poster);
-      }
-    })
-  );
+  const signature = titleKeys
+    .map((title) => normalizeWikipediaTitle(title))
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b))
+    .join("\u001f");
+  const posterRecord = await getWikipediaPosterMapBySignature(signature);
 
-  if (posterByTitle.size === 0) {
+  if (Object.keys(posterRecord).length === 0) {
     return items;
   }
 
@@ -2130,8 +2174,10 @@ async function enrichAwardsWithWikipediaPosters(items: AwardCard[]): Promise<Awa
       return item;
     }
 
-    const wikiPoster = item.wikipediaTitle ? posterByTitle.get(item.wikipediaTitle) : undefined;
-    const titlePoster = posterByTitle.get(item.title);
+    const wikiPoster = item.wikipediaTitle
+      ? posterRecord[normalizeWikipediaTitle(item.wikipediaTitle)]
+      : undefined;
+    const titlePoster = posterRecord[normalizeWikipediaTitle(item.title)];
     const resolvedPoster = wikiPoster ?? titlePoster;
     if (!resolvedPoster) {
       return item;

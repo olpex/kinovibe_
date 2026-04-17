@@ -1656,6 +1656,207 @@ const AWARDS_UI_OVERRIDES: Record<Locale, Record<string, string>> = {
   }
 };
 
+const AWARD_CARD_LABEL_OVERRIDES: Partial<Record<Locale, Record<string, string>>> = {
+  de: {
+    "award.festivalLabel": "Festival/Auszeichnung",
+    "award.categoryLabel": "Auszeichnungskategorie",
+    "award.yearLabel": "Jahr",
+    "award.ceremonyDateLabel": "Datum der Zeremonie",
+    "award.festivalUnknown": "Das Festival wird nicht durch die Quelle angegeben",
+    "award.categoryUnknown": "Kategorie ist nicht angegeben",
+    "award.badgeWinner": "Gewinner",
+    "award.badgeNominee": "Nominiert",
+    "award.badgeHighlight": "Im Fokus"
+  },
+  fr: {
+    "award.festivalLabel": "Festival/Prix",
+    "award.categoryLabel": "Catégorie de prix",
+    "award.yearLabel": "Année",
+    "award.ceremonyDateLabel": "Date de la cérémonie",
+    "award.festivalUnknown": "Le festival n'est pas spécifié par la source",
+    "award.categoryUnknown": "La catégorie n'est pas spécifiée",
+    "award.badgeWinner": "Gagnant",
+    "award.badgeNominee": "Nominé",
+    "award.badgeHighlight": "En vedette"
+  },
+  it: {
+    "award.festivalLabel": "Festival/Premio",
+    "award.categoryLabel": "Categoria del premio",
+    "award.yearLabel": "Anno",
+    "award.ceremonyDateLabel": "Data della cerimonia",
+    "award.festivalUnknown": "Il festival non è specificato dalla fonte",
+    "award.categoryUnknown": "La categoria non è specificata",
+    "award.badgeWinner": "Vincitore",
+    "award.badgeNominee": "Candidato",
+    "award.badgeHighlight": "In evidenza"
+  },
+  es: {
+    "award.festivalLabel": "Festival/Premio",
+    "award.categoryLabel": "Categoría de premio",
+    "award.yearLabel": "Año",
+    "award.ceremonyDateLabel": "Fecha de la ceremonia",
+    "award.festivalUnknown": "El festival no está especificado por la fuente",
+    "award.categoryUnknown": "La categoría no está especificada",
+    "award.badgeWinner": "Ganador",
+    "award.badgeNominee": "Nominado",
+    "award.badgeHighlight": "Destacado"
+  },
+  pt: {
+    "award.festivalLabel": "Festival/Prêmio",
+    "award.categoryLabel": "Categoria de prêmio",
+    "award.yearLabel": "Ano",
+    "award.ceremonyDateLabel": "Data da cerimônia",
+    "award.festivalUnknown": "Festival não é especificado pela fonte",
+    "award.categoryUnknown": "A categoria não foi especificada",
+    "award.badgeWinner": "Ganhador",
+    "award.badgeNominee": "Nomeado",
+    "award.badgeHighlight": "Destaque"
+  },
+  nl: {
+    "award.festivalLabel": "Festival/prijs",
+    "award.categoryLabel": "Prijscategorie",
+    "award.yearLabel": "Jaar",
+    "award.ceremonyDateLabel": "Ceremoniedatum",
+    "award.festivalUnknown": "Festival is niet gespecificeerd per bron",
+    "award.categoryUnknown": "Categorie is niet gespecificeerd",
+    "award.badgeWinner": "Winnaar",
+    "award.badgeNominee": "Genomineerd",
+    "award.badgeHighlight": "In de spotlights"
+  },
+  sv: {
+    "award.festivalLabel": "Festival/pris",
+    "award.categoryLabel": "Priskategori",
+    "award.yearLabel": "År",
+    "award.ceremonyDateLabel": "Ceremonidatum",
+    "award.festivalUnknown": "Festivalen anges inte av källan",
+    "award.categoryUnknown": "Kategori är inte specificerad",
+    "award.badgeWinner": "Vinnare",
+    "award.badgeNominee": "Nominerad",
+    "award.badgeHighlight": "I fokus"
+  },
+  fi: {
+    "award.festivalLabel": "Festivaali/palkinto",
+    "award.categoryLabel": "Palkintoluokka",
+    "award.yearLabel": "Vuosi",
+    "award.ceremonyDateLabel": "Seremonian päivämäärä",
+    "award.festivalUnknown": "Festivaalia ei ole määritetty lähteessä",
+    "award.categoryUnknown": "Luokkaa ei ole määritetty",
+    "award.badgeWinner": "Voittaja",
+    "award.badgeNominee": "Ehdokas",
+    "award.badgeHighlight": "Valokeilassa"
+  },
+  no: {
+    "award.festivalLabel": "Festival/pris",
+    "award.categoryLabel": "Priskategori",
+    "award.yearLabel": "År",
+    "award.ceremonyDateLabel": "Seremonidato",
+    "award.festivalUnknown": "Festival er ikke spesifisert av kilden",
+    "award.categoryUnknown": "Kategori er ikke spesifisert",
+    "award.badgeWinner": "Vinner",
+    "award.badgeNominee": "Nominert",
+    "award.badgeHighlight": "I fokus"
+  },
+  da: {
+    "award.festivalLabel": "Festival/Pris",
+    "award.categoryLabel": "Priskategori",
+    "award.yearLabel": "År",
+    "award.ceremonyDateLabel": "Ceremonidato",
+    "award.festivalUnknown": "Festival er ikke angivet af kilden",
+    "award.categoryUnknown": "Kategori er ikke angivet",
+    "award.badgeWinner": "Vinder",
+    "award.badgeNominee": "Nomineret",
+    "award.badgeHighlight": "I fokus"
+  },
+  cs: {
+    "award.festivalLabel": "Festival/Cena",
+    "award.categoryLabel": "Kategorie ocenění",
+    "award.yearLabel": "Rok",
+    "award.ceremonyDateLabel": "Datum obřadu",
+    "award.festivalUnknown": "Festival není specifikován zdrojem",
+    "award.categoryUnknown": "Kategorie není specifikována",
+    "award.badgeWinner": "Vítěz",
+    "award.badgeNominee": "Nominovaný",
+    "award.badgeHighlight": "V centru pozornosti"
+  },
+  pl: {
+    "award.festivalLabel": "Festiwal/Nagroda",
+    "award.categoryLabel": "Kategoria nagrody",
+    "award.yearLabel": "Rok",
+    "award.ceremonyDateLabel": "Data ceremonii",
+    "award.festivalUnknown": "Festiwal nie jest określony przez źródło",
+    "award.categoryUnknown": "Kategoria nie jest określona",
+    "award.badgeWinner": "Zwycięzca",
+    "award.badgeNominee": "Nominowany",
+    "award.badgeHighlight": "W centrum uwagi"
+  },
+  sk: {
+    "award.festivalLabel": "Festival/Ocenenie",
+    "award.categoryLabel": "Kategória ocenenia",
+    "award.yearLabel": "Rok",
+    "award.ceremonyDateLabel": "Dátum obradu",
+    "award.festivalUnknown": "Festival nie je špecifikovaný podľa zdroja",
+    "award.categoryUnknown": "Kategória nie je špecifikovaná",
+    "award.badgeWinner": "Víťaz",
+    "award.badgeNominee": "Nominovaný",
+    "award.badgeHighlight": "V centre pozornosti"
+  },
+  hu: {
+    "award.festivalLabel": "Fesztivál/díj",
+    "award.categoryLabel": "Díjkategória",
+    "award.yearLabel": "Év",
+    "award.ceremonyDateLabel": "Ceremónia dátuma",
+    "award.festivalUnknown": "A fesztivál nincs megadva a forrás szerint",
+    "award.categoryUnknown": "A kategória nincs megadva",
+    "award.badgeWinner": "Győztes",
+    "award.badgeNominee": "Jelölt",
+    "award.badgeHighlight": "Reflektorfényben"
+  },
+  ro: {
+    "award.festivalLabel": "Festival/Premiu",
+    "award.categoryLabel": "Categoria premiului",
+    "award.yearLabel": "An",
+    "award.ceremonyDateLabel": "Data ceremoniei",
+    "award.festivalUnknown": "Festivalul nu este specificat de sursă",
+    "award.categoryUnknown": "Categoria nu este specificată",
+    "award.badgeWinner": "Câștigător",
+    "award.badgeNominee": "Nominalizat",
+    "award.badgeHighlight": "În prim-plan"
+  },
+  el: {
+    "award.festivalLabel": "Φεστιβάλ/Βραβείο",
+    "award.categoryLabel": "Κατηγορία βραβείου",
+    "award.yearLabel": "Έτος",
+    "award.ceremonyDateLabel": "Ημερομηνία τελετής",
+    "award.festivalUnknown": "Το φεστιβάλ δεν προσδιορίζεται από την πηγή",
+    "award.categoryUnknown": "Η κατηγορία δεν προσδιορίζεται",
+    "award.badgeWinner": "Νικητής",
+    "award.badgeNominee": "Υποψήφιος",
+    "award.badgeHighlight": "Στο προσκήνιο"
+  },
+  hr: {
+    "award.festivalLabel": "Festival/Nagrada",
+    "award.categoryLabel": "Kategorija nagrade",
+    "award.yearLabel": "Godina",
+    "award.ceremonyDateLabel": "Datum ceremonije",
+    "award.festivalUnknown": "Festival nije naveden u izvoru",
+    "award.categoryUnknown": "Kategorija nije navedena",
+    "award.badgeWinner": "Pobjednik",
+    "award.badgeNominee": "Nominirani",
+    "award.badgeHighlight": "U fokusu"
+  },
+  me: {
+    "award.festivalLabel": "Фестивал/награда",
+    "award.categoryLabel": "Категорија награде",
+    "award.yearLabel": "Година",
+    "award.ceremonyDateLabel": "Датум церемоније",
+    "award.festivalUnknown": "Фестивал није прецизиран у извору",
+    "award.categoryUnknown": "Категорија није наведена",
+    "award.badgeWinner": "Победник",
+    "award.badgeNominee": "Номиновани",
+    "award.badgeHighlight": "У фокусу"
+  }
+};
+
 const HEADER_DATA_SOURCE_OVERRIDES: Partial<Record<Locale, Record<string, string>>> = {
   uk: {
     "header.dataSourceLabel": "Джерело даних",
@@ -2575,6 +2776,7 @@ function buildLocaleMessages(
     ...(CORE_NAV_MENU_OVERRIDES[locale] ?? {}),
     ...(CORE_CATALOG_LABEL_OVERRIDES[locale] ?? {}),
     ...(AWARDS_UI_OVERRIDES[locale] ?? {}),
+    ...(AWARD_CARD_LABEL_OVERRIDES[locale] ?? {}),
     ...(HEADER_DATA_SOURCE_OVERRIDES[locale] ?? {}),
     ...(LEADERBOARD_UI_OVERRIDES[locale] ?? {}),
     ...(I18N_MANUAL_OVERRIDES_BY_LOCALE[locale] ?? {}),

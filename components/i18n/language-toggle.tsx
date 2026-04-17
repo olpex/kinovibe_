@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   getLocaleCookieKey,
   normalizeLocale,
@@ -28,6 +29,10 @@ function readLocaleFromCookie(): Locale {
 }
 
 export function LanguageToggle({ className }: LanguageToggleProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
   const [locale, setLocale] = useState<Locale>(() => readLocaleFromCookie());
   const label = useMemo(() => translate(locale, "lang.label"), [locale]);
 
@@ -37,15 +42,25 @@ export function LanguageToggle({ className }: LanguageToggleProps) {
       <select
         className="kvLangSelect"
         value={locale}
+        disabled={isPending}
         onChange={(event) => {
           const nextLocale = normalizeLocale(event.target.value);
+          if (nextLocale === locale) {
+            return;
+          }
+
           const secureSegment = window.location.protocol === "https:" ? "; Secure" : "";
           document.cookie = `${getLocaleCookieKey()}=${encodeURIComponent(nextLocale)}; Path=/; Max-Age=31536000; SameSite=Lax${secureSegment}`;
           setLocale(nextLocale);
-          // Force full document reload so server components read the new locale cookie immediately.
-          window.location.assign(
-            `${window.location.pathname}${window.location.search}${window.location.hash}`
-          );
+
+          const search = searchParams.toString();
+          const hash = typeof window !== "undefined" ? window.location.hash : "";
+          const href = `${pathname}${search ? `?${search}` : ""}${hash}`;
+
+          startTransition(() => {
+            router.replace(href, { scroll: false });
+            router.refresh();
+          });
         }}
       >
         {SUPPORTED_LOCALES.map((item) => (
