@@ -401,6 +401,16 @@ function sanitizeNarrativeText(text: string | undefined, maxLength: number): str
   return shortenInformativeText(normalized, maxLength);
 }
 
+function hasEnoughBiographyContext(text: string | undefined): boolean {
+  const normalized = text?.replace(/\s+/g, " ").trim() ?? "";
+  if (!normalized) {
+    return false;
+  }
+
+  // Treat very short one-liners as insufficient for person biography sections.
+  return normalized.length >= 220;
+}
+
 function buildFallbackMovieOverview(
   locale: Locale,
   args: {
@@ -2278,10 +2288,21 @@ export const getTmdbPersonDetails = cache(
         ? undefined
         : localizedBiography;
 
-    const biographySource =
+    const localizedCandidate = sanitizeNarrativeText(safeLocalizedBiography, 920);
+    const englishFallbackCandidate = sanitizeNarrativeText(
+      normalizedEnglishBiography ?? (locale === "en" ? snapshot.biography : undefined),
+      920
+    );
+    const preferredBiographySource =
       locale === "en"
-        ? normalizedDetailsBiography ?? snapshot.biography ?? ""
-        : safeLocalizedBiography ?? "";
+        ? localizedCandidate || englishFallbackCandidate
+        : hasEnoughBiographyContext(localizedCandidate)
+          ? localizedCandidate
+          : englishFallbackCandidate || localizedCandidate;
+
+    const biographySource =
+      preferredBiographySource ??
+      (locale === "en" ? normalizedDetailsBiography ?? snapshot.biography ?? "" : safeLocalizedBiography ?? "");
     const generatedBiography = shortenInformativeText(
       `${details.name}. ${translate(locale, "person.department")}: ${normalizeNonEmptyText(details.known_for_department) ?? snapshot.department ?? translate(locale, "common.notAvailable")}. ${translate(locale, "menu.knownFor")}: ${credits.cast
         .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
