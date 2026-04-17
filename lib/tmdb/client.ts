@@ -1802,6 +1802,29 @@ function formatTvRuntimeLabel(
   return formatRuntime(runtimeMinutes, fallbackId, locale);
 }
 
+function buildFallbackOnAirOverview(
+  locale: Locale,
+  args: {
+    title: string;
+    year: number;
+    genres: string[];
+    country: string;
+    channel: string;
+    status: string;
+  }
+): string {
+  const yearLabel = args.year > 0 ? String(args.year) : translate(locale, "watchlist.tba");
+  const genresLabel = args.genres.length > 0 ? args.genres.join(", ") : translate(locale, "home.defaultGenre");
+  const countryLabel = args.country.trim() || translate(locale, "common.notAvailable");
+  const channelLabel = args.channel.trim() || translate(locale, "common.notAvailable");
+  const statusLabel = args.status.trim() || translate(locale, "common.notAvailable");
+
+  return shortenInformativeText(
+    `${args.title}. ${genresLabel}. ${yearLabel}. ${translate(locale, "movie.productionCountry")}: ${countryLabel}. ${translate(locale, "tv.broadcastChannel")}: ${channelLabel}. ${translate(locale, "watchlist.statusLabel")}: ${statusLabel}.`,
+    260
+  );
+}
+
 export type TvOnAirShowDetails = {
   tvMazeId: number;
   tmdbTvId?: number;
@@ -2014,12 +2037,16 @@ export const getTvOnAirShowDetails = cache(
     let trailerUrl: string | undefined;
     let trailerName: string | undefined;
     let backdropUrl: string | undefined;
+    let tmdbTitle: string | undefined;
+    let tmdbOverview: string | undefined;
     if (tmdbTvId) {
       try {
         const tmdbDetails = await getTmdbTvDetails(tmdbTvId, locale);
         trailerUrl = tmdbDetails.trailerUrl;
         trailerName = tmdbDetails.trailerName;
         backdropUrl = tmdbDetails.backdropUrl;
+        tmdbTitle = sanitizeNarrativeText(tmdbDetails.title, 180) || undefined;
+        tmdbOverview = sanitizeNarrativeText(tmdbDetails.overview, 220) || undefined;
       } catch {
         trailerUrl = undefined;
       }
@@ -2046,16 +2073,26 @@ export const getTvOnAirShowDetails = cache(
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
       .slice(0, 24);
 
-    const fallbackOverview = sanitizeNarrativeText(stripHtmlTags(show.summary ?? ""), 220);
+    const tvMazeOverview = sanitizeNarrativeText(stripHtmlTags(show.summary ?? ""), 220);
     const historicalNote = formatRunPeriodLabel(locale, show.premiered, show.ended, show.status);
     const runtime = formatTvRuntimeLabel(locale, show.averageRuntime ?? show.runtime, show.id);
     const rating = Number(show.rating?.average ?? 0);
     const year = parseYear(show.premiered ?? null);
+    const fallbackOverview = buildFallbackOnAirOverview(locale, {
+      title: tmdbTitle || show.name,
+      year,
+      genres: show.genres?.filter(Boolean) ?? [],
+      country: localizedCountry,
+      channel,
+      status: show.status?.trim() || ""
+    });
+    const summaryOverview = locale === DEFAULT_LOCALE ? tvMazeOverview : "";
+    const resolvedOverview = tmdbOverview || summaryOverview || fallbackOverview;
 
     return {
       tvMazeId: show.id,
       tmdbTvId,
-      title: show.name,
+      title: tmdbTitle || show.name,
       year,
       genres: show.genres?.filter(Boolean) ?? [],
       countries: [localizedCountry],
@@ -2064,7 +2101,7 @@ export const getTvOnAirShowDetails = cache(
       status: show.status?.trim() || translate(locale, "common.notAvailable"),
       originalLanguage:
         normalizeTvMazeLanguageToCode(show.language) ?? show.language?.trim() ?? translate(locale, "common.notAvailable"),
-      overview: fallbackOverview || translate(locale, "home.fallbackOverview"),
+      overview: resolvedOverview || translate(locale, "home.fallbackOverview"),
       historicalNote,
       channel,
       airtime,
@@ -3605,8 +3642,13 @@ export const getTmdbTvDetails = cache(
     const resolvedDirectors = directors.length > 0 ? directors : fallbackDirectingNames;
     const countries = localizeCountryNames(details.production_countries ?? [], locale);
     const sanitizedTitle = sanitizeNarrativeText(translatedTitle || details.name, 180);
+    const shouldUseResolvedOverview =
+      locale === DEFAULT_LOCALE || resolvedOverview.sourceLanguageCode === targetLanguageCode;
+    const overviewCandidate = shouldUseResolvedOverview
+      ? translatedOverview || details.overview || detailsInEnglish?.overview || ""
+      : "";
     const sanitizedOverview = sanitizeNarrativeText(
-      translatedOverview || details.overview || detailsInEnglish?.overview || "",
+      overviewCandidate,
       720
     );
     const sanitizedTagline = sanitizeNarrativeText(translatedTagline, 180);
