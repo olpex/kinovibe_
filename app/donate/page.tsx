@@ -4,8 +4,8 @@ import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "./donate.module.css";
 
-const DEFAULT_DONATE_AMOUNTS = [10, 20, 30, 40, 50] as const;
-const DEFAULT_DONATE_CURRENCY = "USD";
+const DEFAULT_DONATE_AMOUNTS = [100, 150, 200, 250, 300] as const;
+const DEFAULT_DONATE_CURRENCY = "UAH";
 
 function buildMonobankDonateUrl(baseUrl: string, amount: number): string | null {
   if (!baseUrl) {
