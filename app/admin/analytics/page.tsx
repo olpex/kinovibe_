@@ -101,17 +101,6 @@ function normalizeWindow(raw: string | undefined): AnalyticsWindow {
   return "all";
 }
 
-function buildSinceIso(window: AnalyticsWindow): string | null {
-  if (window === "all") {
-    return null;
-  }
-  const days = Number(window);
-  if (!Number.isFinite(days) || days < 1) {
-    return null;
-  }
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-}
-
 function buildHref(basePath: string, params: URLSearchParams): string {
   const query = params.toString();
   return query.length > 0 ? `${basePath}?${query}` : basePath;
@@ -145,8 +134,7 @@ function formatUserLabel(
 }
 
 async function fetchAllSiteEvents(
-  client: SupabaseClient,
-  sinceIso: string | null
+  client: SupabaseClient
 ): Promise<{ events: SiteEventRow[]; errorMessage: string | null; truncated: boolean }> {
   const all: SiteEventRow[] = [];
   let from = 0;
@@ -158,10 +146,6 @@ async function fetchAllSiteEvents(
       .select("user_id,event_type,page_path,element_key,movie_tmdb_id,ip_address,country_code,created_at,metadata_json")
       .order("created_at", { ascending: false })
       .range(from, from + SITE_EVENTS_BATCH_SIZE - 1);
-
-    if (sinceIso) {
-      query = query.gte("created_at", sinceIso);
-    }
 
     const { data, error } = await query;
     if (error) {
@@ -186,6 +170,23 @@ async function fetchAllSiteEvents(
   }
 
   return { events: all, errorMessage: null, truncated };
+}
+
+function filterEventsByWindow(events: SiteEventRow[], window: AnalyticsWindow): SiteEventRow[] {
+  if (window === "all") {
+    return events;
+  }
+
+  const days = Number(window);
+  if (!Number.isFinite(days) || days < 1) {
+    return events;
+  }
+
+  const sinceMs = Date.now() - days * 24 * 60 * 60 * 1000;
+  return events.filter((event) => {
+    const createdAtMs = Date.parse(event.created_at);
+    return Number.isFinite(createdAtMs) && createdAtMs >= sinceMs;
+  });
 }
 
 export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
@@ -220,8 +221,11 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   }
 
   const selectedWindow = normalizeWindow(params.window);
-  const sinceIso = buildSinceIso(selectedWindow);
-  const { events, errorMessage, truncated } = await fetchAllSiteEvents(client, sinceIso);
+  const { events: allEvents, errorMessage, truncated } = await fetchAllSiteEvents(client);
+  const events = filterEventsByWindow(allEvents, selectedWindow);
+  const serviceRoleMode = Boolean(adminClient);
+  const windowMatchesAll =
+    selectedWindow !== "all" && allEvents.length > 0 && events.length === allEvents.length;
 
   const countryCounts = new Map<string, number>();
   const pageCounts = new Map<string, number>();
@@ -343,6 +347,14 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
       <section className={styles.headerCard}>
         <h1>{translate(locale, "analytics.title")}</h1>
         <p>{translate(locale, "analytics.subtitle")}</p>
+        <p className={styles.inlineHint}>
+          {serviceRoleMode
+            ? translate(locale, "analytics.modeServiceRole")
+            : translate(locale, "analytics.modeFallback")}
+        </p>
+        {windowMatchesAll ? (
+          <p className={styles.inlineHint}>{translate(locale, "analytics.windowMatchesAllHint")}</p>
+        ) : null}
         <div className={styles.inlineFilters}>
           <span>{translate(locale, "leaderboard.filterWindowLabel")}:</span>
           {(["7", "30", "90", "all"] as AnalyticsWindow[]).map((window) => {

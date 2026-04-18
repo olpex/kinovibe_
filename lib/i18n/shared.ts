@@ -204,6 +204,11 @@ const BASE_MESSAGES: Record<string, string> = {
   "analytics.selectCountryHint": "Select a country on the left to inspect visitor connections.",
   "analytics.noCountryData": "No country data found for the selected period.",
   "analytics.noCountryDetails": "No connection details found for this country yet.",
+  "analytics.modeServiceRole": "Mode: service-role access (full cross-user analytics).",
+  "analytics.modeFallback":
+    "Fallback mode: set SUPABASE_SERVICE_ROLE_KEY to see full cross-user analytics. Current values may be limited by RLS visibility.",
+  "analytics.windowMatchesAllHint":
+    "This period currently matches the same dataset as the ∞ window (all available events fall into the selected range).",
 
   "admin.accessDenied": "Access denied",
   "admin.adminRequired": "Admin access required.",
@@ -864,6 +869,11 @@ const UK_MESSAGES: Record<string, string> = {
   "analytics.selectCountryHint": "Оберіть країну зліва, щоб переглянути деталізацію підключень.",
   "analytics.noCountryData": "За обраний період немає даних по країнах.",
   "analytics.noCountryDetails": "Для цієї країни поки немає деталей підключень.",
+  "analytics.modeServiceRole": "Режим: service-role доступ (повна аналітика по всіх користувачах).",
+  "analytics.modeFallback":
+    "Режим fallback: задайте SUPABASE_SERVICE_ROLE_KEY, щоб бачити повну аналітику по всіх користувачах. Поточні значення можуть бути обмежені політиками RLS.",
+  "analytics.windowMatchesAllHint":
+    "Зараз цей період збігається з вікном ∞ (усі доступні події потрапляють у вибраний діапазон).",
   "common.email": "Email",
   "common.password": "Пароль",
   "common.previous": "Назад",
