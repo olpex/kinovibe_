@@ -13,8 +13,26 @@ type HomeScreenProps = {
   locale: Locale;
 };
 
+function getUtcDayStamp(date: Date): number {
+  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86_400_000);
+}
+
+function pickDailyFeatured(candidates: HomeScreenData["trendingNow"]): HomeScreenData["trendingNow"][number] | null {
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const dayStamp = getUtcDayStamp(new Date());
+  const index = dayStamp % candidates.length;
+  return candidates[index] ?? candidates[0] ?? null;
+}
+
 export function HomeScreen({ data, session, locale }: HomeScreenProps) {
-  const featured = data.trendingNow[0] ?? data.topPicks[0] ?? null;
+  const featured = pickDailyFeatured(data.trendingNow) ?? data.topPicks[0] ?? null;
+  const featuredOverview =
+    featured?.overview && featured.overview.trim().length > 0
+      ? featured.overview
+      : translate(locale, "home.fallbackOverview");
   const featuredBackdropCss = toCssImageUrl(featured?.backdropUrl);
   const featuredUpdatedAt = data.featuredUpdatedAt
     ? new Date(data.featuredUpdatedAt).toLocaleString(toIntlLocale(locale), {
@@ -52,10 +70,7 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
             {featured?.genre ?? translate(locale, "home.defaultGenre")} · {featured?.year ?? new Date().getUTCFullYear()} ·{" "}
             {featured?.runtime ?? translate(locale, "home.runtimeTbd")} · {(featured?.rating ?? 0).toFixed(1)}
           </p>
-          <p className={styles.heroCopy}>
-            {featured?.overview ??
-              translate(locale, "home.fallbackOverview")}
-          </p>
+          <p className={styles.heroCopy}>{featuredOverview}</p>
           <div className={styles.heroButtons}>
             {featured ? (
               <Link href={`/movie/${featured.id}`} className={styles.primaryButton}>

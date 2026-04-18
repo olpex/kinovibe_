@@ -1094,13 +1094,14 @@ async function localizeCard(card: HomeMovie, locale: Locale): Promise<HomeMovie>
   const [countries] = await Promise.all([
     card.countries.length > 0 ? Promise.resolve(card.countries) : getTmdbMovieCountryNames(card.id, locale)
   ]);
+  const overview = sanitizeNarrativeText(card.overview, 420) || card.overview?.trim() || "";
 
   return {
     ...card,
     title: card.title,
     genre: card.genre,
     countries,
-    overview: sanitizeNarrativeText(card.overview, 420) || card.overview
+    overview: overview || translate(locale, "home.fallbackOverview")
   };
 }
 
@@ -1108,13 +1109,14 @@ async function localizeTvCard(card: HomeMovie, locale: Locale): Promise<HomeMovi
   const [countries] = await Promise.all([
     card.countries.length > 0 ? Promise.resolve(card.countries) : getTmdbTvCountryNames(card.id, locale)
   ]);
+  const overview = sanitizeNarrativeText(card.overview, 420) || card.overview?.trim() || "";
 
   return {
     ...card,
     title: card.title,
     genre: card.genre,
     countries,
-    overview: sanitizeNarrativeText(card.overview, 420) || card.overview
+    overview: overview || translate(locale, "home.fallbackOverview")
   };
 }
 
