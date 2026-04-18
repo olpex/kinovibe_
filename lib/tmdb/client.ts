@@ -70,6 +70,8 @@ const TMDB_READ_TOKEN = process.env.TMDB_API_READ_ACCESS_TOKEN;
 const TMDB_IMAGE_BASE_URL =
   process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL ?? DEFAULT_IMAGE_BASE_URL;
 const TVMAZE_API_BASE_URL = process.env.TVMAZE_API_BASE_URL ?? "https://api.tvmaze.com";
+const OMDB_API_BASE_URL = process.env.OMDB_API_BASE_URL ?? "https://www.omdbapi.com/";
+const OMDB_API_KEY = process.env.OMDB_API_KEY;
 const ON_AIR_PAGE_SIZE = 20;
 const WIKIPEDIA_MENTION_PATTERN = /wikipedia|wiki\b|вікіпед|википед|wikip[eé]dia/iu;
 const WIKIDATA_SPARQL_ENDPOINT =
@@ -2378,6 +2380,11 @@ export type TmdbAwardsResult = {
   dataSourceStatus: DataSourceStatus;
 };
 
+type OmdbLookupResponse = {
+  Response?: "True" | "False";
+  Poster?: string;
+};
+
 type SparqlBindingValue = {
   value: string;
 };
@@ -2402,6 +2409,225 @@ function parseAwardMovieTmdbId(rawId: string): number | undefined {
   }
 
   return parsed;
+}
+
+function parseAwardYearNumber(item: AwardCard): number | undefined {
+  if (item.eventDate) {
+    const eventYear = Number(item.eventDate.slice(0, 4));
+    if (Number.isFinite(eventYear) && eventYear > 1800 && eventYear < 3000) {
+      return eventYear;
+    }
+  }
+
+  const year = Number(item.year);
+  if (Number.isFinite(year) && year > 1800 && year < 3000) {
+    return year;
+  }
+
+  return undefined;
+}
+
+function sanitizeTitleForMatching(title: string): string {
+  return title
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function shouldReplaceAwardImage(imageUrl: string | undefined): boolean {
+  const normalized = normalizeWikidataImageUrl(imageUrl);
+  if (!normalized) {
+    return true;
+  }
+
+  if (
+    normalized.includes("image.tmdb.org/") ||
+    normalized.includes("img.omdbapi.com/") ||
+    normalized.includes("m.media-amazon.com/")
+  ) {
+    return false;
+  }
+
+  return !isLikelyPosterImage(normalized);
+}
+
+const getTmdbPosterByMovieId = cache(async (movieId: number): Promise<string | undefined> => {
+  if (!Number.isFinite(movieId) || movieId <= 0) {
+    return undefined;
+  }
+
+  try {
+    const details = await fetchTmdb<TmdbMovieDetailsResponse>(
+      `/movie/${movieId}`,
+      { language: "en-US" },
+      21600
+    );
+    if (isBlockedMovieDetails(details)) {
+      return undefined;
+    }
+    return posterUrl(details.poster_path) ?? backdropUrl(details.backdrop_path);
+  } catch {
+    return undefined;
+  }
+});
+
+const lookupTmdbMovieByAwardTitle = cache(
+  async (title: string, yearToken: string): Promise<{ movieTmdbId?: number; imageUrl?: string }> => {
+    const normalizedTitle = title.trim();
+    if (!normalizedTitle) {
+      return {};
+    }
+
+    const targetYear = Number(yearToken);
+    const hasTargetYear = Number.isFinite(targetYear) && targetYear > 1800 && targetYear < 3000;
+
+    const fetchCandidates = async (useYear: boolean): Promise<TmdbMovie[]> => {
+      const params: Record<string, string> = {
+        query: normalizedTitle,
+        include_adult: "false",
+        language: "en-US",
+        page: "1"
+      };
+      if (useYear && hasTargetYear) {
+        params.year = String(targetYear);
+      }
+
+      const response = await fetchTmdb<TmdbMoviesResponse>("/search/movie", params, 21600);
+      return response.results.filter((movie) => !isBlockedMovieSummary(movie));
+    };
+
+    let candidates: TmdbMovie[] = [];
+    try {
+      candidates = await fetchCandidates(true);
+      if (candidates.length === 0 && hasTargetYear) {
+        candidates = await fetchCandidates(false);
+      }
+    } catch {
+      return {};
+    }
+
+    if (candidates.length === 0) {
+      return {};
+    }
+
+    const normalizedTargetTitle = sanitizeTitleForMatching(normalizedTitle);
+    const sorted = [...candidates].sort((left, right) => {
+      const leftHasPoster = left.poster_path ? 1 : 0;
+      const rightHasPoster = right.poster_path ? 1 : 0;
+      if (rightHasPoster !== leftHasPoster) {
+        return rightHasPoster - leftHasPoster;
+      }
+
+      const leftTitleMatch = sanitizeTitleForMatching(left.title) === normalizedTargetTitle ? 1 : 0;
+      const rightTitleMatch = sanitizeTitleForMatching(right.title) === normalizedTargetTitle ? 1 : 0;
+      if (rightTitleMatch !== leftTitleMatch) {
+        return rightTitleMatch - leftTitleMatch;
+      }
+
+      if (hasTargetYear) {
+        const leftYear = parseOptionalYear(left.release_date);
+        const rightYear = parseOptionalYear(right.release_date);
+        const leftDiff = leftYear ? Math.abs(leftYear - targetYear) : Number.MAX_SAFE_INTEGER;
+        const rightDiff = rightYear ? Math.abs(rightYear - targetYear) : Number.MAX_SAFE_INTEGER;
+        if (leftDiff !== rightDiff) {
+          return leftDiff - rightDiff;
+        }
+      }
+
+      return (right.vote_average ?? 0) - (left.vote_average ?? 0);
+    });
+
+    const chosen = sorted[0];
+    return {
+      movieTmdbId: chosen.id,
+      imageUrl: posterUrl(chosen.poster_path) ?? backdropUrl(chosen.backdrop_path)
+    };
+  }
+);
+
+const getOmdbPosterByTitle = cache(async (title: string, yearToken: string): Promise<string | undefined> => {
+  if (!OMDB_API_KEY) {
+    return undefined;
+  }
+
+  const normalizedTitle = title.trim();
+  if (!normalizedTitle) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(OMDB_API_BASE_URL);
+    url.searchParams.set("apikey", OMDB_API_KEY);
+    url.searchParams.set("t", normalizedTitle);
+    url.searchParams.set("type", "movie");
+    if (/^\d{4}$/.test(yearToken)) {
+      url.searchParams.set("y", yearToken);
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      next: { revalidate: 43200 }
+    });
+
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const payload = (await response.json()) as OmdbLookupResponse;
+    const poster = payload.Poster?.trim();
+    if (payload.Response !== "True" || !poster || poster === "N/A") {
+      return undefined;
+    }
+
+    return normalizeWikidataImageUrl(poster);
+  } catch {
+    return undefined;
+  }
+});
+
+async function enrichAwardCardsWithPosters(
+  items: AwardCard[],
+  category: "popular" | "upcoming"
+): Promise<AwardCard[]> {
+  return Promise.all(
+    items.map(async (item) => {
+      const yearNumber = parseAwardYearNumber(item);
+      const yearToken = yearNumber ? String(yearNumber) : "";
+      let movieTmdbId = item.movieTmdbId;
+      let imageUrl = item.imageUrl;
+
+      if (category === "popular" && !movieTmdbId) {
+        const lookup = await lookupTmdbMovieByAwardTitle(item.title, yearToken);
+        movieTmdbId = lookup.movieTmdbId ?? movieTmdbId;
+        if (!imageUrl && lookup.imageUrl) {
+          imageUrl = lookup.imageUrl;
+        }
+      }
+
+      if (shouldReplaceAwardImage(imageUrl) && movieTmdbId) {
+        const tmdbPoster = await getTmdbPosterByMovieId(movieTmdbId);
+        if (tmdbPoster) {
+          imageUrl = tmdbPoster;
+        }
+      }
+
+      if (shouldReplaceAwardImage(imageUrl)) {
+        const omdbPoster = await getOmdbPosterByTitle(item.title, yearToken);
+        if (omdbPoster) {
+          imageUrl = omdbPoster;
+        }
+      }
+
+      return {
+        ...item,
+        movieTmdbId,
+        imageUrl
+      };
+    })
+  );
 }
 
 const isBlockedTmdbMovieId = cache(async (movieId: number): Promise<boolean> => {
@@ -2698,7 +2924,7 @@ async function fetchWikidataSparql(
 
 function buildWikidataOutcomeQuery(outcome: "winner" | "nominee"): string {
   const languageChain = toWikidataLanguageChain();
-  const minYear = Math.max(1990, new Date().getUTCFullYear() - 15);
+  const minYear = Math.max(1960, new Date().getUTCFullYear() - 45);
   const statementPath = outcome === "winner" ? "p:P166" : "p:P1411";
   const statementMainValue = outcome === "winner" ? "ps:P166" : "ps:P1411";
   const statementDateQualifier = outcome === "winner" ? "pq:P585" : "pq:P585";
@@ -2733,7 +2959,7 @@ SELECT DISTINCT ?film ?filmLabel ?awardLabel ?categoryLabel ?date ?poster ?image
   }
 }
 ORDER BY DESC(?date)
-LIMIT 140
+LIMIT 420
 `.trim();
 }
 
@@ -2762,7 +2988,7 @@ SELECT DISTINCT ?ceremony ?ceremonyLabel ?seriesLabel ?eventDate ?poster ?image 
   }
 }
 ORDER BY ASC(?eventDate)
-LIMIT 80
+LIMIT 180
 `.trim();
 }
 
@@ -2801,7 +3027,7 @@ function mapWikidataWinners(bindings: SparqlBinding[]): AwardCard[] {
 
     const filmEntityId = parseWikidataEntityId(getSparqlBindingValue(binding, "film"));
     const tmdbMovieId = parseAwardMovieTmdbId(getSparqlBindingValue(binding, "tmdbId") ?? "");
-    const imageUrl = pickWikidataImage(binding, { allowNonPosterFallback: true });
+    const imageUrl = pickWikidataImage(binding);
     const wikipediaTitle = getSparqlBindingValue(binding, "enwikiTitle");
     const dedupeKey = `${filmEntityId ?? title.toLowerCase()}|${outcome}`;
     const previous = unique.get(dedupeKey);
@@ -2837,7 +3063,7 @@ function mapWikidataWinners(bindings: SparqlBinding[]): AwardCard[] {
     }
   }
 
-  return Array.from(unique.values()).slice(0, 24);
+  return Array.from(unique.values()).slice(0, 180);
 }
 
 function mapWikidataUpcoming(bindings: SparqlBinding[]): AwardCard[] {
@@ -2848,7 +3074,7 @@ function mapWikidataUpcoming(bindings: SparqlBinding[]): AwardCard[] {
     const rawCeremonyLabel = getSparqlBindingValue(binding, "ceremonyLabel");
     const seriesLabel = getSparqlBindingValue(binding, "seriesLabel");
     const eventDate = getSparqlBindingValue(binding, "eventDate");
-    const imageUrl = pickWikidataImage(binding, { allowNonPosterFallback: true });
+    const imageUrl = pickWikidataImage(binding);
     const wikipediaTitle = getSparqlBindingValue(binding, "enwikiTitle");
 
     const title =
@@ -2879,7 +3105,7 @@ function mapWikidataUpcoming(bindings: SparqlBinding[]): AwardCard[] {
     });
   }
 
-  return Array.from(unique.values()).slice(0, 24);
+  return Array.from(unique.values()).slice(0, 120);
 }
 
 const getWikidataAwardsBase = unstable_cache(
@@ -2897,7 +3123,7 @@ const getWikidataAwardsBase = unstable_cache(
     const mapped = mapWikidataWinners([...winnerBindings, ...nomineeBindings]);
     return enrichAwardsWithWikipediaPosters(mapped);
   },
-  ["wikidata-awards-v1"],
+  ["wikidata-awards-v2"],
   { revalidate: 21600 }
 );
 
@@ -3031,7 +3257,7 @@ const getWikipediaPosterMapBySignature = cache(
 );
 
 async function enrichAwardsWithWikipediaPosters(items: AwardCard[]): Promise<AwardCard[]> {
-  const candidates = items.filter((item) => !item.imageUrl);
+  const candidates = items.filter((item) => shouldReplaceAwardImage(item.imageUrl));
   if (candidates.length === 0) {
     return items;
   }
@@ -3064,7 +3290,7 @@ async function enrichAwardsWithWikipediaPosters(items: AwardCard[]): Promise<Awa
   }
 
   return items.map((item) => {
-    if (item.imageUrl) {
+    if (!shouldReplaceAwardImage(item.imageUrl)) {
       return item;
     }
 
@@ -3087,9 +3313,6 @@ async function enrichAwardsWithWikipediaPosters(items: AwardCard[]): Promise<Awa
 function mapAwardResult(item: TmdbAwardResult, locale: Locale): AwardCard | null {
   const category = item.category ?? translate(locale, "nav.awards");
   const parsed = parseAwardCategoryParts(category, locale);
-  if (!parsed.isStructured) {
-    return null;
-  }
 
   return {
     id: item.id,
@@ -3124,11 +3347,12 @@ export async function getTmdbAwards(
     const results = response.results ?? [];
     if (results.length > 0) {
       const tmdbItems = results
-        .slice(0, 48)
+        .slice(0, 180)
         .map((item) => mapAwardResult(item, locale))
         .filter((item): item is AwardCard => item !== null)
-        .slice(0, 24);
-      const allowedTmdbItems = await filterBlockedAwardCards(tmdbItems, category);
+        .slice(0, 120);
+      const enrichedTmdbItems = await enrichAwardCardsWithPosters(tmdbItems, category);
+      const allowedTmdbItems = await filterBlockedAwardCards(enrichedTmdbItems, category);
 
       if (allowedTmdbItems.length > 0) {
         return {
@@ -3142,7 +3366,8 @@ export async function getTmdbAwards(
   }
 
   const wikidataItems = await getWikidataAwards(category, locale);
-  const allowedWikidataItems = await filterBlockedAwardCards(wikidataItems, category);
+  const enrichedWikidataItems = await enrichAwardCardsWithPosters(wikidataItems, category);
+  const allowedWikidataItems = await filterBlockedAwardCards(enrichedWikidataItems, category);
   if (allowedWikidataItems.length > 0) {
     return {
       items: allowedWikidataItems,
