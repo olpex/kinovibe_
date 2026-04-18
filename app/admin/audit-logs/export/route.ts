@@ -71,7 +71,7 @@ function toCsv(rows: AuditLogExportRow[]): string {
     return cells.map((cell) => escapeCsvCell(cell)).join(",");
   });
 
-  return [headers.join(","), ...lines].join("\n");
+  return `\uFEFF${[headers.join(","), ...lines].join("\n")}`;
 }
 
 export const dynamic = "force-dynamic";

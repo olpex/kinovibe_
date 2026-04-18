@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { recordSiteEvent } from "@/lib/analytics/events";
+import { recordAuditLog } from "@/lib/audit/logging";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -136,6 +137,19 @@ export async function watchlistAction(
       };
     }
 
+    await recordAuditLog(supabase, {
+      userId,
+      routeKey: "watchlist.action",
+      method: "SERVER_ACTION",
+      statusCode: 200,
+      outcome: "removed",
+      ipAddress: "server_action",
+      userAgent: "next-server-action",
+      metadata: {
+        movieTmdbId: payload.tmdbId
+      }
+    });
+
     revalidatePath("/");
     revalidatePath("/watchlist");
     revalidatePath(`/movie/${payload.tmdbId}`);
@@ -215,6 +229,21 @@ export async function watchlistAction(
       }
     });
   }
+
+  await recordAuditLog(supabase, {
+    userId,
+    routeKey: "watchlist.action",
+    method: "SERVER_ACTION",
+    statusCode: 200,
+    outcome: operation,
+    ipAddress: "server_action",
+    userAgent: "next-server-action",
+    metadata: {
+      movieTmdbId: payload.tmdbId,
+      status,
+      progressPercent
+    }
+  });
 
   revalidatePath("/");
   revalidatePath("/watchlist");

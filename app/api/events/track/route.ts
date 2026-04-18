@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordSiteEvent, type SiteEventType } from "@/lib/analytics/events";
+import { recordAuditLog } from "@/lib/audit/logging";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -102,6 +103,25 @@ export async function POST(request: Request) {
     countryCode: getCountryCode(request),
     metadata
   });
+
+  if (userId && payload.eventType !== "page_view") {
+    await recordAuditLog(client, {
+      userId,
+      routeKey: "api.events.track",
+      method: "POST",
+      statusCode: 202,
+      outcome: "accepted",
+      ipAddress: getIpAddress(request),
+      userAgent: request.headers.get("user-agent") ?? "unknown",
+      metadata: {
+        eventType: payload.eventType,
+        pagePath: payload.pagePath ?? null,
+        elementKey: payload.elementKey ?? null,
+        movieTmdbId: payload.movieTmdbId ?? null,
+        countryCode: getCountryCode(request)
+      }
+    });
+  }
 
   return NextResponse.json({ ok: true }, { status: 202 });
 }

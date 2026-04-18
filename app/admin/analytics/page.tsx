@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
@@ -13,6 +14,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import styles from "./analytics.module.css";
 
 type SiteEventRow = {
+  user_id: string | null;
   event_type: "page_view" | "click" | "movie_added";
   page_path: string | null;
   element_key: string | null;
@@ -26,14 +28,24 @@ type SiteEventRow = {
 type CountryConnectionRow = {
   ipAddress: string;
   city: string | null;
+  pagePath: string | null;
   connectedAt: string;
 };
 
 type PageProps = {
   searchParams?: Promise<{
     country?: string;
+    window?: string;
   }>;
 };
+
+type AnalyticsWindow = "7" | "30" | "90" | "all";
+
+const SITE_EVENTS_BATCH_SIZE = 2000;
+const MAX_SITE_EVENTS = Math.max(
+  10_000,
+  Math.min(200_000, Number(process.env.ADMIN_ANALYTICS_MAX_ROWS ?? "100000") || 100000)
+);
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
@@ -83,6 +95,100 @@ function pickMetadataText(
   return null;
 }
 
+function normalizeWindow(raw: string | undefined): AnalyticsWindow {
+  if (raw === "7" || raw === "30" || raw === "90" || raw === "all") {
+    return raw;
+  }
+  return "all";
+}
+
+function buildSinceIso(window: AnalyticsWindow): string | null {
+  if (window === "all") {
+    return null;
+  }
+  const days = Number(window);
+  if (!Number.isFinite(days) || days < 1) {
+    return null;
+  }
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function buildHref(basePath: string, params: URLSearchParams): string {
+  const query = params.toString();
+  return query.length > 0 ? `${basePath}?${query}` : basePath;
+}
+
+function formatUserLabel(
+  userId: string | null | undefined,
+  profileMap: Map<string, { username: string | null; first_name: string | null; last_name: string | null }>,
+  locale: Parameters<typeof translate>[0]
+): string {
+  if (!userId) {
+    return translate(locale, "common.notAvailable");
+  }
+
+  const profile = profileMap.get(userId);
+  if (!profile) {
+    return userId.slice(0, 8);
+  }
+
+  const first = profile.first_name?.trim() ?? "";
+  const last = profile.last_name?.trim() ?? "";
+  const full = `${first} ${last}`.trim();
+  if (full) {
+    return full;
+  }
+  const username = profile.username?.trim();
+  if (username) {
+    return username;
+  }
+  return userId.slice(0, 8);
+}
+
+async function fetchAllSiteEvents(
+  client: SupabaseClient,
+  sinceIso: string | null
+): Promise<{ events: SiteEventRow[]; errorMessage: string | null; truncated: boolean }> {
+  const all: SiteEventRow[] = [];
+  let from = 0;
+  let truncated = false;
+
+  while (from < MAX_SITE_EVENTS) {
+    let query = client
+      .from("site_events")
+      .select("user_id,event_type,page_path,element_key,movie_tmdb_id,ip_address,country_code,created_at,metadata_json")
+      .order("created_at", { ascending: false })
+      .range(from, from + SITE_EVENTS_BATCH_SIZE - 1);
+
+    if (sinceIso) {
+      query = query.gte("created_at", sinceIso);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      return { events: all, errorMessage: error.message, truncated };
+    }
+
+    const rows = (data ?? []) as SiteEventRow[];
+    if (rows.length === 0) {
+      break;
+    }
+
+    all.push(...rows);
+    if (rows.length < SITE_EVENTS_BATCH_SIZE) {
+      break;
+    }
+
+    from += SITE_EVENTS_BATCH_SIZE;
+    if (from >= MAX_SITE_EVENTS) {
+      truncated = true;
+      break;
+    }
+  }
+
+  return { events: all, errorMessage: null, truncated };
+}
+
 export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
   const [locale, sessionUser] = await Promise.all([getRequestLocale(), getSessionUser()]);
@@ -114,19 +220,16 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
     );
   }
 
-  const sinceIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await client
-    .from("site_events")
-    .select("event_type,page_path,element_key,movie_tmdb_id,ip_address,country_code,created_at,metadata_json")
-    .gte("created_at", sinceIso)
-    .order("created_at", { ascending: false })
-    .limit(10_000);
+  const selectedWindow = normalizeWindow(params.window);
+  const sinceIso = buildSinceIso(selectedWindow);
+  const { events, errorMessage, truncated } = await fetchAllSiteEvents(client, sinceIso);
 
-  const events = (data ?? []) as SiteEventRow[];
   const countryCounts = new Map<string, number>();
   const pageCounts = new Map<string, number>();
   const clickCounts = new Map<string, number>();
   const movieCounts = new Map<string, number>();
+  const movieUsers = new Map<string, Set<string>>();
+  const movieUnknownUsers = new Map<string, number>();
 
   for (const event of events) {
     if (event.event_type === "page_view" && event.country_code) {
@@ -141,6 +244,13 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
     if (event.event_type === "movie_added" && event.movie_tmdb_id) {
       const key = String(event.movie_tmdb_id);
       movieCounts.set(key, (movieCounts.get(key) ?? 0) + 1);
+      if (event.user_id) {
+        const set = movieUsers.get(key) ?? new Set<string>();
+        set.add(event.user_id);
+        movieUsers.set(key, set);
+      } else {
+        movieUnknownUsers.set(key, (movieUnknownUsers.get(key) ?? 0) + 1);
+      }
     }
   }
 
@@ -153,6 +263,29 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
     }
   }
 
+  const profileIds = Array.from(
+    new Set(
+      Array.from(movieUsers.values()).flatMap((ids) => Array.from(ids))
+    )
+  );
+  const profileMap = new Map<
+    string,
+    { username: string | null; first_name: string | null; last_name: string | null }
+  >();
+  if (profileIds.length > 0) {
+    const { data: profiles } = await client
+      .from("profiles")
+      .select("id,username,first_name,last_name")
+      .in("id", profileIds);
+    for (const row of profiles ?? []) {
+      profileMap.set(row.id as string, {
+        username: (row.username as string | null) ?? null,
+        first_name: (row.first_name as string | null) ?? null,
+        last_name: (row.last_name as string | null) ?? null
+      });
+    }
+  }
+
   const totalVisits = events.filter((event) => event.event_type === "page_view").length;
   const totalClicks = events.filter((event) => event.event_type === "click").length;
   const totalMovieAdds = events.filter((event) => event.event_type === "movie_added").length;
@@ -162,30 +295,26 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
     requestedCountry && countryCounts.has(requestedCountry)
       ? requestedCountry
       : countryEntries[0]?.key ?? null;
-  const countryConnections = new Map<string, CountryConnectionRow>();
+  const detailRows: CountryConnectionRow[] = [];
 
   if (selectedCountry) {
     for (const event of events) {
       if (event.event_type !== "page_view" || event.country_code !== selectedCountry) {
         continue;
       }
-      const ipAddress = event.ip_address?.trim();
-      if (!ipAddress || countryConnections.has(ipAddress)) {
-        continue;
-      }
-
       const city =
         pickMetadataText(event.metadata_json, ["geoCity", "city", "ipCity"]) ??
         pickMetadataText(event.metadata_json, ["geoRegion", "region"]);
-      countryConnections.set(ipAddress, {
-        ipAddress,
+      detailRows.push({
+        ipAddress: event.ip_address?.trim() || translate(locale, "common.notAvailable"),
         city,
+        pagePath: event.page_path?.trim() || null,
         connectedAt: event.created_at
       });
     }
   }
 
-  const detailRows = Array.from(countryConnections.values());
+  const selectedCountryVisitCount = selectedCountry ? (countryCounts.get(selectedCountry) ?? 0) : 0;
   const dateTimeFormatter = new Intl.DateTimeFormat(toIntlLocale(locale), {
     dateStyle: "medium",
     timeStyle: "short"
@@ -216,6 +345,27 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
       <section className={styles.headerCard}>
         <h1>{translate(locale, "analytics.title")}</h1>
         <p>{translate(locale, "analytics.subtitle")}</p>
+        <div className={styles.inlineFilters}>
+          <span>{translate(locale, "leaderboard.filterWindowLabel")}:</span>
+          {(["7", "30", "90", "all"] as AnalyticsWindow[]).map((window) => {
+            const linkParams = new URLSearchParams();
+            linkParams.set("window", window);
+            if (selectedCountry) {
+              linkParams.set("country", selectedCountry);
+            }
+            const active = selectedWindow === window;
+            return (
+              <Link
+                key={window}
+                href={buildHref("/admin/analytics", linkParams)}
+                className={`${styles.filterPill} ${active ? styles.filterPillActive : ""}`}
+              >
+                {window === "all" ? "∞" : `${window}d`}
+              </Link>
+            );
+          })}
+          {truncated ? <span className={styles.inlineHint}>…</span> : null}
+        </div>
         <div className={styles.kpis}>
           <article>
             <h3>{translate(locale, "analytics.visits")}</h3>
@@ -236,14 +386,14 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      {error ? (
+      {errorMessage ? (
         <section className={styles.notice}>
           <h2>{translate(locale, "analytics.queryFailed")}</h2>
-          <p>{error.message}</p>
+          <p>{errorMessage}</p>
         </section>
       ) : null}
 
-      {!error ? (
+      {!errorMessage ? (
         <section className={styles.grid}>
           <article className={styles.card}>
             <h2>{translate(locale, "analytics.countries")}</h2>
@@ -251,10 +401,13 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
               <ul className={styles.countryList}>
                 {countryEntries.map((entry) => {
                   const isActive = entry.key === selectedCountry;
+                  const countryParams = new URLSearchParams();
+                  countryParams.set("country", entry.key);
+                  countryParams.set("window", selectedWindow);
                   return (
                     <li key={entry.key}>
                       <Link
-                        href={`/admin/analytics?country=${encodeURIComponent(entry.key)}`}
+                        href={buildHref("/admin/analytics", countryParams)}
                         className={`${styles.countryLink} ${isActive ? styles.countryLinkActive : ""}`}
                       >
                         <span>{entry.key}</span>
@@ -278,19 +431,24 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
             {selectedCountry ? (
               detailRows.length > 0 ? (
                 <div className={styles.tableWrap}>
+                  <p className={styles.inlineHint}>
+                    {selectedCountryVisitCount.toLocaleString(toIntlLocale(locale))} {translate(locale, "analytics.visits")}
+                  </p>
                   <table className={styles.detailTable}>
                     <thead>
                       <tr>
                         <th>{translate(locale, "analytics.ipAddress")}</th>
                         <th>{translate(locale, "analytics.city")}</th>
+                        <th>{translate(locale, "analytics.pages")}</th>
                         <th>{translate(locale, "analytics.connectedAt")}</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {detailRows.map((row) => (
-                        <tr key={`${row.ipAddress}-${row.connectedAt}`}>
+                      {detailRows.map((row, index) => (
+                        <tr key={`${row.ipAddress}-${row.connectedAt}-${index}`}>
                           <td>{row.ipAddress}</td>
                           <td>{row.city ?? translate(locale, "common.notAvailable")}</td>
+                          <td>{row.pagePath ?? translate(locale, "common.notAvailable")}</td>
                           <td>
                             <time dateTime={row.connectedAt}>
                               {dateTimeFormatter.format(new Date(row.connectedAt))}
@@ -341,6 +499,22 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
                   <span>
                     {movieTitles.get(entry.key) ??
                       translate(locale, "discussion.tmdbReference", { id: entry.key })}
+                    {(() => {
+                      const users = Array.from(movieUsers.get(entry.key) ?? []);
+                      const labels = users.map((id) => formatUserLabel(id, profileMap, locale)).filter(Boolean);
+                      const unknownCount = movieUnknownUsers.get(entry.key) ?? 0;
+                      if (labels.length === 0 && unknownCount === 0) {
+                        return null;
+                      }
+                      const suffixParts: string[] = [];
+                      if (labels.length > 0) {
+                        suffixParts.push(labels.join(", "));
+                      }
+                      if (unknownCount > 0) {
+                        suffixParts.push(`+${unknownCount}`);
+                      }
+                      return ` (${suffixParts.join(" · ")})`;
+                    })()}
                   </span>
                   <b>{entry.value}</b>
                 </li>
