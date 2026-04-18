@@ -40,7 +40,9 @@ type PageProps = {
 
 type AnalyticsWindow = "7" | "30" | "90" | "all";
 
-const SITE_EVENTS_BATCH_SIZE = 2000;
+// Supabase/PostgREST often caps rows per response (commonly 1000).
+// Keep the requested range at or below that value to ensure reliable paging.
+const SITE_EVENTS_BATCH_SIZE = 1000;
 const MAX_SITE_EVENTS = Math.max(
   10_000,
   Math.min(200_000, Number(process.env.ADMIN_ANALYTICS_MAX_ROWS ?? "100000") || 100000)
@@ -158,11 +160,7 @@ async function fetchAllSiteEvents(
     }
 
     all.push(...rows);
-    if (rows.length < SITE_EVENTS_BATCH_SIZE) {
-      break;
-    }
-
-    from += SITE_EVENTS_BATCH_SIZE;
+    from += rows.length;
     if (from >= MAX_SITE_EVENTS) {
       truncated = true;
       break;
