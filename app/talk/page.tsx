@@ -45,6 +45,13 @@ export default async function TalkPage() {
             {translate(locale, "menu.feedback")}
           </Link>
         </article>
+        <article className={styles.textCard}>
+          <h2>{translate(locale, "menu.supportDonate")}</h2>
+          <p>{translate(locale, "menu.supportDonateText")}</p>
+          <Link href="/donate" className={styles.linkButton}>
+            {translate(locale, "menu.donate")}
+          </Link>
+        </article>
       </div>
     </CatalogPageShell>
   );

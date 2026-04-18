@@ -306,6 +306,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "menu.onTheAir": "On The Air",
   "menu.discuss": "Discuss",
   "menu.feedback": "Feedback",
+  "menu.donate": "Support us",
   "menu.leaderboard": "Leaderboard",
   "menu.support": "Support",
   "menu.apiDocs": "API Docs",
@@ -474,6 +475,22 @@ const BASE_MESSAGES: Record<string, string> = {
   "menu.supportWatchlistText": "Check if movie records and watchlist tables are configured.",
   "menu.supportProfile": "Profile setup",
   "menu.supportProfileText": "Manage name, website, country, and avatar settings.",
+  "menu.supportDonate": "Support the project",
+  "menu.supportDonateText":
+    "If KinoVibe is useful for you, you can leave a small one-time donation without registration.",
+  "menu.donateTitle": "Support KinoVibe",
+  "menu.donateSubtitle":
+    "A subtle one-time donation helps maintain hosting, APIs, and ongoing updates.",
+  "donate.noAccountNeeded": "No registration required",
+  "donate.providerLabel": "Payment provider",
+  "donate.providerValue": "Monobank Jar",
+  "donate.amountUah": "{amount} UAH",
+  "donate.button": "Donate",
+  "donate.disclaimer":
+    "Payment opens on the provider side. KinoVibe does not store card data.",
+  "donate.configMissing": "Donation link is not configured yet.",
+  "donate.configHint":
+    "Add DONATE_MONOBANK_JAR_URL in environment variables to enable donation buttons.",
 
   "feedback.title": "Feedback and suggestions",
   "feedback.subtitle": "Share what works, what breaks, and what we should improve next.",
@@ -748,6 +765,7 @@ const UK_MESSAGES: Record<string, string> = {
   "menu.feedback": "Відгуки та пропозиції",
   "menu.leaderboard": "Таблиця лідерів",
   "menu.support": "Підтримка",
+  "menu.donate": "Підтримати",
   "menu.apiDocs": "Документація API",
   "menu.apiBusiness": "API для бізнесу",
   "discussion.title": "Обговорення",
@@ -986,6 +1004,22 @@ const UK_MESSAGES: Record<string, string> = {
   "feedback.errorMessageTooLong": "Повідомлення має бути до 5000 символів.",
   "feedback.authRequired": "Увійдіть, щоб залишати відгуки та пропозиції.",
   "feedback.supportCardText": "Пишіть, що покращити, і ваші ідеї одразу потраплять власнику проєкту.",
+  "menu.supportDonate": "Підтримати проєкт",
+  "menu.supportDonateText":
+    "Якщо KinoVibe вам корисний, можна залишити невеликий одноразовий донат без реєстрації.",
+  "menu.donateTitle": "Підтримати KinoVibe",
+  "menu.donateSubtitle":
+    "Невеликий донат допомагає покривати хостинг, API та подальші оновлення.",
+  "donate.noAccountNeeded": "Без реєстрації",
+  "donate.providerLabel": "Платіжний провайдер",
+  "donate.providerValue": "Monobank Банка",
+  "donate.amountUah": "{amount} грн",
+  "donate.button": "Переказати",
+  "donate.disclaimer":
+    "Оплата відкривається на стороні провайдера. KinoVibe не зберігає дані картки.",
+  "donate.configMissing": "Посилання для донату ще не налаштоване.",
+  "donate.configHint":
+    "Додайте DONATE_MONOBANK_JAR_URL у змінні середовища, щоб активувати кнопки донату.",
   "monetization.proRequiredTitle": "Функція Pro",
   "monetization.proFiltersHint": "Розширені фільтри доступні у Pro-плані. Оновіть план у профілі, щоб їх розблокувати.",
   "monetization.managePlan": "Керувати планом",
