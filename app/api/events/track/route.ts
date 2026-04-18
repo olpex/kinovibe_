@@ -32,11 +32,28 @@ function getIpAddress(request: Request): string | null {
 }
 
 function getCountryCode(request: Request): string | null {
-  return (
+  const fromHeaders =
     request.headers.get("x-vercel-ip-country")?.trim() ||
     request.headers.get("cf-ipcountry")?.trim() ||
-    null
-  );
+    request.headers.get("cloudfront-viewer-country")?.trim() ||
+    request.headers.get("x-appengine-country")?.trim() ||
+    request.headers.get("x-country-code")?.trim() ||
+    null;
+  if (fromHeaders) {
+    return fromHeaders;
+  }
+
+  const acceptLanguage = request.headers.get("accept-language")?.trim() || "";
+  if (!acceptLanguage) {
+    return null;
+  }
+
+  const primary = acceptLanguage.split(",")[0]?.trim() || "";
+  const regionMatch = primary.match(/^[a-z]{2,3}-([a-z]{2}|\d{3})$/i);
+  if (!regionMatch?.[1]) {
+    return null;
+  }
+  return regionMatch[1].toUpperCase();
 }
 
 function readGeoHeader(request: Request, headerName: string): string | null {

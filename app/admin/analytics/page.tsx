@@ -28,7 +28,6 @@ type SiteEventRow = {
 type CountryConnectionRow = {
   ipAddress: string;
   city: string | null;
-  pagePath: string | null;
   connectedAt: string;
 };
 
@@ -308,7 +307,6 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
       detailRows.push({
         ipAddress: event.ip_address?.trim() || translate(locale, "common.notAvailable"),
         city,
-        pagePath: event.page_path?.trim() || null,
         connectedAt: event.created_at
       });
     }
@@ -439,7 +437,6 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
                       <tr>
                         <th>{translate(locale, "analytics.ipAddress")}</th>
                         <th>{translate(locale, "analytics.city")}</th>
-                        <th>{translate(locale, "analytics.pages")}</th>
                         <th>{translate(locale, "analytics.connectedAt")}</th>
                       </tr>
                     </thead>
@@ -448,7 +445,6 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
                         <tr key={`${row.ipAddress}-${row.connectedAt}-${index}`}>
                           <td>{row.ipAddress}</td>
                           <td>{row.city ?? translate(locale, "common.notAvailable")}</td>
-                          <td>{row.pagePath ?? translate(locale, "common.notAvailable")}</td>
                           <td>
                             <time dateTime={row.connectedAt}>
                               {dateTimeFormatter.format(new Date(row.connectedAt))}
