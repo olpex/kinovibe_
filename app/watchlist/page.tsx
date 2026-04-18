@@ -197,20 +197,22 @@ export default async function WatchlistPage() {
     rawItems.map((item) => item.tmdbId),
     locale
   );
-  const items = rawItems.map((item) => {
-    const localized = localizedMap.get(item.tmdbId);
-    if (!localized) {
-      return item;
-    }
-    return {
-      ...item,
-      title: localized.title,
-      year: localized.year,
-      genre: localized.genre,
-      rating: localized.rating,
-      posterUrl: localized.posterUrl ?? item.posterUrl
-    };
-  });
+  const items = rawItems
+    .map((item) => {
+      const localized = localizedMap.get(item.tmdbId);
+      if (!localized) {
+        return null;
+      }
+      return {
+        ...item,
+        title: localized.title,
+        year: localized.year,
+        genre: localized.genre,
+        rating: localized.rating,
+        posterUrl: localized.posterUrl ?? item.posterUrl
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
   const grouped = STATUS_ORDER.map((status) => ({
     status,
     label: translate(locale, STATUS_LABELS[status]),

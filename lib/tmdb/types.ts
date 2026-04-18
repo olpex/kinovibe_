@@ -12,6 +12,7 @@ export type TmdbMovie = {
   title: string;
   release_date: string | null;
   vote_average: number;
+  original_language?: string | null;
   genre_ids: number[];
   poster_path: string | null;
   backdrop_path: string | null;
@@ -131,6 +132,7 @@ export type TmdbTv = {
   name: string;
   first_air_date: string | null;
   vote_average: number;
+  original_language?: string | null;
   genre_ids: number[];
   origin_country?: string[];
   poster_path: string | null;
@@ -237,6 +239,8 @@ export type TmdbPersonKnownForItem = {
   name?: string;
   release_date?: string | null;
   first_air_date?: string | null;
+  original_language?: string | null;
+  origin_country?: string[] | null;
   poster_path?: string | null;
   vote_average?: number;
 };
@@ -287,6 +291,8 @@ export type TmdbPersonCombinedCreditsResponse = {
     character?: string;
     release_date?: string | null;
     first_air_date?: string | null;
+    original_language?: string | null;
+    origin_country?: string[] | null;
     poster_path?: string | null;
     vote_average?: number;
   }>;

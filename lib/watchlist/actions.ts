@@ -7,6 +7,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getTmdbMovieDetails, isBlockedMediaError } from "@/lib/tmdb/client";
 import { ensureMovieRecord, parseRuntimeToMinutes } from "./server";
 import {
   WATCHLIST_DEFAULT_STATE,
@@ -101,6 +102,20 @@ export async function watchlistAction(
       ok: false,
       message: translate(locale, "watchlist.errorSignIn")
     };
+  }
+  if (operation !== "remove") {
+    try {
+      await getTmdbMovieDetails(payload.tmdbId, locale);
+    } catch (error) {
+      if (isBlockedMediaError(error)) {
+        return {
+          ...previousState,
+          ok: false,
+          authenticated: true,
+          message: translate(locale, "watchlist.blockedContent")
+        };
+      }
+    }
   }
 
   const ensuredMovie = await ensureMovieRecord(payload);

@@ -151,6 +151,108 @@ const REGION_BY_LOCALE: Record<Locale, string> = {
   me: "ME"
 };
 
+const BLOCKED_MEDIA_LANGUAGE_CODES = new Set(["ru"]);
+const BLOCKED_MEDIA_COUNTRY_CODES = new Set(["RU"]);
+const BLOCKED_MEDIA_ERROR_CODE = "BLOCKED_MEDIA_CONTENT";
+
+class BlockedMediaContentError extends Error {
+  code: string;
+
+  constructor(message = "Blocked media content") {
+    super(message);
+    this.name = "BlockedMediaContentError";
+    this.code = BLOCKED_MEDIA_ERROR_CODE;
+  }
+}
+
+function normalizeLanguageCode(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toLowerCase() ?? "";
+  return normalized || null;
+}
+
+function normalizeCountryCode(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toUpperCase() ?? "";
+  return normalized || null;
+}
+
+function hasBlockedLanguage(language: string | null | undefined): boolean {
+  const normalizedLanguage = normalizeLanguageCode(language);
+  return normalizedLanguage ? BLOCKED_MEDIA_LANGUAGE_CODES.has(normalizedLanguage) : false;
+}
+
+function hasBlockedCountry(countries: Array<string | null | undefined> | null | undefined): boolean {
+  if (!countries || countries.length === 0) {
+    return false;
+  }
+
+  return countries.some((country) => {
+    const normalizedCountry = normalizeCountryCode(country);
+    return normalizedCountry ? BLOCKED_MEDIA_COUNTRY_CODES.has(normalizedCountry) : false;
+  });
+}
+
+function isBlockedMovieSummary(movie: TmdbMovie): boolean {
+  return hasBlockedLanguage(movie.original_language);
+}
+
+function isBlockedTvSummary(tv: TmdbTv): boolean {
+  return hasBlockedLanguage(tv.original_language) || hasBlockedCountry(tv.origin_country ?? []);
+}
+
+function isBlockedMovieDetails(details: TmdbMovieDetailsResponse): boolean {
+  return (
+    hasBlockedLanguage(details.original_language) ||
+    hasBlockedCountry((details.production_countries ?? []).map((country) => country.iso_3166_1))
+  );
+}
+
+function isBlockedTvDetails(details: TmdbTvDetailsResponse): boolean {
+  return (
+    hasBlockedLanguage(details.original_language) ||
+    hasBlockedCountry((details.production_countries ?? []).map((country) => country.iso_3166_1))
+  );
+}
+
+function isBlockedPersonCredit(
+  item: TmdbPersonCombinedCreditsResponse["cast"][number]
+): boolean {
+  if (item.media_type === "movie") {
+    return hasBlockedLanguage(item.original_language);
+  }
+
+  return hasBlockedLanguage(item.original_language) || hasBlockedCountry(item.origin_country ?? []);
+}
+
+function isBlockedKnownForItem(item: TmdbPersonKnownForItem): boolean {
+  if (item.media_type === "movie") {
+    return hasBlockedLanguage(item.original_language);
+  }
+
+  return hasBlockedLanguage(item.original_language) || hasBlockedCountry(item.origin_country ?? []);
+}
+
+function assertMovieDetailsAllowed(details: TmdbMovieDetailsResponse): void {
+  if (isBlockedMovieDetails(details)) {
+    throw new BlockedMediaContentError();
+  }
+}
+
+function assertTvDetailsAllowed(details: TmdbTvDetailsResponse): void {
+  if (isBlockedTvDetails(details)) {
+    throw new BlockedMediaContentError();
+  }
+}
+
+export function isBlockedMediaError(error: unknown): boolean {
+  return (
+    error instanceof BlockedMediaContentError ||
+    (typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: string }).code === BLOCKED_MEDIA_ERROR_CODE)
+  );
+}
+
 function parseYear(releaseDate: string | null): number {
   if (!releaseDate) {
     return 0;
@@ -1146,12 +1248,15 @@ export async function getTmdbHomeCatalog(locale: Locale = "en"): Promise<TmdbHom
     throw new Error("TMDB home catalog unavailable");
   }
 
-  const trendingSource =
-    trendingResponse?.results ?? popularResponse?.results ?? topRatedResponse?.results ?? [];
-  const popularSource =
-    popularResponse?.results ?? trendingResponse?.results ?? topRatedResponse?.results ?? [];
-  const topRatedSource =
-    topRatedResponse?.results ?? popularResponse?.results ?? trendingResponse?.results ?? [];
+  const trendingSource = (
+    trendingResponse?.results ?? popularResponse?.results ?? topRatedResponse?.results ?? []
+  ).filter((movie) => !isBlockedMovieSummary(movie));
+  const popularSource = (
+    popularResponse?.results ?? trendingResponse?.results ?? topRatedResponse?.results ?? []
+  ).filter((movie) => !isBlockedMovieSummary(movie));
+  const topRatedSource = (
+    topRatedResponse?.results ?? popularResponse?.results ?? trendingResponse?.results ?? []
+  ).filter((movie) => !isBlockedMovieSummary(movie));
 
   const trendingNow = trendingSource
     .slice(0, 8)
@@ -1270,13 +1375,14 @@ export async function getTmdbMovieCatalogPage(
     { language, page: String(safePage), ...(config.params ?? {}), ...regionParams },
     900
   );
+  const filteredResults = response.results.filter((movie) => !isBlockedMovieSummary(movie));
 
   return {
     page: response.page,
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
+      filteredResults.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
     )
   };
 }
@@ -1335,13 +1441,14 @@ export async function discoverTmdbMovieCatalogPage(
     },
     900
   );
+  const filteredResults = response.results.filter((movie) => !isBlockedMovieSummary(movie));
 
   return {
     page: response.page,
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
+      filteredResults.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
     )
   };
 }
@@ -1359,13 +1466,14 @@ export async function getTmdbTvCatalogPage(
     { language, page: String(safePage) },
     900
   );
+  const filteredResults = response.results.filter((tv) => !isBlockedTvSummary(tv));
 
   return {
     page: response.page,
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((tv) => localizeTvCard(mapTmdbTvToCard(tv, genresMap, locale), locale))
+      filteredResults.map((tv) => localizeTvCard(mapTmdbTvToCard(tv, genresMap, locale), locale))
     )
   };
 }
@@ -1890,6 +1998,10 @@ export async function getTvOnAirSchedulePage(
 
     const network = show.network ?? show.webChannel ?? null;
     const networkCountryCode = safeRegionCode(network?.country?.code, region);
+    const normalizedShowLanguage = normalizeTvMazeLanguageToCode(show.language);
+    if (hasBlockedCountry([networkCountryCode]) || hasBlockedLanguage(normalizedShowLanguage)) {
+      continue;
+    }
     if (filters.originCountry && networkCountryCode !== safeRegionCode(filters.originCountry, region)) {
       continue;
     }
@@ -2028,6 +2140,10 @@ export const getTvOnAirShowDetails = cache(
       ? localizeScheduleDate(scheduleEntry.airdate, locale, preferredTimeZone)
       : dateLabel;
     const countryCode = safeRegionCode(resolvedNetwork?.country?.code, region);
+    const normalizedShowLanguage = normalizeTvMazeLanguageToCode(show.language);
+    if (hasBlockedCountry([countryCode]) || hasBlockedLanguage(normalizedShowLanguage)) {
+      return null;
+    }
     const localizedCountry = localizeCountryName(countryCode, countryName, locale);
 
     const imdbId = show.externals?.imdb?.trim() ?? "";
@@ -2049,7 +2165,10 @@ export const getTvOnAirShowDetails = cache(
         backdropUrl = tmdbDetails.backdropUrl;
         tmdbTitle = sanitizeNarrativeText(tmdbDetails.title, 180) || undefined;
         tmdbOverview = sanitizeNarrativeText(tmdbDetails.overview, 220) || undefined;
-      } catch {
+      } catch (error) {
+        if (isBlockedMediaError(error)) {
+          return null;
+        }
         trailerUrl = undefined;
       }
     }
@@ -2172,13 +2291,14 @@ export async function discoverTmdbTvCatalogPage(
     },
     900
   );
+  const filteredResults = response.results.filter((tv) => !isBlockedTvSummary(tv));
 
   return {
     page: response.page,
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((tv) => localizeTvCard(mapTmdbTvToCard(tv, genresMap, locale), locale))
+      filteredResults.map((tv) => localizeTvCard(mapTmdbTvToCard(tv, genresMap, locale), locale))
     )
   };
 }
@@ -2201,11 +2321,12 @@ export type TmdbPagedPeople = {
 };
 
 function personKnownForLabel(items: TmdbPersonKnownForItem[], locale: Locale): string {
-  if (items.length === 0) {
+  const allowedItems = items.filter((item) => !isBlockedKnownForItem(item));
+  if (allowedItems.length === 0) {
     return translate(locale, "person.noKnownTitles");
   }
 
-  return items
+  return allowedItems
     .slice(0, 3)
     .map((item) => item.title ?? item.name ?? translate(locale, "person.untitled"))
     .join(", ");
@@ -2281,6 +2402,66 @@ function parseAwardMovieTmdbId(rawId: string): number | undefined {
   }
 
   return parsed;
+}
+
+const isBlockedTmdbMovieId = cache(async (movieId: number): Promise<boolean> => {
+  if (!Number.isFinite(movieId) || movieId <= 0) {
+    return false;
+  }
+
+  try {
+    const details = await fetchTmdb<TmdbMovieDetailsResponse>(
+      `/movie/${movieId}`,
+      { language: "en-US" },
+      21600
+    );
+    return isBlockedMovieDetails(details);
+  } catch {
+    return false;
+  }
+});
+
+export async function isTmdbMovieBlockedByPolicy(movieId: number): Promise<boolean> {
+  return isBlockedTmdbMovieId(movieId);
+}
+
+const isBlockedTmdbTvId = cache(async (tvId: number): Promise<boolean> => {
+  if (!Number.isFinite(tvId) || tvId <= 0) {
+    return false;
+  }
+
+  try {
+    const details = await fetchTmdb<TmdbTvDetailsResponse>(
+      `/tv/${tvId}`,
+      { language: "en-US" },
+      21600
+    );
+    return isBlockedTvDetails(details);
+  } catch {
+    return false;
+  }
+});
+
+export async function isTmdbTvBlockedByPolicy(tvId: number): Promise<boolean> {
+  return isBlockedTmdbTvId(tvId);
+}
+
+async function filterBlockedAwardCards(
+  items: AwardCard[],
+  category: "popular" | "upcoming"
+): Promise<AwardCard[]> {
+  const filtered = await Promise.all(
+    items.map(async (item) => {
+      if (!item.movieTmdbId) {
+        return category === "popular" ? null : item;
+      }
+
+      const blocked = await isBlockedTmdbMovieId(item.movieTmdbId);
+      return blocked ? null : item;
+    })
+  );
+
+  return filtered.filter((item): item is AwardCard => item !== null);
 }
 
 function normalizeAwardText(value: string): string {
@@ -2947,10 +3128,11 @@ export async function getTmdbAwards(
         .map((item) => mapAwardResult(item, locale))
         .filter((item): item is AwardCard => item !== null)
         .slice(0, 24);
+      const allowedTmdbItems = await filterBlockedAwardCards(tmdbItems, category);
 
-      if (tmdbItems.length > 0) {
+      if (allowedTmdbItems.length > 0) {
         return {
-          items: tmdbItems,
+          items: allowedTmdbItems,
           dataSourceStatus: "tmdb"
         };
       }
@@ -2960,9 +3142,10 @@ export async function getTmdbAwards(
   }
 
   const wikidataItems = await getWikidataAwards(category, locale);
-  if (wikidataItems.length > 0) {
+  const allowedWikidataItems = await filterBlockedAwardCards(wikidataItems, category);
+  if (allowedWikidataItems.length > 0) {
     return {
-      items: wikidataItems,
+      items: allowedWikidataItems,
       dataSourceStatus: "fallback"
     };
   }
@@ -3011,6 +3194,7 @@ export async function searchTmdbMovies(
     },
     900
   );
+  const filteredResults = response.results.filter((movie) => !isBlockedMovieSummary(movie));
 
   return {
     query: normalizedQuery,
@@ -3018,7 +3202,7 @@ export async function searchTmdbMovies(
     totalPages: response.total_pages,
     totalResults: response.total_results,
     items: await Promise.all(
-      response.results.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
+      filteredResults.map((movie) => localizeCard(mapTmdbMovieToCard(movie, genresMap, locale), locale))
     )
   };
 }
@@ -3129,6 +3313,9 @@ const getTmdbMovieCountryNames = cache(
         { language: toTmdbLanguage(locale) },
         86400
       );
+      if (isBlockedMovieDetails(details)) {
+        return [];
+      }
       return localizeCountryNames(details.production_countries ?? [], locale);
     } catch {
       return [];
@@ -3144,6 +3331,9 @@ const getTmdbTvCountryNames = cache(
         { language: toTmdbLanguage(locale) },
         86400
       );
+      if (isBlockedTvDetails(details)) {
+        return [];
+      }
       return localizeCountryNames(details.production_countries ?? [], locale);
     } catch {
       return [];
@@ -3342,6 +3532,7 @@ export const getTmdbMovieDetails = cache(
         fetchTmdb<TmdbMovieWatchProvidersResponse>(`/movie/${movieId}/watch/providers`, {}, 3600),
         fetchMovieTranslations(movieId)
       ]);
+    assertMovieDetailsAllowed(details);
 
     const trailer = selectBestTrailer(videoResults);
 
@@ -3357,6 +3548,7 @@ export const getTmdbMovieDetails = cache(
 
     const genresMap = await getGenresMap(locale);
     const similarItems = similar.results
+      .filter((movie) => !isBlockedMovieSummary(movie))
       .slice(0, 8)
       .map((movie) => mapTmdbMovieToCard(movie, genresMap, locale));
 
@@ -3545,6 +3737,7 @@ export const getTmdbTvDetails = cache(
         fetchTmdb<TmdbMovieWatchProvidersResponse>(`/tv/${tvId}/watch/providers`, {}, 3600),
         fetchTvTranslations(tvId)
       ]);
+    assertTvDetailsAllowed(details);
 
     const trailer = selectBestTrailer(videoResults);
 
@@ -3560,6 +3753,7 @@ export const getTmdbTvDetails = cache(
 
     const genresMap = await getTvGenresMap(locale);
     const similarItems = similar.results
+      .filter((item) => !isBlockedTvSummary(item))
       .slice(0, 8)
       .map((item) => mapTmdbTvToCard(item, genresMap, locale));
 
@@ -3794,6 +3988,11 @@ export const getTmdbPersonDetails = cache(
     }
 
     const normalizedEnglishBiography = normalizeNonEmptyText(detailsInEnglish?.biography);
+    const eligibleCredits = credits.cast.filter(
+      (credit) =>
+        (credit.media_type === "movie" || credit.media_type === "tv") &&
+        !isBlockedPersonCredit(credit)
+    );
     const safeLocalizedBiography =
       locale !== "en" &&
       localizedBiography &&
@@ -3822,8 +4021,7 @@ export const getTmdbPersonDetails = cache(
       preferredBiographySource ??
       (locale === "en" ? normalizedDetailsBiography ?? snapshot.biography ?? "" : safeLocalizedBiography ?? "");
     const generatedBiography = shortenInformativeText(
-      `${details.name}. ${translate(locale, "person.department")}: ${normalizeNonEmptyText(details.known_for_department) ?? snapshot.department ?? translate(locale, "common.notAvailable")}. ${translate(locale, "menu.knownFor")}: ${credits.cast
-        .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
+      `${details.name}. ${translate(locale, "person.department")}: ${normalizeNonEmptyText(details.known_for_department) ?? snapshot.department ?? translate(locale, "common.notAvailable")}. ${translate(locale, "menu.knownFor")}: ${eligibleCredits
         .map((credit) => credit.title ?? credit.name ?? translate(locale, "person.untitled"))
         .filter((title) => title.trim().length > 0)
         .slice(0, 3)
@@ -3847,8 +4045,7 @@ export const getTmdbPersonDetails = cache(
       homepage: details.homepage,
       avatarUrl: posterUrl(details.profile_path ?? snapshot.profilePath ?? null),
       knownFor: await Promise.all(
-        credits.cast
-          .filter((credit) => credit.media_type === "movie" || credit.media_type === "tv")
+        eligibleCredits
           .map((credit) => mapPersonCredit(credit, locale))
           .sort((a, b) => b.rating - a.rating)
           .slice(0, 20)
@@ -3876,6 +4073,9 @@ export async function getTmdbMovieLocalizedSummaries(
           { language },
           3600
         );
+        if (isBlockedMovieDetails(details)) {
+          return null;
+        }
         return {
           tmdbId: movieId,
           title: details.title,

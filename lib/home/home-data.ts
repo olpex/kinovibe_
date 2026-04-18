@@ -1,7 +1,7 @@
 import { continueWatching, genreChips, topPicks, trendingNow } from "@/components/home/mock-data";
 import { HomeScreenData, MovieCard } from "@/components/home/types";
 import { DEFAULT_LOCALE, translate, type Locale } from "@/lib/i18n/shared";
-import { HomeMovie, getTmdbHomeCatalog } from "@/lib/tmdb/client";
+import { HomeMovie, getTmdbHomeCatalog, isTmdbMovieBlockedByPolicy } from "@/lib/tmdb/client";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function asNumber(value: unknown, fallback = 0): number {
@@ -91,34 +91,36 @@ async function getSupabaseContinueWatching(
     return [];
   }
 
-  const cards = data
-    .map<MovieCard | null>((item, index) => {
-      const movie = Array.isArray(item.movie) ? item.movie[0] : item.movie;
-      if (!movie) {
-        return null;
-      }
+  const cards = (await Promise.all(data.map(async (item, index): Promise<MovieCard | null> => {
+    const movie = Array.isArray(item.movie) ? item.movie[0] : item.movie;
+    if (!movie) {
+      return null;
+    }
 
-      const id = asNumber(movie.tmdb_id, 50000 + index);
-      const genreSource = movie.genres;
-      const genre = Array.isArray(genreSource)
-        ? asString(genreSource[0], translate(locale, "home.defaultGenre"))
-        : asString(genreSource, translate(locale, "home.defaultGenre"));
+    const id = asNumber(movie.tmdb_id, 50000 + index);
+    if (await isTmdbMovieBlockedByPolicy(id)) {
+      return null;
+    }
+    const genreSource = movie.genres;
+    const genre = Array.isArray(genreSource)
+      ? asString(genreSource[0], translate(locale, "home.defaultGenre"))
+      : asString(genreSource, translate(locale, "home.defaultGenre"));
 
-      return {
-        id,
-        title: asString(movie.title, "KinoVibe"),
-        year: asNumber(movie.year, new Date().getUTCFullYear()),
-        genre,
-        countries: [],
-        runtime: toRuntimeLabel(movie.runtime, translate(locale, "home.runtimeTbd")),
-        rating: asNumber(movie.vote_average, 0),
-        progress: asNumber(item.progress_percent, 0),
-        gradient: gradientByMovieId(id),
-        posterUrl: asOptionalString(movie.poster_url),
-        overview: undefined,
-        backdropUrl: undefined
-      };
-    })
+    return {
+      id,
+      title: asString(movie.title, "KinoVibe"),
+      year: asNumber(movie.year, new Date().getUTCFullYear()),
+      genre,
+      countries: [],
+      runtime: toRuntimeLabel(movie.runtime, translate(locale, "home.runtimeTbd")),
+      rating: asNumber(movie.vote_average, 0),
+      progress: asNumber(item.progress_percent, 0),
+      gradient: gradientByMovieId(id),
+      posterUrl: asOptionalString(movie.poster_url),
+      overview: undefined,
+      backdropUrl: undefined
+    };
+  })))
     .filter((item): item is MovieCard => item !== null);
 
   return cards;
@@ -141,9 +143,11 @@ async function getSupabaseTopPicks(
     return [];
   }
 
-  const cards = data
-    .map((movie, index) => {
+  const cards = (await Promise.all(data.map(async (movie, index): Promise<MovieCard | null> => {
       const id = asNumber(movie.tmdb_id, 70000 + index);
+      if (await isTmdbMovieBlockedByPolicy(id)) {
+        return null;
+      }
       const genreSource = movie.genres;
       const genre = Array.isArray(genreSource)
         ? asString(genreSource[0], translate(locale, "home.defaultGenre"))
@@ -162,7 +166,7 @@ async function getSupabaseTopPicks(
         overview: asString(movie.overview, ""),
         backdropUrl: undefined
       } satisfies MovieCard;
-    });
+    }))).filter((item): item is MovieCard => item !== null);
 
   return cards;
 }

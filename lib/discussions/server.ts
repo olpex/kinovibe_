@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { translate, type Locale } from "@/lib/i18n/shared";
+import { isTmdbMovieBlockedByPolicy, isTmdbTvBlockedByPolicy } from "@/lib/tmdb/client";
 import { DiscussionEntry, DiscussionMediaType, DiscussionThreadSummary } from "./types";
 
 function isDiscussionMediaType(value: unknown): value is DiscussionMediaType {
@@ -15,6 +16,12 @@ export async function getMediaDiscussions(
   const safeLimit = Math.max(1, Math.min(limit, 100));
   const supabase = await createSupabaseServerClient();
   if (!supabase || !tmdbId) {
+    return [];
+  }
+  if (mediaType === "movie" && (await isTmdbMovieBlockedByPolicy(tmdbId))) {
+    return [];
+  }
+  if (mediaType === "tv" && (await isTmdbTvBlockedByPolicy(tmdbId))) {
     return [];
   }
 
@@ -82,6 +89,34 @@ export async function getDiscussionThreadsByCategory(
   }
 
   const unknownAuthor = translate(locale, "discussion.unknownAuthor");
+  const tmdbIds = Array.from(
+    new Set(
+      (data ?? [])
+        .map((row) => Number(row.media_tmdb_id))
+        .filter((value) => Number.isFinite(value) && value > 0)
+    )
+  );
+  const blockedIds = new Set<number>();
+  if (mediaType === "movie" && tmdbIds.length > 0) {
+    const blockedMovies = await Promise.all(
+      tmdbIds.map(async (id) => ((await isTmdbMovieBlockedByPolicy(id)) ? id : null))
+    );
+    for (const id of blockedMovies) {
+      if (id) {
+        blockedIds.add(id);
+      }
+    }
+  }
+  if (mediaType === "tv" && tmdbIds.length > 0) {
+    const blockedTv = await Promise.all(
+      tmdbIds.map(async (id) => ((await isTmdbTvBlockedByPolicy(id)) ? id : null))
+    );
+    for (const id of blockedTv) {
+      if (id) {
+        blockedIds.add(id);
+      }
+    }
+  }
 
   const threadMap = new Map<string, DiscussionThreadSummary>();
 
@@ -94,6 +129,9 @@ export async function getDiscussionThreadsByCategory(
     const rowAuthor = typeof row.author_name === "string" ? row.author_name.trim() : unknownAuthor;
 
     if (!isDiscussionMediaType(rowMediaType) || rowMediaType !== mediaType || Number.isNaN(rowTmdbId)) {
+      continue;
+    }
+    if (blockedIds.has(rowTmdbId)) {
       continue;
     }
 

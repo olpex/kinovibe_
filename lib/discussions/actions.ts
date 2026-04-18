@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isTmdbMovieBlockedByPolicy, isTmdbTvBlockedByPolicy } from "@/lib/tmdb/client";
 import { DISCUSSION_DEFAULT_STATE, type DiscussionMediaType, type DiscussionUiState } from "./types";
 
 function isDiscussionMediaType(value: unknown): value is DiscussionMediaType {
@@ -75,6 +76,22 @@ export async function discussionAction(
       message: translate(locale, "discussion.errorPayload")
     };
   }
+  if (mediaType === "movie" && (await isTmdbMovieBlockedByPolicy(mediaTmdbId))) {
+    return {
+      ...previousState,
+      ok: false,
+      authenticated: false,
+      message: translate(locale, "discussion.blockedContent")
+    };
+  }
+  if (mediaType === "tv" && (await isTmdbTvBlockedByPolicy(mediaTmdbId))) {
+    return {
+      ...previousState,
+      ok: false,
+      authenticated: false,
+      message: translate(locale, "discussion.blockedContent")
+    };
+  }
 
   const { data: authData } = await supabase.auth.getUser();
   const user = authData.user;
@@ -127,4 +144,3 @@ export async function discussionAction(
     refreshKey: Date.now()
   };
 }
-
