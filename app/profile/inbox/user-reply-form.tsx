@@ -22,17 +22,18 @@ export function UserReplyForm({ entryId, parentReplyId, locale }: UserReplyFormP
       {state.message ? (
         <p className={state.ok ? styles.replyOk : styles.replyError}>{state.message}</p>
       ) : null}
-      <form action={formAction}>
+      <form action={formAction} className={styles.replyFormBody}>
         <input type="hidden" name="entry_id" value={entryId} />
         <input type="hidden" name="parent_reply_id" value={parentReplyId} />
         <textarea
+          className={styles.replyTextarea}
           name="body"
           rows={3}
           maxLength={5000}
           required
           placeholder={translate(locale, "inbox.replyPlaceholder")}
         />
-        <button type="submit" disabled={pending}>
+        <button type="submit" className={styles.replySubmitButton} disabled={pending}>
           {pending ? translate(locale, "common.sending") : translate(locale, "inbox.sendReply")}
         </button>
       </form>
