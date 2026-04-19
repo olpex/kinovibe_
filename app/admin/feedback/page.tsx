@@ -10,7 +10,6 @@ import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/supabase/session";
-import { closeFeedbackThreadAction } from "./actions";
 import { ReplyForm } from "./reply-form";
 import styles from "./admin-feedback.module.css";
 
@@ -59,6 +58,7 @@ type AdminNotifRow = {
   id: number;
   title: string;
   body: string;
+  feedback_entry_id: number | null;
   created_at: string;
 };
 
@@ -104,43 +104,54 @@ export default async function AdminFeedbackPage() {
   }
 
   // Load all feedback entries
-  const { data: entriesWithOptional, error: entriesError } = await client
-    .from("feedback_entries")
-    .select("id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id,is_read_by_admin,is_closed_by_admin")
-    .order("created_at", { ascending: false })
-    .limit(200);
-  let rows = (entriesWithOptional ?? []) as (FeedbackRow & {
-    parent_reply_id?: number | null;
-    is_closed_by_admin?: boolean;
-    is_read_by_admin?: boolean;
-  })[];
-  let supportsCloseFlag = true;
-  if (entriesError) {
-    console.error("[admin-feedback] failed to load feedback_entries", entriesError);
-    // Backward-compatible fallback for databases without newer optional columns.
-    const { data: entriesLegacy, error: entriesLegacyError } = await client
+  let rows: Array<
+    FeedbackRow & {
+      parent_reply_id?: number | null;
+      is_closed_by_admin?: boolean;
+      is_read_by_admin?: boolean;
+    }
+  > = [];
+  let supportsCloseFlag = false;
+  let supportsReadFlag = false;
+  let supportsParentReplyId = false;
+
+  const feedbackSelectAttempts = [
+    "id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id,is_read_by_admin,is_closed_by_admin",
+    "id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id,is_read_by_admin",
+    "id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id",
+    "id,user_id,user_email,locale,category,subject,message,page_path,created_at"
+  ] as const;
+
+  for (const selectClause of feedbackSelectAttempts) {
+    const { data, error } = await client
       .from("feedback_entries")
-      .select("id,user_id,user_email,locale,category,subject,message,page_path,created_at,parent_reply_id,is_read_by_admin")
+      .select(selectClause)
       .order("created_at", { ascending: false })
       .limit(200);
-    if (entriesLegacyError) {
-      console.error("[admin-feedback] failed to load legacy feedback_entries", entriesLegacyError);
-      rows = [];
-    } else {
-      rows = (entriesLegacy ?? []) as (FeedbackRow & {
-        parent_reply_id?: number | null;
-        is_read_by_admin?: boolean;
-      })[];
-      supportsCloseFlag = false;
+
+    if (error) {
+      console.error("[admin-feedback] failed to load feedback_entries", {
+        selectClause,
+        error
+      });
+      continue;
     }
+
+    rows = (data ?? []) as unknown as typeof rows;
+    supportsCloseFlag = selectClause.includes("is_closed_by_admin");
+    supportsReadFlag = selectClause.includes("is_read_by_admin");
+    supportsParentReplyId = selectClause.includes("parent_reply_id");
+    break;
   }
+
   let fallbackNotifications: AdminNotifRow[] = [];
   if (rows.length === 0 && session.userId && serverClient) {
     const { data: notifs, error: notifsError } = await serverClient
       .from("inbox_notifications")
-      .select("id,title,body,created_at")
+      .select("id,title,body,feedback_entry_id,created_at")
       .eq("recipient_user_id", session.userId)
       .eq("notification_type", "feedback_received")
+      .eq("is_read", false)
       .order("created_at", { ascending: false })
       .limit(200);
     if (notifsError) {
@@ -169,34 +180,39 @@ export default async function AdminFeedbackPage() {
 
   // User replies (feedback entries with parent_reply_id set — thread continuation)
   const userRepliesMap = new Map<number, UserReplyRow[]>();
-  for (const row of rows) {
-    if (row.parent_reply_id) {
-      // Find which entry was it a reply to via parent_reply_id
-      const existingReplies = repliesMap.entries();
-      for (const [entryId, adminReplies] of existingReplies) {
-        const parentReply = adminReplies.find((ar) => ar.id === row.parent_reply_id);
-        if (parentReply) {
-          const list = userRepliesMap.get(entryId) ?? [];
-          list.push({
-            id: row.id,
-            parent_reply_id: row.parent_reply_id,
-            user_email: row.user_email,
-            message: row.message,
-            created_at: row.created_at,
-            is_admin: false
-          });
-          userRepliesMap.set(entryId, list);
-          break;
+  if (supportsParentReplyId) {
+    for (const row of rows) {
+      if (row.parent_reply_id) {
+        // Find which entry was it a reply to via parent_reply_id
+        const existingReplies = repliesMap.entries();
+        for (const [entryId, adminReplies] of existingReplies) {
+          const parentReply = adminReplies.find((ar) => ar.id === row.parent_reply_id);
+          if (parentReply) {
+            const list = userRepliesMap.get(entryId) ?? [];
+            list.push({
+              id: row.id,
+              parent_reply_id: row.parent_reply_id,
+              user_email: row.user_email,
+              message: row.message,
+              created_at: row.created_at,
+              is_admin: false
+            });
+            userRepliesMap.set(entryId, list);
+            break;
+          }
         }
       }
     }
   }
 
   // Top-level entries (not user replies)
-  const topLevelRows = rows.filter((r) => !r.parent_reply_id);
+  const topLevelRows = supportsParentReplyId ? rows.filter((r) => !r.parent_reply_id) : rows;
   const openTopLevelCount = supportsCloseFlag
     ? topLevelRows.filter((row) => !row.is_closed_by_admin).length
-    : topLevelRows.filter((row) => !row.is_read_by_admin).length;
+    : supportsReadFlag
+      ? topLevelRows.filter((row) => !row.is_read_by_admin).length
+      : topLevelRows.length;
+  const headerCount = topLevelRows.length > 0 ? openTopLevelCount : fallbackNotifications.length;
 
   return (
     <main className={styles.page}>
@@ -223,7 +239,7 @@ export default async function AdminFeedbackPage() {
 
       <section className={styles.headerCard}>
         <h1>{headingTitle}</h1>
-        <p>{translate(locale, "admin.feedbackSubtitle", { count: openTopLevelCount })}</p>
+        <p>{translate(locale, "admin.feedbackSubtitle", { count: headerCount })}</p>
       </section>
 
       {topLevelRows.length === 0 && fallbackNotifications.length === 0 ? (
@@ -245,6 +261,9 @@ export default async function AdminFeedbackPage() {
               </div>
               <p className={styles.entrySubject}>{notification.title}</p>
               <p className={styles.entryBody}>{notification.body}</p>
+              {notification.feedback_entry_id ? (
+                <ReplyForm entryId={notification.feedback_entry_id} locale={locale} />
+              ) : null}
             </article>
           ))}
         </div>
@@ -253,7 +272,9 @@ export default async function AdminFeedbackPage() {
           {topLevelRows.map((entry) => {
             const isClosed = supportsCloseFlag
               ? Boolean(entry.is_closed_by_admin)
-              : Boolean(entry.is_read_by_admin);
+              : supportsReadFlag
+                ? Boolean(entry.is_read_by_admin)
+                : false;
             const adminReplies = repliesMap.get(entry.id) ?? [];
             const userReplies = userRepliesMap.get(entry.id) ?? [];
 
@@ -331,17 +352,7 @@ export default async function AdminFeedbackPage() {
                   </div>
                 ) : null}
 
-                <div className={styles.entryActions}>
-                  {!isClosed ? (
-                    <form action={closeFeedbackThreadAction} className={styles.closeForm}>
-                      <input type="hidden" name="entry_id" value={entry.id} />
-                      <button type="submit" className={styles.closeButton}>
-                        {translate(locale, "admin.closeDiscussion")}
-                      </button>
-                    </form>
-                  ) : null}
-                  {!isClosed ? <ReplyForm entryId={entry.id} locale={locale} /> : null}
-                </div>
+                {!isClosed ? <ReplyForm entryId={entry.id} locale={locale} /> : null}
               </article>
             );
           })}

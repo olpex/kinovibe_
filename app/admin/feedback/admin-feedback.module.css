@@ -212,16 +212,18 @@
   width: fit-content;
 }
 
-.entryActions {
-  display: grid;
-  gap: 0.65rem;
+.replyActionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
 }
 
-.closeForm {
+.closeInlineForm {
   display: flex;
 }
 
-.closeButton {
+.closeInlineButton {
   border: 1px solid var(--color-border);
   border-radius: 0.72rem;
   background: rgba(26, 34, 48, 0.82);
@@ -232,7 +234,7 @@
   cursor: pointer;
 }
 
-.closeButton:hover {
+.closeInlineButton:hover {
   border-color: rgba(148, 163, 184, 0.5);
   color: var(--color-text);
 }
