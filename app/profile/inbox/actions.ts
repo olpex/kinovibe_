@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getPrimaryAdminEmail } from "@/lib/auth/admin";
+import { resolveDiscussionClosedFromReplies } from "@/lib/feedback/discussion-state";
 import { sendUserReplyEmailToAdmin } from "@/lib/feedback/notifications";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
@@ -82,6 +83,19 @@ export async function replyToAdminAction(
   }
 
   if (discussionIsClosed) {
+    return { ok: false, message: translate(locale, "inbox.discussionClosedHint") };
+  }
+
+  // Legacy DB fallback: derive close/open from hidden system replies.
+  const { data: adminRepliesStateRows } = await supabase
+    .from("feedback_replies")
+    .select("body,created_at")
+    .eq("feedback_entry_id", entryId)
+    .order("created_at", { ascending: true });
+  const markerClosedState = resolveDiscussionClosedFromReplies(
+    (adminRepliesStateRows ?? []) as Array<{ body: string | null }>
+  );
+  if (markerClosedState === true) {
     return { ok: false, message: translate(locale, "inbox.discussionClosedHint") };
   }
 

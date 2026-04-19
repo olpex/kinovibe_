@@ -7,6 +7,10 @@ import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/supabase/session";
+import {
+  isDiscussionSystemMarker,
+  resolveDiscussionClosedFromReplies
+} from "@/lib/feedback/discussion-state";
 import { markAllReadAction } from "./actions";
 import { UserReplyForm } from "./user-reply-form";
 import styles from "./inbox.module.css";
@@ -184,11 +188,16 @@ export default async function InboxPage() {
           <div className={styles.notificationList}>
             {feedbackEntries.map((entry) => {
               const replies = repliesMap.get(entry.id) ?? [];
-              const hasUnread = replies.some((r) => unreadReplyIds.has(r.id));
-              const lastReply = replies[replies.length - 1];
+              const markerClosedState = resolveDiscussionClosedFromReplies(
+                (replies as Array<{ body: string | null }>)
+              );
+              const visibleReplies = replies.filter((reply) => !isDiscussionSystemMarker(reply.body));
+              const hasUnread = visibleReplies.some((r) => unreadReplyIds.has(r.id));
+              const lastReply = visibleReplies[visibleReplies.length - 1];
               const isClosed =
                 (supportsCloseFlag ? Boolean(entry.is_closed_by_admin) : false) ||
-                (supportsReadFallback ? Boolean(entry.is_read_by_admin) : false);
+                (supportsReadFallback ? Boolean(entry.is_read_by_admin) : false) ||
+                (markerClosedState === true);
 
               return (
                 <article
@@ -215,12 +224,12 @@ export default async function InboxPage() {
                   <p className={styles.notifBody}>{entry.message}</p>
 
                   {/* Admin replies thread */}
-                  {replies.length > 0 ? (
+                  {visibleReplies.length > 0 ? (
                     <div className={styles.repliesThread}>
                       <p className={styles.repliesThreadLabel}>
                         {translate(locale, "admin.replyThread")}
                       </p>
-                      {replies.map((reply) => (
+                      {visibleReplies.map((reply) => (
                         <div
                           key={reply.id}
                           className={`${styles.replyBubble} ${unreadReplyIds.has(reply.id) ? styles.replyBubbleUnread : ""}`}

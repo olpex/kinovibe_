@@ -11,6 +11,10 @@ import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/supabase/session";
+import {
+  isDiscussionSystemMarker,
+  resolveDiscussionClosedFromReplies
+} from "@/lib/feedback/discussion-state";
 import { ReplyForm } from "./reply-form";
 import styles from "./admin-feedback.module.css";
 
@@ -212,7 +216,11 @@ export default async function AdminFeedbackPage() {
   const openTopLevelCount = topLevelRows.filter((row) => {
     const closedByFlag = supportsCloseFlag ? Boolean(row.is_closed_by_admin) : false;
     const closedByReadFallback = supportsReadFlag ? Boolean(row.is_read_by_admin) : false;
-    return !(closedByFlag || closedByReadFallback);
+    const markerClosedState = resolveDiscussionClosedFromReplies(
+      (repliesMap.get(row.id) ?? []) as Array<{ body: string | null }>
+    );
+    const closedByMarker = markerClosedState === true;
+    return !(closedByFlag || closedByReadFallback || closedByMarker);
   }).length;
   const headerCount = topLevelRows.length > 0 ? openTopLevelCount : fallbackNotifications.length;
 
@@ -272,18 +280,25 @@ export default async function AdminFeedbackPage() {
       ) : (
         <div className={styles.entryList}>
           {topLevelRows.map((entry) => {
-            const isClosed =
-              (supportsCloseFlag ? Boolean(entry.is_closed_by_admin) : false) ||
-              (supportsReadFlag ? Boolean(entry.is_read_by_admin) : false);
             const adminReplies = repliesMap.get(entry.id) ?? [];
             const userReplies = userRepliesMap.get(entry.id) ?? [];
+            const markerClosedState = resolveDiscussionClosedFromReplies(
+              (adminReplies as Array<{ body: string | null }>)
+            );
+            const isClosed =
+              (supportsCloseFlag ? Boolean(entry.is_closed_by_admin) : false) ||
+              (supportsReadFlag ? Boolean(entry.is_read_by_admin) : false) ||
+              (markerClosedState === true);
+            const visibleAdminReplies = adminReplies.filter(
+              (reply) => !isDiscussionSystemMarker(reply.body)
+            );
 
             // Merge & sort all thread items chronologically
             type ThreadItem =
               | (ReplyRow & { is_admin: true })
               | (UserReplyRow & { is_admin: false });
             const thread: ThreadItem[] = [
-              ...(adminReplies as (ReplyRow & { is_admin: true })[]),
+              ...(visibleAdminReplies as (ReplyRow & { is_admin: true })[]),
               ...(userReplies as (UserReplyRow & { is_admin: false })[])
             ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 

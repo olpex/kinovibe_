@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { isAdminEmail } from "@/lib/auth/admin";
+import {
+  DISCUSSION_CLOSE_MARKER,
+  DISCUSSION_REOPEN_MARKER,
+  resolveDiscussionClosedFromReplies
+} from "@/lib/feedback/discussion-state";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -23,7 +28,8 @@ export type AdminDiscussionState = {
 async function setFeedbackDiscussionState(
   entryId: number,
   shouldClose: boolean,
-  sessionUserId: string
+  sessionUserId: string,
+  sessionEmail: string
 ): Promise<{ ok: boolean; usedFallback: boolean }> {
   const adminClient = createSupabaseAdminClient();
   const serverClient = await createSupabaseServerClient();
@@ -48,13 +54,54 @@ async function setFeedbackDiscussionState(
     .eq("id", entryId);
 
   if (fallbackError) {
-    console.error("[admin-feedback] failed to set discussion state", {
-      entryId,
-      shouldClose,
-      error,
-      fallbackError
-    });
-    return { ok: false, usedFallback: true };
+    const missingStateColumns = error.code === "PGRST204" && fallbackError.code === "PGRST204";
+    if (!missingStateColumns) {
+      console.error("[admin-feedback] failed to set discussion state", {
+        entryId,
+        shouldClose,
+        error,
+        fallbackError
+      });
+      return { ok: false, usedFallback: true };
+    }
+
+    // Legacy DB fallback: store discussion lifecycle as hidden system replies.
+    const { data: existingReplies, error: markerLoadError } = await client
+      .from("feedback_replies")
+      .select("body,created_at")
+      .eq("feedback_entry_id", entryId)
+      .order("created_at", { ascending: true });
+
+    if (markerLoadError) {
+      console.error("[admin-feedback] failed to read replies for fallback state", {
+        entryId,
+        shouldClose,
+        markerLoadError
+      });
+      return { ok: false, usedFallback: true };
+    }
+
+    const markerClosedState = resolveDiscussionClosedFromReplies(
+      (existingReplies ?? []) as Array<{ body: string | null }>
+    );
+    if (markerClosedState !== shouldClose) {
+      const markerBody = shouldClose ? DISCUSSION_CLOSE_MARKER : DISCUSSION_REOPEN_MARKER;
+      const { error: markerInsertError } = await client.from("feedback_replies").insert({
+        feedback_entry_id: entryId,
+        admin_user_id: sessionUserId,
+        admin_email: sessionEmail,
+        body: markerBody
+      });
+
+      if (markerInsertError) {
+        console.error("[admin-feedback] failed to insert fallback discussion marker", {
+          entryId,
+          shouldClose,
+          markerInsertError
+        });
+        return { ok: false, usedFallback: true };
+      }
+    }
   }
 
   // Ensure admin inbox is marked as read when thread is closed.
@@ -103,11 +150,11 @@ export async function closeFeedbackThreadAction(
     return { ok: false, message: translate(locale, "admin.discussionStateUpdateFailed"), isClosed: false };
   }
 
-  if (!session.userId) {
+  if (!session.userId || !session.email) {
     return { ok: false, message: translate(locale, "admin.adminRequired"), isClosed: false };
   }
 
-  const result = await setFeedbackDiscussionState(entryId, true, session.userId);
+  const result = await setFeedbackDiscussionState(entryId, true, session.userId, session.email);
 
   revalidatePath("/admin/feedback");
   revalidatePath("/profile");
@@ -141,11 +188,11 @@ export async function reopenFeedbackThreadAction(
   }
 
   const entryId = Number(formData.get("entry_id"));
-  if (!entryId || !session.userId) {
+  if (!entryId || !session.userId || !session.email) {
     return { ok: false, message: translate(locale, "admin.discussionStateUpdateFailed"), isClosed: true };
   }
 
-  const result = await setFeedbackDiscussionState(entryId, false, session.userId);
+  const result = await setFeedbackDiscussionState(entryId, false, session.userId, session.email);
 
   revalidatePath("/admin/feedback");
   revalidatePath("/profile");
@@ -225,6 +272,19 @@ export async function replyToFeedbackAction(
     return { ok: false, message: translate(locale, "admin.discussionClosedHint") };
   }
 
+  // Legacy DB fallback: derive close/open from hidden system replies.
+  const { data: stateRepliesRows } = await client
+    .from("feedback_replies")
+    .select("body,created_at")
+    .eq("feedback_entry_id", entryId)
+    .order("created_at", { ascending: true });
+  const markerClosedState = resolveDiscussionClosedFromReplies(
+    (stateRepliesRows ?? []) as Array<{ body: string | null }>
+  );
+  if (markerClosedState === true) {
+    return { ok: false, message: translate(locale, "admin.discussionClosedHint") };
+  }
+
   // Insert reply
   const { data: reply, error: replyError } = await client
     .from("feedback_replies")
@@ -242,11 +302,11 @@ export async function replyToFeedbackAction(
   }
 
   // Find the original entry author to notify
-  const { data: entry } = await client
-    .from("feedback_entries")
-    .select("user_id, user_email, subject, category, locale")
-    .eq("id", entryId)
-    .single();
+    const { data: entry } = await client
+      .from("feedback_entries")
+      .select("user_id, user_email, subject, category, locale")
+      .eq("id", entryId)
+      .single();
 
   if (entry?.user_id) {
     const subject = entry.subject ?? translate(locale, "feedback.email.noSubject");
