@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { SiteHeader } from "@/components/navigation/site-header";
+import { CatalogMovieGrid } from "@/components/tmdb/catalog-grid";
+import { CatalogPagination } from "@/components/tmdb/catalog-pagination";
 import { MovieFilters } from "@/components/tmdb/movie-filters";
 import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import {
-  parseMovieDiscoverFilters,
-  enforceMovieDiscoverPlan
+  type MovieDiscoverFilters
 } from "@/lib/tmdb/movie-filters";
-import { type MovieGenreOption } from "@/lib/tmdb/client";
+import { type MovieGenreOption, type TmdbPagedCards } from "@/lib/tmdb/client";
 import { toCssImageUrl } from "@/lib/ui/css-image";
-import { MediaRail } from "./media-rail";
 import { HomeScreenData, HomeSession } from "./types";
 import styles from "./home-screen.module.css";
 
@@ -18,6 +18,9 @@ type HomeScreenProps = {
   session: HomeSession;
   locale: Locale;
   movieFiltersGenres: MovieGenreOption[];
+  movieFilters: MovieDiscoverFilters;
+  movieCatalog: TmdbPagedCards;
+  movieFiltersQuery: Record<string, string>;
 };
 
 function getUtcDayStamp(date: Date): number {
@@ -34,8 +37,15 @@ function pickDailyFeatured(candidates: HomeScreenData["trendingNow"]): HomeScree
   return candidates[index] ?? candidates[0] ?? null;
 }
 
-export function HomeScreen({ data, session, locale, movieFiltersGenres }: HomeScreenProps) {
-  const defaultMovieFilters = enforceMovieDiscoverPlan(parseMovieDiscoverFilters({}), session.isPro);
+export function HomeScreen({
+  data,
+  session,
+  locale,
+  movieFiltersGenres,
+  movieFilters,
+  movieCatalog,
+  movieFiltersQuery
+}: HomeScreenProps) {
   const availableMovieFilterGenres =
     movieFiltersGenres.length > 0
       ? movieFiltersGenres
@@ -114,34 +124,33 @@ export function HomeScreen({ data, session, locale, movieFiltersGenres }: HomeSc
         <div className={styles.homeFiltersSection}>
           <MovieFilters
             locale={locale}
-            basePath="/movie"
+            basePath="/"
             genres={availableMovieFilterGenres}
-            filters={defaultMovieFilters}
+            filters={movieFilters}
             isPro={session.isPro}
           />
         </div>
         <div className={styles.homeCatalogRails}>
-          <MediaRail
-            title={translate(locale, "home.trendingNow")}
-            caption={translate(locale, "home.trendingCaption")}
+          <div className={styles.catalogHeading}>
+            <h2>{translate(locale, "menu.moviesAllTitle")}</h2>
+            <p>{translate(locale, "menu.moviesAllSubtitle")}</p>
+          </div>
+          <p className={styles.catalogCount}>
+            {movieCatalog.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")}{" "}
+            {translate(locale, "menu.moviesAllTitle")}
+          </p>
+          <CatalogMovieGrid
             locale={locale}
-            items={data.trendingNow}
-            emptyMessage={translate(locale, "home.trendingEmpty")}
+            items={movieCatalog.items}
+            hrefPrefix="/movie"
+            emptyMessage={translate(locale, "home.noTitlesFound")}
           />
-          <MediaRail
-            title={translate(locale, "home.continueWatching")}
-            caption={data.continueWatchingCaption}
+          <CatalogPagination
             locale={locale}
-            items={data.continueWatching}
-            showProgress
-            emptyMessage={translate(locale, "home.progressEmpty")}
-          />
-          <MediaRail
-            title={translate(locale, "home.topPicks")}
-            caption={translate(locale, "home.topPicksCaption")}
-            locale={locale}
-            items={data.topPicks}
-            emptyMessage={translate(locale, "home.topPicksEmpty")}
+            basePath="/"
+            page={movieCatalog.page}
+            totalPages={movieCatalog.totalPages}
+            query={movieFiltersQuery}
           />
         </div>
       </section>
