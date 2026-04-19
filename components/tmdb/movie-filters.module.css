@@ -212,3 +212,30 @@
     max-height: 8rem;
   }
 }
+
+@media (max-width: 560px) {
+  .sidebar {
+    padding: 0.7rem;
+    gap: 0.65rem;
+  }
+
+  .group label {
+    font-size: 0.8rem;
+  }
+
+  .group input,
+  .group select {
+    padding: 0.45rem 0.52rem;
+    font-size: 0.88rem;
+  }
+
+  .actions {
+    grid-template-columns: 1fr;
+  }
+
+  .actions button,
+  .actions a {
+    min-height: 2rem;
+    font-size: 0.82rem;
+  }
+}

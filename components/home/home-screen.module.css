@@ -485,6 +485,10 @@
 }
 
 @media (max-width: 900px) {
+  .homeCatalogSection {
+    grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+  }
+
   .topBar {
     flex-direction: column;
     align-items: stretch;
@@ -503,6 +507,18 @@
 @media (max-width: 760px) {
   .page {
     padding-bottom: 5.8rem;
+  }
+
+  .catalogHeading h2 {
+    font-size: 1.45rem;
+  }
+
+  .catalogHeading p {
+    font-size: 0.9rem;
+  }
+
+  .catalogCount {
+    font-size: 0.86rem;
   }
 
   .mobileNav {
