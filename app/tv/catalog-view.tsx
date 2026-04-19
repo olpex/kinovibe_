@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdSlot } from "@/components/monetization/ad-slot";
 import { CatalogMovieGrid } from "@/components/tmdb/catalog-grid";
 import { TvFilters } from "@/components/tmdb/tv-filters";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
@@ -61,6 +62,8 @@ export async function TvCatalogView({
   basePath,
   searchParams
 }: TvCatalogViewProps) {
+  const catalogTopAdSlot = (process.env.NEXT_PUBLIC_ADSENSE_CATALOG_TOP_SLOT ?? "").trim();
+  const catalogBottomAdSlot = (process.env.NEXT_PUBLIC_ADSENSE_CATALOG_BOTTOM_SLOT ?? "").trim();
   const params = await searchParams;
   const page = parsePage(params.page);
   const defaultSort = getDefaultSortByCategory(category);
@@ -176,6 +179,13 @@ export async function TvCatalogView({
           isPro={session.isPro}
         />
         <div className={styles.mainContent}>
+          {!session.isPro && catalogTopAdSlot ? (
+            <AdSlot
+              slot={catalogTopAdSlot}
+              trackKey={`tv:${category}:top_banner`}
+              label={translate(locale, "monetization.sponsoredLabel")}
+            />
+          ) : null}
           <CatalogMovieGrid
             locale={locale}
             items={result.items}
@@ -189,6 +199,13 @@ export async function TvCatalogView({
                 : undefined
             }
           />
+          {!session.isPro && catalogBottomAdSlot ? (
+            <AdSlot
+              slot={catalogBottomAdSlot}
+              trackKey={`tv:${category}:bottom_banner`}
+              label={translate(locale, "monetization.sponsoredLabel")}
+            />
+          ) : null}
           <CatalogPagination
             locale={locale}
             basePath={basePath}

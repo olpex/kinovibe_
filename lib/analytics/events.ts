@@ -8,7 +8,12 @@ export type SiteEventType =
   | "filter_apply"
   | "card_open"
   | "play_start"
-  | "play_complete";
+  | "play_complete"
+  | "ad_impression"
+  | "ad_click"
+  | "pro_checkout_start"
+  | "pro_checkout_success"
+  | "pro_checkout_cancel";
 
 export type SiteEventInput = {
   eventType: SiteEventType;

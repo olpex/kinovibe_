@@ -20,6 +20,7 @@
 --   6) 20260419103000_feedback_close_flag.sql
 --   7) 20260419113000_feedback_discussion_state_hardening.sql
 --   8) 20260419150000_legal_catalog_and_event_types.sql
+--   9) 20260419235500_billing_and_ads_monetization.sql
 --
 -- Notes:
 --   - Keep this file as a human-readable entry point only.

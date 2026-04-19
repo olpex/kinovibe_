@@ -24,7 +24,12 @@ type SiteEventRow = {
     | "filter_apply"
     | "card_open"
     | "play_start"
-    | "play_complete";
+    | "play_complete"
+    | "ad_impression"
+    | "ad_click"
+    | "pro_checkout_start"
+    | "pro_checkout_success"
+    | "pro_checkout_cancel";
   page_path: string | null;
   element_key: string | null;
   movie_tmdb_id: number | null;
@@ -38,6 +43,14 @@ type CountryConnectionRow = {
   ipAddress: string;
   city: string | null;
   connectedAt: string;
+};
+
+type BillingPaymentRow = {
+  amount_total: number;
+  currency: string;
+  status: string;
+  paid_at: string | null;
+  created_at: string;
 };
 
 type PageProps = {
@@ -197,6 +210,27 @@ function filterEventsByWindow(events: SiteEventRow[], window: AnalyticsWindow): 
   });
 }
 
+function filterPaymentsByWindow(
+  payments: BillingPaymentRow[],
+  window: AnalyticsWindow
+): BillingPaymentRow[] {
+  if (window === "all") {
+    return payments;
+  }
+
+  const days = Number(window);
+  if (!Number.isFinite(days) || days < 1) {
+    return payments;
+  }
+
+  const sinceMs = Date.now() - days * 24 * 60 * 60 * 1000;
+  return payments.filter((payment) => {
+    const sourceDate = payment.paid_at ?? payment.created_at;
+    const createdAtMs = Date.parse(sourceDate);
+    return Number.isFinite(createdAtMs) && createdAtMs >= sinceMs;
+  });
+}
+
 export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   const params = searchParams ? await searchParams : {};
   const [locale, sessionUser] = await Promise.all([getRequestLocale(), getSessionUser()]);
@@ -231,6 +265,13 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   const selectedWindow = normalizeWindow(params.window);
   const { events: allEvents, errorMessage, truncated } = await fetchAllSiteEvents(client);
   const events = filterEventsByWindow(allEvents, selectedWindow);
+  const { data: rawPayments } = await client
+    .from("billing_payments")
+    .select("amount_total,currency,status,paid_at,created_at")
+    .order("created_at", { ascending: false })
+    .limit(5000);
+  const payments = filterPaymentsByWindow((rawPayments ?? []) as BillingPaymentRow[], selectedWindow);
+  const paidPayments = payments.filter((payment) => payment.status === "paid");
   const serviceRoleMode = Boolean(adminClient);
   const windowMatchesAll =
     selectedWindow !== "all" && allEvents.length > 0 && events.length === allEvents.length;
@@ -305,9 +346,38 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   const totalCardOpens = events.filter((event) => event.event_type === "card_open").length;
   const totalPlayStarts = events.filter((event) => event.event_type === "play_start").length;
   const totalPlayCompletions = events.filter((event) => event.event_type === "play_complete").length;
+  const totalAdImpressions = events.filter((event) => event.event_type === "ad_impression").length;
+  const totalAdClicks = events.filter((event) => event.event_type === "ad_click").length;
+  const totalProCheckoutStarts = events.filter((event) => event.event_type === "pro_checkout_start").length;
+  const totalProCheckoutSuccess = events.filter((event) => event.event_type === "pro_checkout_success").length;
   const searchSuccessRate = totalSearchSubmits > 0
     ? Math.min(100, Math.round((totalCardOpens / totalSearchSubmits) * 100))
     : 0;
+  const adCtr = totalAdImpressions > 0
+    ? Math.min(100, Math.round((totalAdClicks / totalAdImpressions) * 100))
+    : 0;
+  const proConversionRate = totalProCheckoutStarts > 0
+    ? Math.min(100, Math.round((totalProCheckoutSuccess / totalProCheckoutStarts) * 100))
+    : 0;
+  const revenueByCurrency = new Map<string, number>();
+  for (const payment of paidPayments) {
+    const currency = (payment.currency || "USD").toUpperCase();
+    revenueByCurrency.set(currency, (revenueByCurrency.get(currency) ?? 0) + payment.amount_total);
+  }
+  const revenueSummary = Array.from(revenueByCurrency.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([currency, amountMinor]) => {
+      try {
+        return new Intl.NumberFormat(toIntlLocale(locale), {
+          style: "currency",
+          currency,
+          maximumFractionDigits: 2
+        }).format(amountMinor / 100);
+      } catch {
+        return `${(amountMinor / 100).toFixed(2)} ${currency}`;
+      }
+    })
+    .join(" · ");
   const countryEntries = topEntries(countryCounts, 40);
   const requestedCountry = normalizeCountryCode(params.country);
   const selectedCountry =
@@ -434,6 +504,34 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
           <article>
             <h3>{translate(locale, "analytics.searchSuccessRate")}</h3>
             <p>{searchSuccessRate}%</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.adImpressions")}</h3>
+            <p>{totalAdImpressions.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.adClicks")}</h3>
+            <p>{totalAdClicks.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.adCtr")}</h3>
+            <p>{adCtr}%</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.proCheckoutStarts")}</h3>
+            <p>{totalProCheckoutStarts.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.proCheckoutSuccess")}</h3>
+            <p>{totalProCheckoutSuccess.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.proConversionRate")}</h3>
+            <p>{proConversionRate}%</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.revenue")}</h3>
+            <p>{revenueSummary || translate(locale, "common.notAvailable")}</p>
           </article>
         </div>
       </section>

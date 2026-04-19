@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import { SiteActivityTracker } from "@/components/analytics/site-activity-tracker";
 import { SiteFooter } from "@/components/navigation/site-footer";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
+import { getAdsenseClientId, isAdsenseEnabled } from "@/lib/monetization/config";
 import { resolveMetadataBase, resolveSiteUrl } from "@/lib/seo/site";
 import "./globals.css";
 
@@ -90,6 +92,8 @@ type RootLayoutProps = Readonly<{
 
 export default async function RootLayout({ children }: RootLayoutProps) {
   const locale = await getRequestLocale();
+  const adsenseEnabled = isAdsenseEnabled();
+  const adsenseClientId = getAdsenseClientId();
   const siteTitle = translate(locale, "meta.siteTitle");
   const siteDescription = translate(locale, "meta.siteDescription");
   const siteUrl = resolveSiteUrl();
@@ -119,6 +123,15 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         data-theme="dark"
         className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable}`}
       >
+        {adsenseEnabled && adsenseClientId ? (
+          <Script
+            id="adsense-script"
+            async
+            strategy="afterInteractive"
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
+            crossOrigin="anonymous"
+          />
+        ) : null}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}

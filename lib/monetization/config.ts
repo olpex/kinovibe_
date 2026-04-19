@@ -1,0 +1,70 @@
+import "server-only";
+import { toIntlLocale, type Locale } from "@/lib/i18n/shared";
+
+export type ProBillingInterval = "month" | "year";
+
+type ProPriceConfig = {
+  currency: string;
+  monthlyAmountMinor: number;
+  yearlyAmountMinor: number;
+};
+
+function parseCurrency(value: string | undefined): string {
+  const normalized = (value ?? "").trim().toUpperCase();
+  if (/^[A-Z]{3}$/.test(normalized)) {
+    return normalized;
+  }
+  return "USD";
+}
+
+function parseMinor(value: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt((value ?? "").trim(), 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+  return Math.floor(parsed);
+}
+
+export function getProPriceConfig(): ProPriceConfig {
+  return {
+    currency: parseCurrency(process.env.PRO_PRICE_CURRENCY),
+    monthlyAmountMinor: parseMinor(process.env.PRO_PRICE_MONTHLY_MINOR, 499),
+    yearlyAmountMinor: parseMinor(process.env.PRO_PRICE_YEARLY_MINOR, 4999)
+  };
+}
+
+export function isStripeBillingEnabled(): boolean {
+  return Boolean(
+    (process.env.STRIPE_SECRET_KEY ?? "").trim() &&
+      (process.env.STRIPE_WEBHOOK_SECRET ?? "").trim()
+  );
+}
+
+export function formatMinorCurrency(
+  amountMinor: number,
+  currency: string,
+  locale: Locale
+): string {
+  try {
+    return new Intl.NumberFormat(toIntlLocale(locale), {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2
+    }).format(amountMinor / 100);
+  } catch {
+    return `${(amountMinor / 100).toFixed(2)} ${currency}`;
+  }
+}
+
+export function getProDurationDays(interval: ProBillingInterval): number {
+  return interval === "year" ? 365 : 30;
+}
+
+export function isAdsenseEnabled(): boolean {
+  const enabled = (process.env.NEXT_PUBLIC_ADSENSE_ENABLED ?? "").trim().toLowerCase();
+  return enabled === "1" || enabled === "true" || enabled === "yes";
+}
+
+export function getAdsenseClientId(): string {
+  return (process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ?? "").trim();
+}

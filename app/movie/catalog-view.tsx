@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdSlot } from "@/components/monetization/ad-slot";
 import { CatalogMovieGrid } from "@/components/tmdb/catalog-grid";
 import { MovieFilters } from "@/components/tmdb/movie-filters";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
@@ -64,6 +65,8 @@ export async function MovieCatalogView({
   basePath,
   searchParams
 }: MovieCatalogViewProps) {
+  const catalogTopAdSlot = (process.env.NEXT_PUBLIC_ADSENSE_CATALOG_TOP_SLOT ?? "").trim();
+  const catalogBottomAdSlot = (process.env.NEXT_PUBLIC_ADSENSE_CATALOG_BOTTOM_SLOT ?? "").trim();
   const params = await searchParams;
   const page = parsePage(params.page);
   const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
@@ -155,7 +158,21 @@ export async function MovieCatalogView({
             isPro={session.isPro}
           />
           <div className={styles.mainContent}>
+            {!session.isPro && catalogTopAdSlot ? (
+              <AdSlot
+                slot={catalogTopAdSlot}
+                trackKey={`movies:${category}:top_banner`}
+                label={translate(locale, "monetization.sponsoredLabel")}
+              />
+            ) : null}
             <CatalogMovieGrid locale={locale} items={result.items} hrefPrefix="/movie" />
+            {!session.isPro && catalogBottomAdSlot ? (
+              <AdSlot
+                slot={catalogBottomAdSlot}
+                trackKey={`movies:${category}:bottom_banner`}
+                label={translate(locale, "monetization.sponsoredLabel")}
+              />
+            ) : null}
             <CatalogPagination
               locale={locale}
               basePath={basePath}

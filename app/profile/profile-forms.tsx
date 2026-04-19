@@ -1,20 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import {
   activateProWithCodeAction,
   changePasswordFromProfileAction,
+  startProCheckoutAction,
   updateProfileSettingsAction,
   type ProfileActionState
 } from "./actions";
-import { translate, type Locale } from "@/lib/i18n/shared";
+import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./profile.module.css";
 
 type ProfileFormsProps = {
   locale: Locale;
   isAdmin: boolean;
   billingPlan: "free" | "pro";
+  billingStatus: "inactive" | "active" | "canceled" | "past_due" | "unpaid" | "expired";
+  billingInterval: "month" | "year" | null;
+  planExpiresAt: string | null;
+  billingEnabled: boolean;
+  billingResultState: "idle" | "success" | "cancel";
+  monthlyPriceLabel: string;
+  yearlyPriceLabel: string;
   initialProfile: {
     firstName: string;
     lastName: string;
@@ -23,7 +31,19 @@ type ProfileFormsProps = {
   };
 };
 
-export function ProfileForms({ locale, isAdmin, billingPlan, initialProfile }: ProfileFormsProps) {
+export function ProfileForms({
+  locale,
+  isAdmin,
+  billingPlan,
+  billingStatus,
+  billingInterval,
+  planExpiresAt,
+  billingEnabled,
+  billingResultState,
+  monthlyPriceLabel,
+  yearlyPriceLabel,
+  initialProfile
+}: ProfileFormsProps) {
   const [profileState, profileAction, profilePending] = useActionState<ProfileActionState, FormData>(
     updateProfileSettingsAction,
     { ok: true, message: "" }
@@ -36,6 +56,33 @@ export function ProfileForms({ locale, isAdmin, billingPlan, initialProfile }: P
     ProfileActionState,
     FormData
   >(activateProWithCodeAction, { ok: true, message: "" });
+  const [checkoutState, checkoutAction, checkoutPending] = useActionState<ProfileActionState, FormData>(
+    startProCheckoutAction,
+    { ok: true, message: "" }
+  );
+
+  const planExpiresAtLabel = planExpiresAt
+    ? new Date(planExpiresAt).toLocaleString(toIntlLocale(locale), {
+        dateStyle: "medium"
+      })
+    : null;
+
+  useEffect(() => {
+    if (billingResultState !== "cancel") {
+      return;
+    }
+
+    fetch("/api/events/track", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        eventType: "pro_checkout_cancel",
+        pagePath: "/profile",
+        elementKey: "checkout:cancel_return"
+      }),
+      keepalive: true
+    }).catch(() => undefined);
+  }, [billingResultState]);
 
   return (
     <div className={styles.grid}>
@@ -105,35 +152,75 @@ export function ProfileForms({ locale, isAdmin, billingPlan, initialProfile }: P
           </strong>
         </div>
         <p className={styles.planMuted}>{translate(locale, "profile.planManageHint")}</p>
+        {billingResultState === "success" ? (
+          <p className={styles.feedbackOk}>{translate(locale, "profile.checkoutSuccess")}</p>
+        ) : null}
+        {billingResultState === "cancel" ? (
+          <p className={styles.feedbackError}>{translate(locale, "profile.checkoutCanceled")}</p>
+        ) : null}
+        {billingPlan === "pro" ? (
+          <p className={styles.planMuted}>
+            {translate(locale, "profile.planStatusLine", {
+              status: translate(locale, `profile.billingStatus.${billingStatus}`),
+              interval: billingInterval ? translate(locale, `profile.billingInterval.${billingInterval}`) : "—",
+              expires: planExpiresAtLabel ?? translate(locale, "common.notAvailable")
+            })}
+          </p>
+        ) : null}
         {billingPlan !== "pro" ? (
           <>
+            {billingEnabled ? (
+              <form action={checkoutAction} className={styles.form}>
+                <h3>{translate(locale, "profile.proCheckoutTitle")}</h3>
+                <p>{translate(locale, "profile.proCheckoutHint")}</p>
+                {checkoutState.message ? (
+                  <p className={checkoutState.ok ? styles.feedbackOk : styles.feedbackError}>
+                    {checkoutState.message}
+                  </p>
+                ) : null}
+                <div className={styles.checkoutGrid}>
+                  <button type="submit" name="interval" value="month" disabled={checkoutPending}>
+                    {checkoutPending
+                      ? translate(locale, "common.updating")
+                      : translate(locale, "profile.buyMonthly", { price: monthlyPriceLabel })}
+                  </button>
+                  <button type="submit" name="interval" value="year" disabled={checkoutPending}>
+                    {checkoutPending
+                      ? translate(locale, "common.updating")
+                      : translate(locale, "profile.buyYearly", { price: yearlyPriceLabel })}
+                  </button>
+                </div>
+              </form>
+            ) : null}
             <Link href="/feedback" className={styles.adminLink}>
               {translate(locale, "profile.planUpgradeSoon")}
             </Link>
-            <form action={proActivationAction} className={styles.form}>
-              <h3>{translate(locale, "profile.proActivationTitle")}</h3>
-              <p>{translate(locale, "profile.proActivationHint")}</p>
-              {proActivationState.message ? (
-                <p className={proActivationState.ok ? styles.feedbackOk : styles.feedbackError}>
-                  {proActivationState.message}
-                </p>
-              ) : null}
-              <label>
-                <span>{translate(locale, "profile.proActivationCode")}</span>
-                <input
-                  name="activationCode"
-                  type="password"
-                  autoComplete="one-time-code"
-                  maxLength={120}
-                  required
-                />
-              </label>
-              <button type="submit" disabled={proActivationPending}>
-                {proActivationPending
-                  ? translate(locale, "common.updating")
-                  : translate(locale, "profile.proActivationCta")}
-              </button>
-            </form>
+            {!billingEnabled ? (
+              <form action={proActivationAction} className={styles.form}>
+                <h3>{translate(locale, "profile.proActivationTitle")}</h3>
+                <p>{translate(locale, "profile.proActivationHint")}</p>
+                {proActivationState.message ? (
+                  <p className={proActivationState.ok ? styles.feedbackOk : styles.feedbackError}>
+                    {proActivationState.message}
+                  </p>
+                ) : null}
+                <label>
+                  <span>{translate(locale, "profile.proActivationCode")}</span>
+                  <input
+                    name="activationCode"
+                    type="password"
+                    autoComplete="one-time-code"
+                    maxLength={120}
+                    required
+                  />
+                </label>
+                <button type="submit" disabled={proActivationPending}>
+                  {proActivationPending
+                    ? translate(locale, "common.updating")
+                    : translate(locale, "profile.proActivationCta")}
+                </button>
+              </form>
+            ) : null}
           </>
         ) : null}
       </section>

@@ -35,7 +35,7 @@ export async function getSessionUser(): Promise<SessionUser> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name,last_name,avatar_url,billing_plan")
+    .select("first_name,last_name,avatar_url,billing_plan,plan_expires_at,billing_status")
     .eq("id", data.user.id)
     .maybeSingle();
 
@@ -44,11 +44,19 @@ export async function getSessionUser(): Promise<SessionUser> {
     (typeof userMetadata.avatar_url === "string" ? userMetadata.avatar_url : null) ??
     (typeof userMetadata.picture === "string" ? userMetadata.picture : null);
 
+  const planExpiresAtRaw = (profile?.plan_expires_at as string | null) ?? null;
+  const planExpiresAt = planExpiresAtRaw ? new Date(planExpiresAtRaw) : null;
+  const planIsStillActive =
+    !planExpiresAt || !Number.isFinite(planExpiresAt.getTime()) || planExpiresAt.getTime() > Date.now();
+
   return {
     isConfigured: true,
     isAuthenticated: true,
     isEmailVerified: Boolean(data.user.email_confirmed_at),
-    isPro: (profile?.billing_plan as string | null)?.toLowerCase() === "pro",
+    isPro:
+      (profile?.billing_plan as string | null)?.toLowerCase() === "pro" &&
+      (profile?.billing_status as string | null)?.toLowerCase() !== "expired" &&
+      planIsStillActive,
     userId: data.user.id,
     email: data.user.email ?? undefined,
     firstName: (profile?.first_name as string | null) ?? undefined,

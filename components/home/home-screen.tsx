@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
+import { AdSlot } from "@/components/monetization/ad-slot";
 import { SiteHeader } from "@/components/navigation/site-header";
 import { CatalogMovieGrid } from "@/components/tmdb/catalog-grid";
 import { CatalogPagination } from "@/components/tmdb/catalog-pagination";
@@ -52,6 +53,8 @@ export function HomeScreen({
   movieCatalog,
   movieFiltersQuery
 }: HomeScreenProps) {
+  const homeTopAdSlot = (process.env.NEXT_PUBLIC_ADSENSE_HOME_TOP_SLOT ?? "").trim();
+  const homeInlineAdSlot = (process.env.NEXT_PUBLIC_ADSENSE_HOME_INLINE_SLOT ?? "").trim();
   const availableMovieFilterGenres =
     movieFiltersGenres.length > 0
       ? movieFiltersGenres
@@ -142,6 +145,13 @@ export function HomeScreen({
             <h2>{translate(locale, "menu.moviesAllTitle")}</h2>
             <p>{translate(locale, "menu.moviesAllSubtitle")}</p>
           </div>
+          {!session.isPro && homeTopAdSlot ? (
+            <AdSlot
+              slot={homeTopAdSlot}
+              trackKey="home:catalog:top_banner"
+              label={translate(locale, "monetization.sponsoredLabel")}
+            />
+          ) : null}
           <p className={styles.catalogAttribution}>{translate(locale, "legal.catalogAttributionLabel")}</p>
           <p className={styles.catalogCount}>
             {movieCatalog.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")}{" "}
@@ -153,6 +163,13 @@ export function HomeScreen({
             hrefPrefix="/movie"
             emptyMessage={translate(locale, "home.noTitlesFound")}
           />
+          {!session.isPro && homeInlineAdSlot ? (
+            <AdSlot
+              slot={homeInlineAdSlot}
+              trackKey="home:catalog:inline_footer"
+              label={translate(locale, "monetization.sponsoredLabel")}
+            />
+          ) : null}
           <CatalogPagination
             locale={locale}
             basePath="/"

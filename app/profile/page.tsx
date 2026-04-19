@@ -8,6 +8,11 @@ import { isAdminEmail } from "@/lib/auth/admin";
 import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
+import {
+  formatMinorCurrency,
+  getProPriceConfig,
+  isStripeBillingEnabled
+} from "@/lib/monetization/config";
 import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import styles from "./profile.module.css";
@@ -24,7 +29,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const dynamic = "force-dynamic";
 
-export default async function ProfilePage() {
+type ProfilePageProps = {
+  searchParams?: Promise<{
+    billing?: string;
+  }>;
+};
+
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const [locale, supabase] = await Promise.all([getRequestLocale(), createSupabaseServerClient()]);
 
   if (!supabase) {
@@ -52,12 +63,42 @@ export default async function ProfilePage() {
     redirect("/auth?next=/profile");
   }
 
+  const params = searchParams ? await searchParams : undefined;
+
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name,last_name,website,country,billing_plan")
+    .select(
+      "first_name,last_name,website,country,billing_plan,plan_expires_at,billing_status,billing_plan_interval"
+    )
     .eq("id", user.id)
     .maybeSingle();
   const isAdmin = isAdminEmail(user.email ?? undefined);
+  const proPrice = getProPriceConfig();
+  const billingEnabled = isStripeBillingEnabled();
+  const planExpiresAtRaw = (profile?.plan_expires_at as string | null) ?? null;
+  const planExpiresAt = planExpiresAtRaw ? new Date(planExpiresAtRaw) : null;
+  const planIsActive =
+    !planExpiresAt || !Number.isFinite(planExpiresAt.getTime()) || planExpiresAt.getTime() > Date.now();
+  const billingStatus = ((profile?.billing_status as string | null)?.toLowerCase() as
+    | "inactive"
+    | "active"
+    | "canceled"
+    | "past_due"
+    | "unpaid"
+    | "expired"
+    | null) ?? "inactive";
+  const effectiveIsPro =
+    (profile?.billing_plan as string | null)?.toLowerCase() === "pro" &&
+    billingStatus !== "expired" &&
+    planIsActive;
+
+  let billingResultState: "idle" | "success" | "cancel" = "idle";
+  const billingRaw = (params?.billing ?? "").trim().toLowerCase();
+  if (billingRaw === "success") {
+    billingResultState = "success";
+  } else if (billingRaw === "cancel") {
+    billingResultState = "cancel";
+  }
 
   return (
     <main className={styles.page}>
@@ -101,8 +142,17 @@ export default async function ProfilePage() {
           country: (profile?.country as string | null) ?? ""
         }}
         billingPlan={
-          (profile?.billing_plan as string | null)?.toLowerCase() === "pro" ? "pro" : "free"
+          effectiveIsPro ? "pro" : "free"
         }
+        billingStatus={billingStatus}
+        billingInterval={
+          ((profile?.billing_plan_interval as string | null)?.toLowerCase() as "month" | "year" | null) ?? null
+        }
+        planExpiresAt={planExpiresAtRaw}
+        billingEnabled={billingEnabled}
+        billingResultState={billingResultState}
+        monthlyPriceLabel={formatMinorCurrency(proPrice.monthlyAmountMinor, proPrice.currency, locale)}
+        yearlyPriceLabel={formatMinorCurrency(proPrice.yearlyAmountMinor, proPrice.currency, locale)}
       />
     </main>
   );

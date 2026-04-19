@@ -23,7 +23,12 @@ function isSupportedEventType(value: string | undefined): value is SiteEventType
     value === "filter_apply" ||
     value === "card_open" ||
     value === "play_start" ||
-    value === "play_complete"
+    value === "play_complete" ||
+    value === "ad_impression" ||
+    value === "ad_click" ||
+    value === "pro_checkout_start" ||
+    value === "pro_checkout_success" ||
+    value === "pro_checkout_cancel"
   );
 }
 
