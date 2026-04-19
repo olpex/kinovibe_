@@ -142,6 +142,7 @@ export function HomeScreen({
             <h2>{translate(locale, "menu.moviesAllTitle")}</h2>
             <p>{translate(locale, "menu.moviesAllSubtitle")}</p>
           </div>
+          <p className={styles.catalogAttribution}>{translate(locale, "legal.catalogAttributionLabel")}</p>
           <p className={styles.catalogCount}>
             {movieCatalog.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")}{" "}
             {translate(locale, "menu.moviesAllTitle")}

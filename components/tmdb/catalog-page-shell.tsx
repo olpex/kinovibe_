@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { SessionUser } from "@/lib/supabase/session";
-import { Locale } from "@/lib/i18n/shared";
+import { Locale, translate } from "@/lib/i18n/shared";
 import { DataSourceStatus } from "@/lib/data-source";
 import { SiteHeader } from "@/components/navigation/site-header";
 import styles from "@/app/menu-page.module.css";
@@ -31,6 +31,9 @@ export function CatalogPageShell({
             <h1>{title}</h1>
             <p>{subtitle}</p>
           </header>
+          {dataSourceStatus ? (
+            <p className={styles.inlineMessage}>{translate(locale, "legal.catalogAttributionLabel")}</p>
+          ) : null}
           {children}
         </section>
       </div>

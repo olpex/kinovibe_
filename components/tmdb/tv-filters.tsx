@@ -66,7 +66,13 @@ export function TvFilters({
         ) : null}
       </div>
 
-      <form action={basePath} method="get" className={styles.form}>
+      <form
+        action={basePath}
+        method="get"
+        className={styles.form}
+        data-track-event="filter_apply"
+        data-track-click="tv:filter_apply"
+      >
         <div className={styles.group}>
           <label htmlFor="tv-filter-sort">{translate(locale, "movie.filters.sortBy")}</label>
           <select id="tv-filter-sort" name="sort" defaultValue={filters.sortBy}>
@@ -147,7 +153,7 @@ export function TvFilters({
         </div>
 
         <div className={styles.group}>
-          <label htmlFor="tv-filter-country">{translate(locale, "profile.country")}</label>
+          <label htmlFor="tv-filter-country">{translate(locale, "movie.filters.country")}</label>
           <select
             id="tv-filter-country"
             name="country"

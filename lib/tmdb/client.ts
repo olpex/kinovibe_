@@ -1607,6 +1607,9 @@ export const getTmdbCountries = cache(
         if (!code || !englishName) {
           return null;
         }
+        if (BLOCKED_MEDIA_COUNTRY_CODES.has(code)) {
+          return null;
+        }
 
         return {
           code,

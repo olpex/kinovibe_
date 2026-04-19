@@ -26,6 +26,7 @@ export type TvDiscoverFilters = {
 };
 
 const SORT_VALUES = new Set<string>(TV_DISCOVER_SORT_OPTIONS.map((entry) => entry.value));
+const BLOCKED_COUNTRY_CODES = new Set(["RU"]);
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   if (Array.isArray(value)) {
@@ -80,6 +81,9 @@ function normalizeNumber(value: number): string {
 function normalizeCountryCode(value: string | undefined): string | undefined {
   const normalized = value?.trim().toUpperCase();
   if (!normalized || !/^[A-Z]{2}$/.test(normalized)) {
+    return undefined;
+  }
+  if (BLOCKED_COUNTRY_CODES.has(normalized)) {
     return undefined;
   }
   return normalized;

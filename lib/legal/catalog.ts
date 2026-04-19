@@ -159,6 +159,8 @@ const REGION_BY_LOCALE: Record<Locale, string> = {
 
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
+const BLOCKED_LANGUAGE_CODES = new Set(["ru"]);
+const BLOCKED_COUNTRY_CODES = new Set(["RU"]);
 
 function normalizeRegion(value: string | undefined): string | undefined {
   const normalized = value?.trim().toUpperCase() ?? "";
@@ -313,6 +315,31 @@ function mapCatalogItem(
   };
 }
 
+function isBlockedLegalItem(item: LegalCatalogItem): boolean {
+  const languageCode = item.languageCode?.trim().toLowerCase();
+  if (languageCode && BLOCKED_LANGUAGE_CODES.has(languageCode)) {
+    return true;
+  }
+
+  if (
+    item.countries.some((country) => {
+      const normalized = country.trim();
+      const upper = normalized.toUpperCase();
+      const lower = normalized.toLowerCase();
+      return (
+        BLOCKED_COUNTRY_CODES.has(upper) ||
+        lower.includes("russia") ||
+        lower.includes("росія") ||
+        lower.includes("россия")
+      );
+    })
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function matchesFilters(item: LegalCatalogItem, filters: LegalCatalogFilters): boolean {
   if (filters.q) {
     const needle = filters.q.toLowerCase();
@@ -367,11 +394,11 @@ async function getSupabaseClient() {
 
 function deriveRegion(locale: Locale, explicitRegion: string | undefined): string | undefined {
   const normalized = normalizeRegion(explicitRegion);
-  if (normalized) {
+  if (normalized && !BLOCKED_COUNTRY_CODES.has(normalized)) {
     return normalized;
   }
   const envRegion = normalizeRegion(process.env.LEGAL_DEFAULT_REGION);
-  if (envRegion) {
+  if (envRegion && !BLOCKED_COUNTRY_CODES.has(envRegion)) {
     return envRegion;
   }
   return REGION_BY_LOCALE[locale] ?? "US";
@@ -504,14 +531,16 @@ export async function getLegalCatalog(
     streamMap.set(streamRow.item_id, list);
   }
 
-  const mapped = (itemRows as LegalCatalogItemRow[]).map((row) =>
-    mapCatalogItem(
-      row,
-      sourceMap.get(row.id) ?? [],
-      streamMap.get(row.id) ?? [],
-      filters.region
+  const mapped = (itemRows as LegalCatalogItemRow[])
+    .map((row) =>
+      mapCatalogItem(
+        row,
+        sourceMap.get(row.id) ?? [],
+        streamMap.get(row.id) ?? [],
+        filters.region
+      )
     )
-  );
+    .filter((item) => !isBlockedLegalItem(item));
 
   const filtered = mapped.filter((item) => matchesFilters(item, filters));
   const totalResults = filtered.length;

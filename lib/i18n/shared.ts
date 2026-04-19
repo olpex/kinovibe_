@@ -323,6 +323,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "search.suggestAria": "Search suggestions",
   "search.suggestLoading": "Looking for matches...",
   "search.suggestNoResults": "No quick matches found.",
+  "search.suggestError": "Suggestions are temporarily unavailable. Try again in a moment.",
 
   "menu.popular": "Popular",
   "menu.moviesAll": "All Movies",
@@ -1034,6 +1035,7 @@ const UK_MESSAGES: Record<string, string> = {
   "search.suggestAria": "Підказки пошуку",
   "search.suggestLoading": "Шукаємо збіги...",
   "search.suggestNoResults": "Швидких збігів не знайдено.",
+  "search.suggestError": "Підказки тимчасово недоступні. Спробуйте ще раз за мить.",
   "watchlist.title": "Мій список перегляду",
   "watchlist.savedTitles": "збережених фільмів",
   "watchlist.emptyTitle": "Список порожній",
