@@ -258,7 +258,12 @@ const BASE_MESSAGES: Record<string, string> = {
   "admin.newFeedbackTitle": "New feedback/suggestion received",
   "admin.replySentNoEmail": "Reply sent, but email delivery failed.",
   "admin.closeDiscussion": "Close discussion",
+  "admin.discussionOpen": "Open",
   "admin.discussionClosed": "Closed",
+  "admin.reopenDiscussion": "Reopen discussion",
+  "admin.discussionClosedHint": "Discussion is closed. Reopen it to continue replying.",
+  "admin.discussionReopened": "Discussion reopened.",
+  "admin.discussionStateUpdateFailed": "Could not change discussion state. Please try again.",
 
   "inbox.title": "Inbox",
   "inbox.subtitle": "{count} message(s)",
@@ -272,6 +277,9 @@ const BASE_MESSAGES: Record<string, string> = {
   "inbox.replySent": "Reply sent successfully.",
   "inbox.replySentNoEmail": "Reply sent in inbox, but email delivery failed.",
   "inbox.awaitingReply": "Awaiting admin reply...",
+  "inbox.discussionOpen": "Open",
+  "inbox.discussionClosed": "Discussion closed by admin.",
+  "inbox.discussionClosedHint": "This discussion is closed. Only admin can reopen it.",
 
   "meta.adminFeedbackTitle": "Feedback | {site}",
   "meta.adminFeedbackDescription": "View and reply to user feedback and suggestions.",
@@ -1088,7 +1096,12 @@ const UK_MESSAGES: Record<string, string> = {
   "admin.newFeedbackTitle": "Новий відгук або пропозиція від користувача",
   "admin.replySentNoEmail": "Відповідь надіслано, але доставку email не вдалося виконати.",
   "admin.closeDiscussion": "Завершити дискусію",
+  "admin.discussionOpen": "Відкрито",
   "admin.discussionClosed": "Завершено",
+  "admin.reopenDiscussion": "Відкрити дискусію",
+  "admin.discussionClosedHint": "Дискусію закрито. Відкрийте її, щоб продовжити відповіді.",
+  "admin.discussionReopened": "Дискусію відкрито повторно.",
+  "admin.discussionStateUpdateFailed": "Не вдалося змінити стан дискусії. Спробуйте ще раз.",
 
   "inbox.title": "Вхідні повідомлення",
   "inbox.subtitle": "{count} повідомлень",
@@ -1101,7 +1114,10 @@ const UK_MESSAGES: Record<string, string> = {
   "inbox.sendReply": "Надіслати",
   "inbox.replySent": "Відповідь надіслано.",
   "inbox.replySentNoEmail": "Відповідь збережено у вхідних, але email не вдалося доставити.",
-  "inbox.awaitingReply": "Очікуємо відповіді адміна..."
+  "inbox.awaitingReply": "Очікуємо відповіді адміна...",
+  "inbox.discussionOpen": "Відкрито",
+  "inbox.discussionClosed": "Дискусію закрито адміністратором.",
+  "inbox.discussionClosedHint": "Цю дискусію закрито. Відкрити її може лише адміністратор."
 };
 
 

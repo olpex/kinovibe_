@@ -264,7 +264,7 @@ export default async function AdminFeedbackPage() {
               <p className={styles.entrySubject}>{notification.title}</p>
               <p className={styles.entryBody}>{notification.body}</p>
               {notification.feedback_entry_id ? (
-                <ReplyForm entryId={notification.feedback_entry_id} locale={locale} />
+                <ReplyForm entryId={notification.feedback_entry_id} locale={locale} isClosed={false} />
               ) : null}
             </article>
           ))}
@@ -295,11 +295,11 @@ export default async function AdminFeedbackPage() {
                   >
                     {translate(locale, `feedback.type.${entry.category}`)}
                   </span>
-                  {isClosed ? (
-                    <span className={`${styles.badge} ${styles.closedBadge}`}>
-                      {translate(locale, "admin.discussionClosed")}
-                    </span>
-                  ) : null}
+                  <span className={`${styles.badge} ${isClosed ? styles.closedBadge : styles.openBadge}`}>
+                    {isClosed
+                      ? translate(locale, "admin.discussionClosed")
+                      : translate(locale, "admin.discussionOpen")}
+                  </span>
                   <span>{entry.user_email}</span>
                   <span>
                     {new Date(entry.created_at).toLocaleString(toIntlLocale(locale), {
@@ -352,7 +352,7 @@ export default async function AdminFeedbackPage() {
                   </div>
                 ) : null}
 
-                {!isClosed ? <ReplyForm entryId={entry.id} locale={locale} /> : null}
+                <ReplyForm entryId={entry.id} locale={locale} isClosed={isClosed} />
               </article>
             );
           })}

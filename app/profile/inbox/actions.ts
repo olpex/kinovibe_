@@ -54,6 +54,37 @@ export async function replyToAdminAction(
     return { ok: false, message: translate(locale, "feedback.errorMessageTooLong") };
   }
 
+  // Do not allow user replies if admin closed the discussion.
+  const closeStateSelectAttempts = [
+    "is_closed_by_admin,is_read_by_admin",
+    "is_read_by_admin",
+    "id"
+  ] as const;
+
+  let discussionIsClosed = false;
+  for (const selectClause of closeStateSelectAttempts) {
+    const { data, error } = await supabase
+      .from("feedback_entries")
+      .select(selectClause)
+      .eq("id", entryId)
+      .eq("user_id", session.userId)
+      .single();
+
+    if (error || !data) {
+      continue;
+    }
+
+    const row = data as { is_closed_by_admin?: boolean; is_read_by_admin?: boolean };
+    discussionIsClosed =
+      Boolean(row.is_closed_by_admin) ||
+      (selectClause.includes("is_read_by_admin") ? Boolean(row.is_read_by_admin) : false);
+    break;
+  }
+
+  if (discussionIsClosed) {
+    return { ok: false, message: translate(locale, "inbox.discussionClosedHint") };
+  }
+
   // Save user reply as a new feedback_entry linked to the admin reply
   const { error } = await supabase.from("feedback_entries").insert({
     user_id: session.userId,

@@ -29,6 +29,8 @@ type FeedbackRow = {
   subject: string | null;
   message: string;
   created_at: string;
+  is_closed_by_admin?: boolean;
+  is_read_by_admin?: boolean;
 };
 
 type ReplyRow = {
@@ -71,16 +73,34 @@ export default async function InboxPage() {
     );
   }
 
-  // 1. Load all top-level feedback entries by this user
-  const { data: feedbackRaw } = await supabase
-    .from("feedback_entries")
-    .select("id,category,subject,message,created_at")
-    .eq("user_id", session.userId)
-    .is("parent_reply_id", null)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  // 1. Load all top-level feedback entries by this user (with close-state fallback support)
+  let feedbackEntries: FeedbackRow[] = [];
+  let supportsCloseFlag = false;
+  let supportsReadFallback = false;
+  const feedbackSelectAttempts = [
+    "id,category,subject,message,created_at,is_closed_by_admin,is_read_by_admin",
+    "id,category,subject,message,created_at,is_read_by_admin",
+    "id,category,subject,message,created_at"
+  ] as const;
 
-  const feedbackEntries = (feedbackRaw ?? []) as FeedbackRow[];
+  for (const selectClause of feedbackSelectAttempts) {
+    const { data, error } = await supabase
+      .from("feedback_entries")
+      .select(selectClause)
+      .eq("user_id", session.userId)
+      .is("parent_reply_id", null)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      continue;
+    }
+
+    feedbackEntries = (data ?? []) as unknown as FeedbackRow[];
+    supportsCloseFlag = selectClause.includes("is_closed_by_admin");
+    supportsReadFallback = selectClause.includes("is_read_by_admin");
+    break;
+  }
 
   // 2. Load admin replies for all these entries
   const entryIds = feedbackEntries.map((e) => e.id);
@@ -166,6 +186,9 @@ export default async function InboxPage() {
               const replies = repliesMap.get(entry.id) ?? [];
               const hasUnread = replies.some((r) => unreadReplyIds.has(r.id));
               const lastReply = replies[replies.length - 1];
+              const isClosed =
+                (supportsCloseFlag ? Boolean(entry.is_closed_by_admin) : false) ||
+                (supportsReadFallback ? Boolean(entry.is_read_by_admin) : false);
 
               return (
                 <article
@@ -177,6 +200,11 @@ export default async function InboxPage() {
                     {hasUnread ? <span className={styles.unreadDot} aria-hidden="true" /> : null}
                     <span className={styles.categoryBadge} data-category={entry.category}>
                       {translate(locale, `feedback.type.${entry.category}`)}
+                    </span>
+                    <span className={`${styles.stateBadge} ${isClosed ? styles.stateClosed : styles.stateOpen}`}>
+                      {isClosed
+                        ? translate(locale, "inbox.discussionClosed")
+                        : translate(locale, "inbox.discussionOpen")}
                     </span>
                     <span>{formatDate(entry.created_at)}</span>
                   </div>
@@ -205,7 +233,7 @@ export default async function InboxPage() {
                       ))}
 
                       {/* Reply form to continue the thread */}
-                      {lastReply ? (
+                      {lastReply && !isClosed ? (
                         <div className={styles.replySection}>
                           <h4>{translate(locale, "inbox.replyToAdmin")}</h4>
                           <UserReplyForm
@@ -214,6 +242,10 @@ export default async function InboxPage() {
                             locale={locale}
                           />
                         </div>
+                      ) : lastReply && isClosed ? (
+                        <p className={styles.awaitingReply}>
+                          {translate(locale, "inbox.discussionClosedHint")}
+                        </p>
                       ) : null}
                     </div>
                   ) : (

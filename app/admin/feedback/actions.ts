@@ -14,72 +14,157 @@ export type AdminReplyState = {
   message: string;
 };
 
-export async function closeFeedbackThreadAction(formData: FormData): Promise<void> {
-  const session = await getSessionUser();
+export type AdminDiscussionState = {
+  ok: boolean;
+  message: string;
+  isClosed: boolean;
+};
 
-  if (!session.isAuthenticated || !isAdminEmail(session.email)) {
-    return;
-  }
-
-  const entryId = Number(formData.get("entry_id"));
-  if (!entryId) {
-    return;
-  }
-
+async function setFeedbackDiscussionState(
+  entryId: number,
+  shouldClose: boolean,
+  sessionUserId: string
+): Promise<{ ok: boolean; usedFallback: boolean }> {
   const adminClient = createSupabaseAdminClient();
   const serverClient = await createSupabaseServerClient();
   const client = adminClient ?? serverClient;
 
-  if (!client || !session.userId) {
-    return;
+  if (!client) {
+    return { ok: false, usedFallback: false };
   }
 
-  const { data: replyIdsRaw } = await client
-    .from("feedback_replies")
-    .select("id")
-    .eq("feedback_entry_id", entryId);
-  const replyIds = (replyIdsRaw ?? [])
-    .map((row) => Number(row.id))
-    .filter((id) => Number.isFinite(id));
-
-  const { error: closeError } = await client
+  const { error } = await client
     .from("feedback_entries")
-    .update({ is_closed_by_admin: true })
+    .update({ is_closed_by_admin: shouldClose })
     .eq("id", entryId);
-  if (closeError) {
-    const { error: readFallbackError } = await client
-      .from("feedback_entries")
-      .update({ is_read_by_admin: true })
-      .eq("id", entryId);
-    if (readFallbackError) {
-      console.error("[admin-feedback] failed to close discussion", {
-        entryId,
-        closeError,
-        readFallbackError
-      });
-    }
+  if (!error) {
+    return { ok: true, usedFallback: false };
   }
 
-  await client
-    .from("inbox_notifications")
-    .update({ is_read: true })
-    .eq("recipient_user_id", session.userId)
-    .in("notification_type", ["feedback_received", "user_reply"])
-    .eq("feedback_entry_id", entryId);
+  // Backward compatibility for DBs without is_closed_by_admin
+  const { error: fallbackError } = await client
+    .from("feedback_entries")
+    .update({ is_read_by_admin: shouldClose })
+    .eq("id", entryId);
 
-  if (replyIds.length > 0) {
+  if (fallbackError) {
+    console.error("[admin-feedback] failed to set discussion state", {
+      entryId,
+      shouldClose,
+      error,
+      fallbackError
+    });
+    return { ok: false, usedFallback: true };
+  }
+
+  // Ensure admin inbox is marked as read when thread is closed.
+  if (shouldClose) {
+    const { data: replyIdsRaw } = await client
+      .from("feedback_replies")
+      .select("id")
+      .eq("feedback_entry_id", entryId);
+    const replyIds = (replyIdsRaw ?? [])
+      .map((row) => Number(row.id))
+      .filter((id) => Number.isFinite(id));
+
     await client
       .from("inbox_notifications")
       .update({ is_read: true })
-      .eq("recipient_user_id", session.userId)
-      .eq("notification_type", "user_reply")
-      .in("feedback_reply_id", replyIds);
+      .eq("recipient_user_id", sessionUserId)
+      .in("notification_type", ["feedback_received", "user_reply"])
+      .eq("feedback_entry_id", entryId);
+
+    if (replyIds.length > 0) {
+      await client
+        .from("inbox_notifications")
+        .update({ is_read: true })
+        .eq("recipient_user_id", sessionUserId)
+        .eq("notification_type", "user_reply")
+        .in("feedback_reply_id", replyIds);
+    }
   }
+
+  return { ok: true, usedFallback: true };
+}
+
+export async function closeFeedbackThreadAction(
+  _prev: AdminDiscussionState,
+  formData: FormData
+): Promise<AdminDiscussionState> {
+  const locale = await getRequestLocale();
+  const session = await getSessionUser();
+
+  if (!session.isAuthenticated || !isAdminEmail(session.email)) {
+    return { ok: false, message: translate(locale, "admin.adminRequired"), isClosed: false };
+  }
+
+  const entryId = Number(formData.get("entry_id"));
+  if (!entryId) {
+    return { ok: false, message: translate(locale, "admin.discussionStateUpdateFailed"), isClosed: false };
+  }
+
+  if (!session.userId) {
+    return { ok: false, message: translate(locale, "admin.adminRequired"), isClosed: false };
+  }
+
+  const result = await setFeedbackDiscussionState(entryId, true, session.userId);
 
   revalidatePath("/admin/feedback");
   revalidatePath("/profile");
   revalidatePath("/profile/inbox");
   revalidatePath("/", "layout");
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: translate(locale, "admin.discussionStateUpdateFailed"),
+      isClosed: false
+    };
+  }
+
+  return {
+    ok: true,
+    message: translate(locale, "admin.discussionClosed"),
+    isClosed: true
+  };
+}
+
+export async function reopenFeedbackThreadAction(
+  _prev: AdminDiscussionState,
+  formData: FormData
+): Promise<AdminDiscussionState> {
+  const locale = await getRequestLocale();
+  const session = await getSessionUser();
+
+  if (!session.isAuthenticated || !isAdminEmail(session.email)) {
+    return { ok: false, message: translate(locale, "admin.adminRequired"), isClosed: true };
+  }
+
+  const entryId = Number(formData.get("entry_id"));
+  if (!entryId || !session.userId) {
+    return { ok: false, message: translate(locale, "admin.discussionStateUpdateFailed"), isClosed: true };
+  }
+
+  const result = await setFeedbackDiscussionState(entryId, false, session.userId);
+
+  revalidatePath("/admin/feedback");
+  revalidatePath("/profile");
+  revalidatePath("/profile/inbox");
+  revalidatePath("/", "layout");
+
+  if (!result.ok) {
+    return {
+      ok: false,
+      message: translate(locale, "admin.discussionStateUpdateFailed"),
+      isClosed: true
+    };
+  }
+
+  return {
+    ok: true,
+    message: translate(locale, "admin.discussionReopened"),
+    isClosed: false
+  };
 }
 
 export async function replyToFeedbackAction(
@@ -109,6 +194,35 @@ export async function replyToFeedbackAction(
 
   if (!client || !session.userId || !session.email) {
     return { ok: false, message: translate(locale, "admin.supabaseUnavailable") };
+  }
+
+  // Prevent replying to a closed discussion unless it is reopened first.
+  const closeStateSelectAttempts = [
+    "is_closed_by_admin,is_read_by_admin",
+    "is_read_by_admin",
+    "id"
+  ] as const;
+  let discussionIsClosed = false;
+  for (const selectClause of closeStateSelectAttempts) {
+    const { data, error } = await client
+      .from("feedback_entries")
+      .select(selectClause)
+      .eq("id", entryId)
+      .single();
+
+    if (error || !data) {
+      continue;
+    }
+
+    const row = data as { is_closed_by_admin?: boolean; is_read_by_admin?: boolean };
+    discussionIsClosed =
+      Boolean(row.is_closed_by_admin) ||
+      (selectClause.includes("is_read_by_admin") ? Boolean(row.is_read_by_admin) : false);
+    break;
+  }
+
+  if (discussionIsClosed) {
+    return { ok: false, message: translate(locale, "admin.discussionClosedHint") };
   }
 
   // Insert reply
