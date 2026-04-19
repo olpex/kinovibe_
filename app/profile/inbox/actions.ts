@@ -76,9 +76,12 @@ export async function replyToAdminAction(
     }
 
     const row = data as { is_closed_by_admin?: boolean; is_read_by_admin?: boolean };
+    const hasCloseFlag = selectClause.includes("is_closed_by_admin");
     discussionIsClosed =
       Boolean(row.is_closed_by_admin) ||
-      (selectClause.includes("is_read_by_admin") ? Boolean(row.is_read_by_admin) : false);
+      (selectClause.includes("is_read_by_admin") && !hasCloseFlag
+        ? Boolean(row.is_read_by_admin)
+        : false);
     break;
   }
 

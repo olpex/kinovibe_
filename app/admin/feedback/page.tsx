@@ -215,7 +215,9 @@ export default async function AdminFeedbackPage() {
   const topLevelRows = supportsParentReplyId ? rows.filter((r) => !r.parent_reply_id) : rows;
   const openTopLevelCount = topLevelRows.filter((row) => {
     const closedByFlag = supportsCloseFlag ? Boolean(row.is_closed_by_admin) : false;
-    const closedByReadFallback = supportsReadFlag ? Boolean(row.is_read_by_admin) : false;
+    const closedByReadFallback = supportsReadFlag && !supportsCloseFlag
+      ? Boolean(row.is_read_by_admin)
+      : false;
     const markerClosedState = resolveDiscussionClosedFromReplies(
       (repliesMap.get(row.id) ?? []) as Array<{ body: string | null }>
     );
@@ -287,7 +289,7 @@ export default async function AdminFeedbackPage() {
             );
             const isClosed =
               (supportsCloseFlag ? Boolean(entry.is_closed_by_admin) : false) ||
-              (supportsReadFlag ? Boolean(entry.is_read_by_admin) : false) ||
+              (supportsReadFlag && !supportsCloseFlag ? Boolean(entry.is_read_by_admin) : false) ||
               (markerClosedState === true);
             const visibleAdminReplies = adminReplies.filter(
               (reply) => !isDiscussionSystemMarker(reply.body)

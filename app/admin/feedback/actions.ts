@@ -54,53 +54,25 @@ async function setFeedbackDiscussionState(
     .eq("id", entryId);
 
   if (fallbackError) {
-    const missingStateColumns = error.code === "PGRST204" && fallbackError.code === "PGRST204";
-    if (!missingStateColumns) {
+    // Runtime-safe fallback for legacy DBs and restrictive policies:
+    // encode state transition as a hidden system marker in feedback_replies.
+    const markerBody = shouldClose ? DISCUSSION_CLOSE_MARKER : DISCUSSION_REOPEN_MARKER;
+    const { error: markerInsertError } = await client.from("feedback_replies").insert({
+      feedback_entry_id: entryId,
+      admin_user_id: sessionUserId,
+      admin_email: sessionEmail,
+      body: markerBody
+    });
+
+    if (markerInsertError) {
       console.error("[admin-feedback] failed to set discussion state", {
         entryId,
         shouldClose,
         error,
-        fallbackError
+        fallbackError,
+        markerInsertError
       });
       return { ok: false, usedFallback: true };
-    }
-
-    // Legacy DB fallback: store discussion lifecycle as hidden system replies.
-    const { data: existingReplies, error: markerLoadError } = await client
-      .from("feedback_replies")
-      .select("body,created_at")
-      .eq("feedback_entry_id", entryId)
-      .order("created_at", { ascending: true });
-
-    if (markerLoadError) {
-      console.error("[admin-feedback] failed to read replies for fallback state", {
-        entryId,
-        shouldClose,
-        markerLoadError
-      });
-      return { ok: false, usedFallback: true };
-    }
-
-    const markerClosedState = resolveDiscussionClosedFromReplies(
-      (existingReplies ?? []) as Array<{ body: string | null }>
-    );
-    if (markerClosedState !== shouldClose) {
-      const markerBody = shouldClose ? DISCUSSION_CLOSE_MARKER : DISCUSSION_REOPEN_MARKER;
-      const { error: markerInsertError } = await client.from("feedback_replies").insert({
-        feedback_entry_id: entryId,
-        admin_user_id: sessionUserId,
-        admin_email: sessionEmail,
-        body: markerBody
-      });
-
-      if (markerInsertError) {
-        console.error("[admin-feedback] failed to insert fallback discussion marker", {
-          entryId,
-          shouldClose,
-          markerInsertError
-        });
-        return { ok: false, usedFallback: true };
-      }
     }
   }
 
@@ -262,9 +234,12 @@ export async function replyToFeedbackAction(
     }
 
     const row = data as { is_closed_by_admin?: boolean; is_read_by_admin?: boolean };
+    const hasCloseFlag = selectClause.includes("is_closed_by_admin");
     discussionIsClosed =
       Boolean(row.is_closed_by_admin) ||
-      (selectClause.includes("is_read_by_admin") ? Boolean(row.is_read_by_admin) : false);
+      (selectClause.includes("is_read_by_admin") && !hasCloseFlag
+        ? Boolean(row.is_read_by_admin)
+        : false);
     break;
   }
 

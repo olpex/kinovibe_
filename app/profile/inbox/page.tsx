@@ -196,7 +196,7 @@ export default async function InboxPage() {
               const lastReply = visibleReplies[visibleReplies.length - 1];
               const isClosed =
                 (supportsCloseFlag ? Boolean(entry.is_closed_by_admin) : false) ||
-                (supportsReadFallback ? Boolean(entry.is_read_by_admin) : false) ||
+                (supportsReadFallback && !supportsCloseFlag ? Boolean(entry.is_read_by_admin) : false) ||
                 (markerClosedState === true);
 
               return (
