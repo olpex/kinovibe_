@@ -112,6 +112,27 @@
   font-weight: 600;
 }
 
+.nominationList {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.nominationItem {
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  background: rgba(20, 28, 40, 0.42);
+  padding: 0.46rem 0.52rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.nominationOutcome {
+  margin: 0;
+  color: #ffd166;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .actions {
   display: flex;
   align-items: center;

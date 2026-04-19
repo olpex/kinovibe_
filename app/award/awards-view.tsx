@@ -17,6 +17,24 @@ type AwardsCatalogViewProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type AwardEntry = {
+  id: string;
+  festival: string;
+  awardCategory: string;
+  year: string;
+  eventDate?: string;
+  outcome: "winner" | "nominee" | "highlight";
+};
+
+type AwardGroup = {
+  id: string;
+  title: string;
+  movieTmdbId?: number;
+  imageUrl?: string;
+  outcome: "winner" | "nominee" | "highlight";
+  entries: AwardEntry[];
+};
+
 const AWARD_TABS: Array<{
   href: "/award" | "/award/upcoming";
   variant: AwardViewVariant;
@@ -132,6 +150,140 @@ function getOutcomeLabel(locale: Locale, outcome: "winner" | "nominee" | "highli
   return translate(locale, "award.badgeHighlight");
 }
 
+function normalizeGroupingText(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function getOutcomeRank(outcome: "winner" | "nominee" | "highlight"): number {
+  if (outcome === "winner") {
+    return 3;
+  }
+  if (outcome === "nominee") {
+    return 2;
+  }
+  return 1;
+}
+
+function buildAwardGroupKey(award: {
+  title: string;
+  movieTmdbId?: number;
+  year: string;
+  eventDate?: string;
+}): string {
+  if (award.movieTmdbId) {
+    return `tmdb:${award.movieTmdbId}`;
+  }
+
+  const yearToken = getAwardYearValue(award.year, award.eventDate) ?? award.year;
+  return `title:${normalizeGroupingText(award.title)}:${String(yearToken)}`;
+}
+
+function aggregateAwardsByTitle(
+  awards: Array<{
+    id: string;
+    title: string;
+    festival: string;
+    awardCategory: string;
+    year: string;
+    eventDate?: string;
+    imageUrl?: string;
+    movieTmdbId?: number;
+    outcome: "winner" | "nominee" | "highlight";
+  }>
+): AwardGroup[] {
+  const groups = new Map<string, AwardGroup>();
+
+  for (const award of awards) {
+    const groupKey = buildAwardGroupKey(award);
+    const existing = groups.get(groupKey);
+    const candidateEntry: AwardEntry = {
+      id: award.id,
+      festival: award.festival,
+      awardCategory: award.awardCategory,
+      year: award.year,
+      eventDate: award.eventDate,
+      outcome: award.outcome
+    };
+
+    if (!existing) {
+      groups.set(groupKey, {
+        id: groupKey,
+        title: award.title,
+        movieTmdbId: award.movieTmdbId,
+        imageUrl: award.imageUrl,
+        outcome: award.outcome,
+        entries: [candidateEntry]
+      });
+      continue;
+    }
+
+    if (!existing.imageUrl && award.imageUrl) {
+      existing.imageUrl = award.imageUrl;
+    }
+    if (!existing.movieTmdbId && award.movieTmdbId) {
+      existing.movieTmdbId = award.movieTmdbId;
+    }
+    if (getOutcomeRank(award.outcome) > getOutcomeRank(existing.outcome)) {
+      existing.outcome = award.outcome;
+    }
+
+    const entryKey = [
+      normalizeGroupingText(candidateEntry.festival),
+      normalizeGroupingText(candidateEntry.awardCategory),
+      candidateEntry.year,
+      candidateEntry.eventDate ?? "",
+      candidateEntry.outcome
+    ].join("|");
+    const alreadyExists = existing.entries.some((entry) => {
+      const currentKey = [
+        normalizeGroupingText(entry.festival),
+        normalizeGroupingText(entry.awardCategory),
+        entry.year,
+        entry.eventDate ?? "",
+        entry.outcome
+      ].join("|");
+      return currentKey === entryKey;
+    });
+
+    if (!alreadyExists) {
+      existing.entries.push(candidateEntry);
+    }
+  }
+
+  const sorted = Array.from(groups.values());
+  for (const group of sorted) {
+    group.entries.sort((left, right) => {
+      const leftDate = Date.parse(left.eventDate ?? "");
+      const rightDate = Date.parse(right.eventDate ?? "");
+      if (!Number.isNaN(rightDate) && !Number.isNaN(leftDate) && rightDate !== leftDate) {
+        return rightDate - leftDate;
+      }
+      const rightRank = getOutcomeRank(right.outcome);
+      const leftRank = getOutcomeRank(left.outcome);
+      if (rightRank !== leftRank) {
+        return rightRank - leftRank;
+      }
+      return left.festival.localeCompare(right.festival);
+    });
+  }
+
+  sorted.sort((left, right) => {
+    const rightRank = getOutcomeRank(right.outcome);
+    const leftRank = getOutcomeRank(left.outcome);
+    if (rightRank !== leftRank) {
+      return rightRank - leftRank;
+    }
+
+    if (right.entries.length !== left.entries.length) {
+      return right.entries.length - left.entries.length;
+    }
+
+    return left.title.localeCompare(right.title);
+  });
+
+  return sorted;
+}
+
 function buildAwardYearOptions(awards: Array<{ year: string; eventDate?: string }>): number[] {
   const years = awards
     .map((item) => getAwardYearValue(item.year, item.eventDate))
@@ -209,6 +361,8 @@ export async function AwardsCatalogView({
 
     return true;
   });
+  const groupedFilteredAwards = aggregateAwardsByTitle(filteredAwards);
+  const groupedAllAwards = aggregateAwardsByTitle(awards);
 
   if (awardsResult.dataSourceStatus === "unavailable") {
     return (
@@ -334,12 +488,12 @@ export async function AwardsCatalogView({
       <p className={shellStyles.inlineMessage}>{translate(locale, "menu.awardsHint")}</p>
       <p className={styles.resultsSummary}>
         {translate(locale, "award.resultsSummary", {
-          shown: filteredAwards.length,
-          total: awards.length
+          shown: groupedFilteredAwards.length,
+          total: groupedAllAwards.length
         })}
       </p>
 
-      {filteredAwards.length === 0 ? (
+      {groupedFilteredAwards.length === 0 ? (
         <section className={styles.emptyState}>
           <h2>
             {variant === "popular"
@@ -354,12 +508,11 @@ export async function AwardsCatalogView({
         </section>
       ) : (
         <section className={styles.grid} aria-label={translate(locale, "nav.awards")}>
-          {filteredAwards.map((award) => {
+          {groupedFilteredAwards.map((award) => {
             const openHref = award.movieTmdbId ? `/movie/${award.movieTmdbId}` : buildSearchHref(award.title);
             const awardImageCss = toCssImageUrl(award.imageUrl);
             const awardImageHref = encodeImageUrl(award.imageUrl);
             const hasImage = Boolean(awardImageCss);
-            const eventDateLabel = formatAwardEventDate(locale, award.eventDate);
 
             return (
               <article key={award.id} className={styles.card}>
@@ -390,20 +543,34 @@ export async function AwardsCatalogView({
                     <Link href={openHref}>{award.title}</Link>
                   </h3>
                   <div className={styles.metaList}>
-                    <p>
-                      <span>{translate(locale, "award.festivalLabel")}:</span> {award.festival}
-                    </p>
-                    <p>
-                      <span>{translate(locale, "award.categoryLabel")}:</span> {award.awardCategory}
-                    </p>
-                    {eventDateLabel ? (
-                      <p>
-                        <span>{translate(locale, "award.ceremonyDateLabel")}:</span> {eventDateLabel}
-                      </p>
-                    ) : null}
-                    <p>
-                      <span>{translate(locale, "award.yearLabel")}:</span> {award.year}
-                    </p>
+                    <div className={styles.nominationList}>
+                      {award.entries.map((entry) => {
+                        const eventDateLabel = formatAwardEventDate(locale, entry.eventDate);
+                        const entryKey = `${entry.id}-${entry.festival}-${entry.awardCategory}-${entry.eventDate ?? entry.year}-${entry.outcome}`;
+
+                        return (
+                          <article key={entryKey} className={styles.nominationItem}>
+                            <p className={styles.nominationOutcome}>
+                              {getOutcomeLabel(locale, entry.outcome)}
+                            </p>
+                            <p>
+                              <span>{translate(locale, "award.festivalLabel")}:</span> {entry.festival}
+                            </p>
+                            <p>
+                              <span>{translate(locale, "award.categoryLabel")}:</span> {entry.awardCategory}
+                            </p>
+                            {eventDateLabel ? (
+                              <p>
+                                <span>{translate(locale, "award.ceremonyDateLabel")}:</span> {eventDateLabel}
+                              </p>
+                            ) : null}
+                            <p>
+                              <span>{translate(locale, "award.yearLabel")}:</span> {entry.year}
+                            </p>
+                          </article>
+                        );
+                      })}
+                    </div>
                   </div>
                   <div className={styles.actions}>
                     <Link href={openHref} className={shellStyles.linkButton}>
