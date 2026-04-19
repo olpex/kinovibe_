@@ -35,6 +35,9 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: resolveMetadataBase(),
     title: siteTitle,
     description: siteDescription,
+    verification: {
+      google: "hfkzuAhdV6jsStuxMJ_xNeOYHidl19gY-qvqk8LEJFA"
+    },
     applicationName: siteTitle,
     referrer: "origin-when-cross-origin",
     keywords: [
