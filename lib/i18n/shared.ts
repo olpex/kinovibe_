@@ -303,6 +303,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "search.suggestNoResults": "No quick matches found.",
 
   "menu.popular": "Popular",
+  "menu.moviesAll": "All Movies",
   "menu.thriller": "Thrillers",
   "menu.nowPlaying": "Now Playing",
   "menu.upcoming": "Upcoming",
@@ -318,6 +319,8 @@ const BASE_MESSAGES: Record<string, string> = {
   "menu.apiBusiness": "API for Business",
   "menu.peopleListAria": "People list",
 
+  "menu.moviesAllTitle": "All Movies",
+  "menu.moviesAllSubtitle": "Browse the complete movie catalog on TMDB.",
   "menu.moviesPopularTitle": "Popular Movies",
   "menu.moviesPopularSubtitle": "The most popular movies right now on TMDB.",
   "menu.moviesNowPlayingTitle": "Now Playing Movies",
@@ -781,6 +784,9 @@ const UK_MESSAGES: Record<string, string> = {
   "award.emptyUpcomingBody":
     "Жоден підключений провайдер не повернув найближчі церемонії з явно вказаними фестивалем/премією та категорією відзнаки.",
   "menu.popular": "Популярні",
+  "menu.moviesAll": "Всі фільми",
+  "menu.moviesAllTitle": "Всі фільми",
+  "menu.moviesAllSubtitle": "Переглядайте повний каталог фільмів на TMDB.",
   "menu.nowPlaying": "Зараз у кіно",
   "menu.upcoming": "Очікувані",
   "menu.topRated": "Рейтингові",

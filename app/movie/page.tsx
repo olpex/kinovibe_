@@ -12,8 +12,8 @@ export default async function MoviesPopularPage({ searchParams }: PageProps) {
   return (
     <MovieCatalogView
       category="popular"
-      title={translate(locale, "menu.moviesPopularTitle")}
-      subtitle={translate(locale, "menu.moviesPopularSubtitle")}
+      title={translate(locale, "menu.moviesAllTitle")}
+      subtitle={translate(locale, "menu.moviesAllSubtitle")}
       basePath="/movie"
       searchParams={searchParams}
     />

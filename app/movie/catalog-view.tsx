@@ -11,7 +11,8 @@ import {
   hasActiveMovieDiscoverFilters,
   movieDiscoverFiltersToQuery,
   parseMovieDiscoverFilters,
-  type CatalogSearchParams
+  type CatalogSearchParams,
+  type MovieDiscoverFilters
 } from "@/lib/tmdb/movie-filters";
 import {
   discoverTmdbMovieCatalogPage,
@@ -38,6 +39,23 @@ type MovieCatalogViewProps = {
   searchParams: Promise<CatalogSearchParams>;
 };
 
+const CATEGORY_ENFORCED_GENRE_IDS: Partial<Record<MovieMenuCategory, number[]>> = {
+  thriller: [53]
+};
+
+function applyCategoryDefaults(
+  category: MovieMenuCategory,
+  filters: MovieDiscoverFilters
+) {
+  const enforcedGenres = CATEGORY_ENFORCED_GENRE_IDS[category] ?? [];
+  if (enforcedGenres.length === 0) {
+    return filters;
+  }
+
+  const genreIds = Array.from(new Set([...enforcedGenres, ...filters.genreIds]));
+  return { ...filters, genreIds };
+}
+
 export async function MovieCatalogView({
   category,
   title,
@@ -48,15 +66,17 @@ export async function MovieCatalogView({
   const params = await searchParams;
   const page = parsePage(params.page);
   const [session, locale] = await Promise.all([getSessionUser(), getRequestLocale()]);
-  const filters = enforceMovieDiscoverPlan(parseMovieDiscoverFilters(params), session.isPro);
+  const rawFilters = enforceMovieDiscoverPlan(parseMovieDiscoverFilters(params), session.isPro);
+  const filters = applyCategoryDefaults(category, rawFilters);
   const filtersQuery = movieDiscoverFiltersToQuery(filters);
-  const useDiscover = category === "popular" && hasActiveMovieDiscoverFilters(filters);
+  const filtersEnabledCategory = category === "popular" || category === "thriller";
+  const useDiscover = filtersEnabledCategory && hasActiveMovieDiscoverFilters(filters);
 
   let result: Awaited<ReturnType<typeof getTmdbMovieCatalogPage>> | null = null;
   let genres = [] as Awaited<ReturnType<typeof getTmdbMovieGenres>>;
 
   try {
-    if (category === "popular") {
+    if (filtersEnabledCategory) {
       [result, genres] = await Promise.all([
         useDiscover
           ? discoverTmdbMovieCatalogPage(filters, locale, page)
@@ -91,7 +111,7 @@ export async function MovieCatalogView({
         subtitle={subtitle}
         dataSourceStatus="unavailable"
       >
-        {category === "popular" ? (
+        {filtersEnabledCategory ? (
           <div className={styles.contentWithSidebar}>
             <MovieFilters
               locale={locale}
@@ -120,7 +140,7 @@ export async function MovieCatalogView({
       <p className={styles.inlineMessage}>
         {result.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")} {title}
       </p>
-      {category === "popular" ? (
+      {filtersEnabledCategory ? (
         <div className={styles.contentWithSidebar}>
           <MovieFilters
             locale={locale}

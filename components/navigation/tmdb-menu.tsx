@@ -19,7 +19,7 @@ const MENU_SECTIONS: MenuSection[] = [
     href: "/movie",
     labelKey: "nav.movies",
     links: [
-      { href: "/movie", labelKey: "menu.popular" },
+      { href: "/movie", labelKey: "menu.moviesAll" },
       { href: "/movie/now-playing", labelKey: "menu.nowPlaying" },
       { href: "/movie/upcoming", labelKey: "menu.upcoming" },
       { href: "/movie/top-rated", labelKey: "menu.topRated" }
