@@ -252,9 +252,9 @@
   cursor: pointer;
 }
 
-.genreChipActive {
-  background: color-mix(in srgb, var(--color-primary) 85%, #fff 15%);
-  color: #fff;
+.homeFiltersSection {
+  margin-top: 1rem;
+  max-width: 360px;
 }
 
 .section {

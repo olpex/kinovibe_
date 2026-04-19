@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { SiteHeader } from "@/components/navigation/site-header";
+import { MovieFilters } from "@/components/tmdb/movie-filters";
 import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
+import {
+  parseMovieDiscoverFilters,
+  enforceMovieDiscoverPlan
+} from "@/lib/tmdb/movie-filters";
+import { type MovieGenreOption } from "@/lib/tmdb/client";
 import { toCssImageUrl } from "@/lib/ui/css-image";
 import { MediaRail } from "./media-rail";
 import { HomeScreenData, HomeSession } from "./types";
@@ -11,6 +17,7 @@ type HomeScreenProps = {
   data: HomeScreenData;
   session: HomeSession;
   locale: Locale;
+  movieFiltersGenres: MovieGenreOption[];
 };
 
 function getUtcDayStamp(date: Date): number {
@@ -27,7 +34,13 @@ function pickDailyFeatured(candidates: HomeScreenData["trendingNow"]): HomeScree
   return candidates[index] ?? candidates[0] ?? null;
 }
 
-export function HomeScreen({ data, session, locale }: HomeScreenProps) {
+export function HomeScreen({ data, session, locale, movieFiltersGenres }: HomeScreenProps) {
+  const defaultMovieFilters = enforceMovieDiscoverPlan(parseMovieDiscoverFilters({}), session.isPro);
+  const availableMovieFilterGenres =
+    movieFiltersGenres.length > 0
+      ? movieFiltersGenres
+      : data.genreChips.map((genre) => ({ id: genre.id, name: genre.name }));
+
   const featured = pickDailyFeatured(data.trendingNow) ?? data.topPicks[0] ?? null;
   const featuredOverview =
     featured?.overview && featured.overview.trim().length > 0
@@ -100,17 +113,27 @@ export function HomeScreen({ data, session, locale }: HomeScreenProps) {
       <section className={styles.genreSection}>
         <h2>{translate(locale, "home.browseGenres")}</h2>
         <div className={styles.genreRow}>
-          {data.genreChips.map((genre, index) => (
+          {data.genreChips.map((genre) => (
             <Link
               key={genre.id}
               href={`/movie?genres=${genre.id}`}
-              className={`${styles.genreChip} ${index === 0 ? styles.genreChipActive : ""}`}
+              className={styles.genreChip}
               aria-label={translate(locale, "home.browseGenreAria", { genre: genre.name })}
             >
               {genre.name}
             </Link>
           ))}
         </div>
+      </section>
+
+      <section className={styles.homeFiltersSection}>
+        <MovieFilters
+          locale={locale}
+          basePath="/movie"
+          genres={availableMovieFilterGenres}
+          filters={defaultMovieFilters}
+          isPro={session.isPro}
+        />
       </section>
 
       <MediaRail
