@@ -5,6 +5,7 @@ import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
+import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { VerifyEmailForm } from "./verify-form";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "./verify.module.css";
@@ -21,7 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = translate(locale, "meta.siteTitle");
   return {
     title: translate(locale, "meta.verifyTitle", { site }),
-    description: translate(locale, "meta.verifyDescription", { site })
+    description: translate(locale, "meta.verifyDescription", { site }),
+    robots: NO_INDEX_PAGE_ROBOTS
   };
 }
 

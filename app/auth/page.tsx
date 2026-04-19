@@ -6,6 +6,7 @@ import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { AuthForm } from "./auth-form";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
+import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { getSessionUser } from "@/lib/supabase/session";
 import styles from "./auth.module.css";
 
@@ -21,7 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = translate(locale, "meta.siteTitle");
   return {
     title: translate(locale, "meta.authTitle", { site }),
-    description: translate(locale, "meta.authDescription", { site })
+    description: translate(locale, "meta.authDescription", { site }),
+    robots: NO_INDEX_PAGE_ROBOTS
   };
 }
 

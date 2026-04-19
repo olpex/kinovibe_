@@ -4,6 +4,7 @@ import { EmailVerificationBanner } from "@/components/auth/email-verification-ba
 import { SiteHeader } from "@/components/navigation/site-header";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
+import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { getSessionUser } from "@/lib/supabase/session";
 import { searchTmdbMovies } from "@/lib/tmdb/client";
 import { toCssImageUrl } from "@/lib/ui/css-image";
@@ -21,7 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = translate(locale, "meta.siteTitle");
   return {
     title: translate(locale, "meta.searchTitle", { site }),
-    description: translate(locale, "meta.searchDescription", { site })
+    description: translate(locale, "meta.searchDescription", { site }),
+    robots: NO_INDEX_PAGE_ROBOTS
   };
 }
 

@@ -8,6 +8,7 @@ import { isAdminEmail } from "@/lib/auth/admin";
 import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
+import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import styles from "./profile.module.css";
 
@@ -16,7 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = translate(locale, "meta.siteTitle");
   return {
     title: translate(locale, "meta.profileTitle", { site }),
-    description: translate(locale, "meta.profileDescription", { site })
+    description: translate(locale, "meta.profileDescription", { site }),
+    robots: NO_INDEX_PAGE_ROBOTS
   };
 }
 

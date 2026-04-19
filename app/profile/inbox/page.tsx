@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
+import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/supabase/session";
 import { markAllReadAction } from "./actions";
@@ -15,7 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = translate(locale, "meta.siteTitle");
   return {
     title: translate(locale, "inbox.title", { site }),
-    description: translate(locale, "inbox.subtitle")
+    description: translate(locale, "inbox.subtitle"),
+    robots: NO_INDEX_PAGE_ROBOTS
   };
 }
 

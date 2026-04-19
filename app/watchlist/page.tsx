@@ -5,6 +5,7 @@ import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { signOutAction } from "@/lib/auth/actions";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
+import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getTmdbMovieCatalogPage, getTmdbMovieLocalizedSummaries } from "@/lib/tmdb/client";
 import { toCssImageUrl } from "@/lib/ui/css-image";
@@ -39,7 +40,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = translate(locale, "meta.siteTitle");
   return {
     title: translate(locale, "meta.watchlistTitle", { site }),
-    description: translate(locale, "meta.watchlistDescription", { site })
+    description: translate(locale, "meta.watchlistDescription", { site }),
+    robots: NO_INDEX_PAGE_ROBOTS
   };
 }
 
