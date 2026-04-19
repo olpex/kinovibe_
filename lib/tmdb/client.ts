@@ -106,6 +106,31 @@ const COMMONS_NON_POSTER_HINTS = [
 ] as const;
 const AWARD_CATEGORY_UNKNOWN_SENTINEL = "__award_category_unknown__";
 const AWARD_UPCOMING_CATEGORY_SENTINEL = "__award_upcoming_category__";
+const WIKIDATA_AWARD_MIN_YEAR = 1900;
+const WIKIDATA_AWARD_QUERY_LIMIT = 520;
+const WIKIDATA_AWARD_MAPPED_LIMIT = 240;
+const TMDB_AWARDS_MAX_PAGES = 4;
+const TMDB_AWARDS_MAX_ITEMS = 180;
+const AWARD_CEREMONY_TITLE_MARKERS = [
+  "award",
+  "awards",
+  "festival",
+  "ceremony",
+  "academy",
+  "oscar",
+  "golden globe",
+  "bafta",
+  "emmy",
+  "cannes",
+  "venice",
+  "berlin",
+  "премі",
+  "фестив",
+  "церемон",
+  "нагород",
+  "лауреат",
+  "номінант"
+] as const;
 const TIMEZONE_BY_REGION: Record<string, string> = {
   US: "America/New_York",
   GB: "Europe/London",
@@ -2531,6 +2556,11 @@ function shouldReplaceAwardImage(imageUrl: string | undefined): boolean {
   return !isLikelyPosterImage(normalized);
 }
 
+function looksLikeCeremonyTitle(value: string): boolean {
+  const normalized = normalizeAwardText(value);
+  return AWARD_CEREMONY_TITLE_MARKERS.some((marker) => normalized.includes(marker));
+}
+
 const getTmdbPosterByMovieId = cache(async (movieId: number): Promise<string | undefined> => {
   if (!Number.isFinite(movieId) || movieId <= 0) {
     return undefined;
@@ -2677,7 +2707,11 @@ async function enrichAwardCardsWithPosters(
       let movieTmdbId = item.movieTmdbId;
       let imageUrl = item.imageUrl;
 
-      if (category === "popular" && !movieTmdbId) {
+      const canTryTmdbLookupByTitle =
+        !movieTmdbId &&
+        (category === "popular" || (item.title.trim().length > 0 && !looksLikeCeremonyTitle(item.title)));
+
+      if (canTryTmdbLookupByTitle) {
         const lookup = await lookupTmdbMovieByAwardTitle(item.title, yearToken);
         movieTmdbId = lookup.movieTmdbId ?? movieTmdbId;
         if (!imageUrl && lookup.imageUrl) {
@@ -3002,7 +3036,6 @@ async function fetchWikidataSparql(
 
 function buildWikidataOutcomeQuery(outcome: "winner" | "nominee"): string {
   const languageChain = toWikidataLanguageChain();
-  const minYear = Math.max(1960, new Date().getUTCFullYear() - 45);
   const statementPath = outcome === "winner" ? "p:P166" : "p:P1411";
   const statementMainValue = outcome === "winner" ? "ps:P166" : "ps:P1411";
   const statementDateQualifier = outcome === "winner" ? "pq:P585" : "pq:P585";
@@ -3020,7 +3053,7 @@ SELECT DISTINCT ?film ?filmLabel ?awardLabel ?categoryLabel ?date ?poster ?image
   BIND(COALESCE(?${dateAlias}, ?releaseDate) AS ?date)
   BIND("${outcome}" AS ?outcome)
   FILTER(BOUND(?date))
-  FILTER(YEAR(?date) >= ${minYear})
+  FILTER(YEAR(?date) >= ${WIKIDATA_AWARD_MIN_YEAR})
   OPTIONAL { ?film wdt:P3383 ?poster. }
   OPTIONAL { ?film wdt:P18 ?image. }
   OPTIONAL { ?film wdt:P4947 ?tmdbId. }
@@ -3037,7 +3070,7 @@ SELECT DISTINCT ?film ?filmLabel ?awardLabel ?categoryLabel ?date ?poster ?image
   }
 }
 ORDER BY DESC(?date)
-LIMIT 420
+LIMIT ${WIKIDATA_AWARD_QUERY_LIMIT}
 `.trim();
 }
 
@@ -3107,7 +3140,7 @@ function mapWikidataWinners(bindings: SparqlBinding[]): AwardCard[] {
     const tmdbMovieId = parseAwardMovieTmdbId(getSparqlBindingValue(binding, "tmdbId") ?? "");
     const imageUrl = pickWikidataImage(binding);
     const wikipediaTitle = getSparqlBindingValue(binding, "enwikiTitle");
-    const dedupeKey = `${filmEntityId ?? title.toLowerCase()}|${outcome}`;
+    const dedupeKey = `${filmEntityId ?? title.toLowerCase()}|${outcome}|${festival.toLowerCase()}|${awardCategory.toLowerCase()}|${year}`;
     const previous = unique.get(dedupeKey);
 
     const candidate: AwardCard = {
@@ -3141,7 +3174,7 @@ function mapWikidataWinners(bindings: SparqlBinding[]): AwardCard[] {
     }
   }
 
-  return Array.from(unique.values()).slice(0, 180);
+  return Array.from(unique.values()).slice(0, WIKIDATA_AWARD_MAPPED_LIMIT);
 }
 
 function mapWikidataUpcoming(bindings: SparqlBinding[]): AwardCard[] {
@@ -3417,18 +3450,29 @@ export async function getTmdbAwards(
   try {
     const language = toTmdbLanguage(locale);
     const path = category === "upcoming" ? "/award/upcoming" : "/award";
-    const response = await fetchTmdb<TmdbAwardsResponse>(
-      path,
-      { language, page: "1" },
-      900
-    );
-    const results = response.results ?? [];
+    const results: TmdbAwardResult[] = [];
+
+    for (let page = 1; page <= TMDB_AWARDS_MAX_PAGES; page += 1) {
+      const response = await fetchTmdb<TmdbAwardsResponse>(
+        path,
+        { language, page: String(page) },
+        900
+      );
+      const pageResults = response.results ?? [];
+      if (pageResults.length === 0) {
+        break;
+      }
+      results.push(...pageResults);
+      if (results.length >= TMDB_AWARDS_MAX_ITEMS) {
+        break;
+      }
+    }
+
     if (results.length > 0) {
       const tmdbItems = results
-        .slice(0, 180)
+        .slice(0, TMDB_AWARDS_MAX_ITEMS)
         .map((item) => mapAwardResult(item, locale))
-        .filter((item): item is AwardCard => item !== null)
-        .slice(0, 120);
+        .filter((item): item is AwardCard => item !== null);
       const enrichedTmdbItems = await enrichAwardCardsWithPosters(tmdbItems, category);
       const allowedTmdbItems = await filterBlockedAwardCards(enrichedTmdbItems, category);
 

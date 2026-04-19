@@ -22,9 +22,11 @@ const AWARD_TABS: Array<{
   variant: AwardViewVariant;
   labelKey: "menu.awardsPopularTitle" | "menu.awardsUpcomingTitle";
 }> = [
-  { href: "/award", variant: "popular", labelKey: "menu.awardsPopularTitle" },
-  { href: "/award/upcoming", variant: "upcoming", labelKey: "menu.awardsUpcomingTitle" }
+  { href: "/award/upcoming", variant: "upcoming", labelKey: "menu.awardsUpcomingTitle" },
+  { href: "/award", variant: "popular", labelKey: "menu.awardsPopularTitle" }
 ];
+
+const MIN_AWARD_FILTER_YEAR = 1900;
 
 function buildSearchHref(title: string): string {
   return `/search?q=${encodeURIComponent(title)}`;
@@ -130,6 +132,22 @@ function getOutcomeLabel(locale: Locale, outcome: "winner" | "nominee" | "highli
   return translate(locale, "award.badgeHighlight");
 }
 
+function buildAwardYearOptions(awards: Array<{ year: string; eventDate?: string }>): number[] {
+  const years = awards
+    .map((item) => getAwardYearValue(item.year, item.eventDate))
+    .filter((value): value is number => value !== undefined);
+
+  const currentYear = new Date().getUTCFullYear();
+  const maxYear = Math.max(currentYear + 1, MIN_AWARD_FILTER_YEAR, ...years);
+  const options: number[] = [];
+
+  for (let year = maxYear; year >= MIN_AWARD_FILTER_YEAR; year -= 1) {
+    options.push(year);
+  }
+
+  return options;
+}
+
 export async function AwardsCatalogView({
   variant,
   titleKey,
@@ -141,13 +159,7 @@ export async function AwardsCatalogView({
   const awardsResult = await getTmdbAwards(variant, locale);
   const awards = awardsResult.items;
 
-  const allYears = Array.from(
-    new Set(
-      awards
-        .map((item) => getAwardYearValue(item.year, item.eventDate))
-        .filter((value): value is number => value !== undefined)
-    )
-  ).sort((left, right) => right - left);
+  const allYears = buildAwardYearOptions(awards);
   const allFestivals = Array.from(new Set(awards.map((item) => item.festival.trim()).filter(Boolean))).sort(
     (left, right) => left.localeCompare(right, toIntlLocale(locale))
   );
@@ -266,36 +278,46 @@ export async function AwardsCatalogView({
             </select>
           </label>
 
-          <label className={styles.filterField}>
+          <label className={`${styles.filterField} ${styles.filterFieldWide}`}>
             <span>{translate(locale, "award.filterFestival")}</span>
-            <select
-              name="festival"
-              multiple
-              defaultValue={selectedFestivals}
-              size={Math.min(6, Math.max(3, allFestivals.length))}
-            >
-              {allFestivals.map((festival) => (
-                <option key={`festival-${festival}`} value={festival}>
-                  {festival}
-                </option>
-              ))}
-            </select>
+            <div className={styles.checklist} role="group" aria-label={translate(locale, "award.filterFestival")}>
+              {allFestivals.length === 0 ? (
+                <p className={styles.checklistEmpty}>{translate(locale, "common.notAvailable")}</p>
+              ) : (
+                allFestivals.map((festival) => (
+                  <label key={`festival-${festival}`} className={styles.checkItem}>
+                    <input
+                      type="checkbox"
+                      name="festival"
+                      value={festival}
+                      defaultChecked={selectedFestivals.includes(festival)}
+                    />
+                    <span title={festival}>{festival}</span>
+                  </label>
+                ))
+              )}
+            </div>
           </label>
 
-          <label className={styles.filterField}>
+          <label className={`${styles.filterField} ${styles.filterFieldWide}`}>
             <span>{translate(locale, "award.filterCategory")}</span>
-            <select
-              name="category"
-              multiple
-              defaultValue={selectedCategories}
-              size={Math.min(6, Math.max(3, allCategories.length))}
-            >
-              {allCategories.map((category) => (
-                <option key={`category-${category}`} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+            <div className={styles.checklist} role="group" aria-label={translate(locale, "award.filterCategory")}>
+              {allCategories.length === 0 ? (
+                <p className={styles.checklistEmpty}>{translate(locale, "common.notAvailable")}</p>
+              ) : (
+                allCategories.map((category) => (
+                  <label key={`category-${category}`} className={styles.checkItem}>
+                    <input
+                      type="checkbox"
+                      name="category"
+                      value={category}
+                      defaultChecked={selectedCategories.includes(category)}
+                    />
+                    <span title={category}>{category}</span>
+                  </label>
+                ))
+              )}
+            </div>
           </label>
 
           <div className={styles.filterActions}>

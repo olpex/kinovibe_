@@ -145,8 +145,13 @@
   padding: 0.75rem;
   background: rgba(11, 15, 20, 0.34);
   display: grid;
-  gap: 0.6rem;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  grid-template-columns:
+    minmax(160px, 0.85fr)
+    minmax(160px, 0.85fr)
+    minmax(290px, 1.6fr)
+    minmax(290px, 1.6fr)
+    auto;
   align-items: start;
 }
 
@@ -161,6 +166,11 @@
 .filterField {
   display: grid;
   gap: 0.32rem;
+  min-width: 0;
+}
+
+.filterFieldWide {
+  min-width: 0;
 }
 
 .filterField span {
@@ -175,17 +185,51 @@
   color: var(--color-text);
   padding: 0.42rem 0.5rem;
   font: inherit;
+  min-width: 0;
 }
 
-.filterField select[multiple] {
-  min-height: 7rem;
+.checklist {
+  border: 1px solid var(--color-border);
+  border-radius: 0.65rem;
+  background: rgba(20, 28, 40, 0.88);
+  max-height: 11.5rem;
+  overflow: auto;
+  padding: 0.45rem 0.5rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.checkItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: var(--color-text);
+  font-size: 0.92rem;
+}
+
+.checkItem input {
+  margin-top: 0.18rem;
+}
+
+.checkItem span {
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.checklistEmpty {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.9rem;
 }
 
 .filterActions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.5rem;
-  align-items: center;
+  align-items: stretch;
+  justify-self: end;
+  align-self: end;
 }
 
 .filterButtonPrimary,
@@ -210,4 +254,31 @@
   margin: 0;
   font-size: 0.92rem;
   color: var(--color-text-soft);
+}
+
+@media (max-width: 1300px) {
+  .filtersForm {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .filterFieldWide {
+    grid-column: 1 / -1;
+  }
+
+  .filterActions {
+    grid-column: 1 / -1;
+    justify-self: start;
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (max-width: 700px) {
+  .filtersForm {
+    grid-template-columns: 1fr;
+  }
+
+  .filterActions {
+    justify-self: stretch;
+  }
 }
