@@ -126,38 +126,41 @@ export function HomeScreen({ data, session, locale, movieFiltersGenres }: HomeSc
         </div>
       </section>
 
-      <section className={styles.homeFiltersSection}>
-        <MovieFilters
-          locale={locale}
-          basePath="/movie"
-          genres={availableMovieFilterGenres}
-          filters={defaultMovieFilters}
-          isPro={session.isPro}
-        />
+      <section className={styles.homeCatalogSection}>
+        <div className={styles.homeFiltersSection}>
+          <MovieFilters
+            locale={locale}
+            basePath="/movie"
+            genres={availableMovieFilterGenres}
+            filters={defaultMovieFilters}
+            isPro={session.isPro}
+          />
+        </div>
+        <div className={styles.homeCatalogRails}>
+          <MediaRail
+            title={translate(locale, "home.trendingNow")}
+            caption={translate(locale, "home.trendingCaption")}
+            locale={locale}
+            items={data.trendingNow}
+            emptyMessage={translate(locale, "home.trendingEmpty")}
+          />
+          <MediaRail
+            title={translate(locale, "home.continueWatching")}
+            caption={data.continueWatchingCaption}
+            locale={locale}
+            items={data.continueWatching}
+            showProgress
+            emptyMessage={translate(locale, "home.progressEmpty")}
+          />
+          <MediaRail
+            title={translate(locale, "home.topPicks")}
+            caption={translate(locale, "home.topPicksCaption")}
+            locale={locale}
+            items={data.topPicks}
+            emptyMessage={translate(locale, "home.topPicksEmpty")}
+          />
+        </div>
       </section>
-
-      <MediaRail
-        title={translate(locale, "home.trendingNow")}
-        caption={translate(locale, "home.trendingCaption")}
-        locale={locale}
-        items={data.trendingNow}
-        emptyMessage={translate(locale, "home.trendingEmpty")}
-      />
-      <MediaRail
-        title={translate(locale, "home.continueWatching")}
-        caption={data.continueWatchingCaption}
-        locale={locale}
-        items={data.continueWatching}
-        showProgress
-        emptyMessage={translate(locale, "home.progressEmpty")}
-      />
-      <MediaRail
-        title={translate(locale, "home.topPicks")}
-        caption={translate(locale, "home.topPicksCaption")}
-        locale={locale}
-        items={data.topPicks}
-        emptyMessage={translate(locale, "home.topPicksEmpty")}
-      />
 
       <nav className={styles.mobileNav} aria-label={translate(locale, "home.mobileNavAria")}>
         <Link href="/" className={styles.mobileNavActive}>
