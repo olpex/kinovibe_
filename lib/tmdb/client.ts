@@ -312,13 +312,18 @@ function gradientByMovieId(id: number): [string, string] {
 }
 
 function genreLabel(genreIds: number[], genresMap: Map<number, string>, locale: Locale): string {
-  for (const id of genreIds) {
-    const label = genresMap.get(id);
-    if (label) {
-      return label;
-    }
-  }
-  return translate(locale, "home.defaultGenre");
+  const labels = genreLabels(genreIds, genresMap);
+  return labels[0] ?? translate(locale, "home.defaultGenre");
+}
+
+function genreLabels(genreIds: number[], genresMap: Map<number, string>): string[] {
+  return Array.from(
+    new Set(
+      genreIds
+        .map((id) => genresMap.get(id))
+        .filter((label): label is string => Boolean(label))
+    )
+  );
 }
 
 function pickHomeGenres(genresMap: Map<number, string>): Array<{ id: number; name: string }> {
@@ -1142,6 +1147,7 @@ export type HomeMovie = {
   title: string;
   year: number;
   genre: string;
+  genres: string[];
   countries: string[];
   runtime: string;
   rating: number;
@@ -1163,11 +1169,14 @@ export function mapTmdbMovieToCard(
   genresMap: Map<number, string>,
   locale: Locale
 ): HomeMovie {
+  const genres = genreLabels(movie.genre_ids, genresMap);
+
   return {
     id: movie.id,
     title: movie.title,
     year: parseYear(movie.release_date),
-    genre: genreLabel(movie.genre_ids, genresMap, locale),
+    genre: genres[0] ?? translate(locale, "home.defaultGenre"),
+    genres,
     countries: [],
     runtime: formatRuntime(null, movie.id, locale),
     rating: movie.vote_average || 0,
@@ -1179,11 +1188,14 @@ export function mapTmdbMovieToCard(
 }
 
 export function mapTmdbTvToCard(tv: TmdbTv, genresMap: Map<number, string>, locale: Locale): HomeMovie {
+  const genres = genreLabels(tv.genre_ids, genresMap);
+
   return {
     id: tv.id,
     title: tv.name,
     year: parseYear(tv.first_air_date),
-    genre: genreLabel(tv.genre_ids, genresMap, locale),
+    genre: genres[0] ?? translate(locale, "home.defaultGenre"),
+    genres,
     countries: localizeCountryCodes(tv.origin_country ?? [], locale),
     runtime: translate(locale, "nav.tvShows"),
     rating: tv.vote_average || 0,
@@ -1443,7 +1455,16 @@ export async function discoverTmdbMovieCatalogPage(
     },
     900
   );
-  const filteredResults = response.results.filter((movie) => !isBlockedMovieSummary(movie));
+  const selectedGenreIds = filters.genreIds;
+  const filteredResults = response.results.filter((movie) => {
+    if (isBlockedMovieSummary(movie)) {
+      return false;
+    }
+    if (selectedGenreIds.length === 0) {
+      return true;
+    }
+    return selectedGenreIds.every((genreId) => movie.genre_ids.includes(genreId));
+  });
 
   return {
     page: response.page,
@@ -2054,7 +2075,15 @@ export async function getTvOnAirSchedulePage(
     const localizedCountry = localizeCountryName(networkCountryCode, countryName, locale);
 
     const firstGenreId = genreIds[0];
+    const genres = Array.from(
+      new Set(
+        genreIds
+          .map((id) => localizedGenresMap.get(id))
+          .filter((value): value is string => Boolean(value))
+      )
+    );
     const genre =
+      genres[0] ??
       (firstGenreId ? localizedGenresMap.get(firstGenreId) : undefined) ??
       show.genres?.[0] ??
       translate(locale, "home.defaultGenre");
@@ -2064,6 +2093,7 @@ export async function getTvOnAirSchedulePage(
       title: show.name,
       year,
       genre,
+      genres,
       countries: [localizedCountry],
       runtime: translate(locale, "nav.tvShows"),
       rating,

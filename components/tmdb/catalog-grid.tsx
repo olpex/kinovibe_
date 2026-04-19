@@ -31,6 +31,10 @@ export function CatalogMovieGrid({
           item.countries.length > 0
             ? item.countries.join(", ")
             : translate(locale, "common.notAvailable");
+        const genresLabel =
+          item.genres.length > 0
+            ? item.genres.join(", ")
+            : item.genre || translate(locale, "home.defaultGenre");
         return (
           <Link key={item.id} href={cardHref} className={styles.card}>
             <div
@@ -46,7 +50,7 @@ export function CatalogMovieGrid({
             <div className={styles.body}>
               <h2>{item.title}</h2>
               <p>
-                {item.genre} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
+                {genresLabel} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
               </p>
               <p>{countriesLabel}</p>
               {item.broadcast ? (
