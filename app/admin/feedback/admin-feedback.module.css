@@ -178,6 +178,13 @@
   display: grid;
   gap: 0.5rem;
   margin-top: 0.25rem;
+  width: 100%;
+}
+
+.replyForm form {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .replyForm textarea {
@@ -189,6 +196,8 @@
   font: inherit;
   resize: vertical;
   min-height: 80px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .replyForm button {
@@ -201,6 +210,37 @@
   font-weight: 700;
   font-size: 0.88rem;
   width: fit-content;
+}
+
+.entryActions {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.closeForm {
+  display: flex;
+}
+
+.closeButton {
+  border: 1px solid var(--color-border);
+  border-radius: 0.72rem;
+  background: rgba(26, 34, 48, 0.82);
+  color: var(--color-text-soft);
+  padding: 0.5rem 0.9rem;
+  font-weight: 700;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  border-color: rgba(148, 163, 184, 0.5);
+  color: var(--color-text);
+}
+
+.closedBadge {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
 }
 
 .replyOk {

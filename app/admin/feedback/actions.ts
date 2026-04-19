@@ -14,6 +14,69 @@ export type AdminReplyState = {
   message: string;
 };
 
+export async function closeFeedbackThreadAction(formData: FormData): Promise<void> {
+  const session = await getSessionUser();
+
+  if (!session.isAuthenticated || !isAdminEmail(session.email)) {
+    return;
+  }
+
+  const entryId = Number(formData.get("entry_id"));
+  if (!entryId) {
+    return;
+  }
+
+  const adminClient = createSupabaseAdminClient();
+  const serverClient = await createSupabaseServerClient();
+  const client = adminClient ?? serverClient;
+
+  if (!client || !session.userId) {
+    return;
+  }
+
+  const { data: replyIdsRaw } = await client
+    .from("feedback_replies")
+    .select("id")
+    .eq("feedback_entry_id", entryId);
+  const replyIds = (replyIdsRaw ?? [])
+    .map((row) => Number(row.id))
+    .filter((id) => Number.isFinite(id));
+
+  const { error: closeError } = await client
+    .from("feedback_entries")
+    .update({ is_closed_by_admin: true })
+    .eq("id", entryId)
+    .is("parent_reply_id", null);
+  if (closeError) {
+    await client
+      .from("feedback_entries")
+      .update({ is_read_by_admin: true })
+      .eq("id", entryId)
+      .is("parent_reply_id", null);
+  }
+
+  await client
+    .from("inbox_notifications")
+    .update({ is_read: true })
+    .eq("recipient_user_id", session.userId)
+    .in("notification_type", ["feedback_received", "user_reply"])
+    .eq("feedback_entry_id", entryId);
+
+  if (replyIds.length > 0) {
+    await client
+      .from("inbox_notifications")
+      .update({ is_read: true })
+      .eq("recipient_user_id", session.userId)
+      .eq("notification_type", "user_reply")
+      .in("feedback_reply_id", replyIds);
+  }
+
+  revalidatePath("/admin/feedback");
+  revalidatePath("/profile");
+  revalidatePath("/profile/inbox");
+  revalidatePath("/", "layout");
+}
+
 export async function replyToFeedbackAction(
   _prev: AdminReplyState,
   formData: FormData

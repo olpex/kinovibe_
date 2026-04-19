@@ -257,6 +257,8 @@ const BASE_MESSAGES: Record<string, string> = {
   "admin.userRepliedTitle": "User replied to your message",
   "admin.newFeedbackTitle": "New feedback/suggestion received",
   "admin.replySentNoEmail": "Reply sent, but email delivery failed.",
+  "admin.closeDiscussion": "Close discussion",
+  "admin.discussionClosed": "Closed",
 
   "inbox.title": "Inbox",
   "inbox.subtitle": "{count} message(s)",
@@ -1085,6 +1087,8 @@ const UK_MESSAGES: Record<string, string> = {
   "admin.userRepliedTitle": "Користувач відповів на ваше повідомлення",
   "admin.newFeedbackTitle": "Новий відгук або пропозиція від користувача",
   "admin.replySentNoEmail": "Відповідь надіслано, але доставку email не вдалося виконати.",
+  "admin.closeDiscussion": "Завершити дискусію",
+  "admin.discussionClosed": "Завершено",
 
   "inbox.title": "Вхідні повідомлення",
   "inbox.subtitle": "{count} повідомлень",

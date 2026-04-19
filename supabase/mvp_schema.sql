@@ -17,6 +17,7 @@
 --   3) 20260417182000_leaderboard_rpc_filters.sql
 --   4) 20260418120000_content_policy_blocks_cleanup.sql
 --   5) 20260418123000_content_policy_bulk_upsert.sql
+--   6) 20260419103000_feedback_close_flag.sql
 --
 -- Notes:
 --   - Keep this file as a human-readable entry point only.
