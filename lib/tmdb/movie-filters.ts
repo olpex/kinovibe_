@@ -27,6 +27,7 @@ export type MovieDiscoverFilters = {
   voteCountFrom?: number;
   runtimeFrom?: number;
   runtimeTo?: number;
+  originCountry?: string;
   originalLanguage?: string;
 };
 
@@ -131,6 +132,7 @@ export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDis
   if (runtimeFrom !== undefined && runtimeTo !== undefined && runtimeFrom > runtimeTo) {
     [runtimeFrom, runtimeTo] = [runtimeTo, runtimeFrom];
   }
+  const originCountry = normalizeCountryCode(firstParam(params.country));
 
   const originalLanguageRaw = firstParam(params.lang)?.trim().toLowerCase();
   const originalLanguage =
@@ -158,6 +160,7 @@ export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDis
     voteCountFrom,
     runtimeFrom,
     runtimeTo,
+    originCountry,
     originalLanguage
   };
 }
@@ -192,6 +195,7 @@ export function hasActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): bo
     filters.voteCountFrom !== undefined ||
     filters.runtimeFrom !== undefined ||
     filters.runtimeTo !== undefined ||
+    filters.originCountry !== undefined ||
     filters.originalLanguage !== undefined
   );
 }
@@ -220,6 +224,9 @@ export function countActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): 
     count += 1;
   }
   if (filters.runtimeFrom !== undefined || filters.runtimeTo !== undefined) {
+    count += 1;
+  }
+  if (filters.originCountry !== undefined) {
     count += 1;
   }
   if (filters.originalLanguage !== undefined) {
@@ -264,6 +271,9 @@ export function movieDiscoverFiltersToQuery(filters: MovieDiscoverFilters): Reco
   if (filters.runtimeTo !== undefined) {
     query.runtimeTo = String(filters.runtimeTo);
   }
+  if (filters.originCountry) {
+    query.country = filters.originCountry;
+  }
   if (filters.originalLanguage) {
     query.lang = filters.originalLanguage;
   }
@@ -303,6 +313,9 @@ export function movieDiscoverFiltersToTmdbParams(
   }
   if (filters.runtimeTo !== undefined) {
     params["with_runtime.lte"] = String(filters.runtimeTo);
+  }
+  if (filters.originCountry) {
+    params.with_origin_country = filters.originCountry;
   }
   if (filters.originalLanguage) {
     params.with_original_language = filters.originalLanguage;

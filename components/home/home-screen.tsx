@@ -8,7 +8,11 @@ import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import {
   type MovieDiscoverFilters
 } from "@/lib/tmdb/movie-filters";
-import { type MovieGenreOption, type TmdbPagedCards } from "@/lib/tmdb/client";
+import {
+  type MovieGenreOption,
+  type TmdbCountryOption,
+  type TmdbPagedCards
+} from "@/lib/tmdb/client";
 import { toCssImageUrl } from "@/lib/ui/css-image";
 import { HomeScreenData, HomeSession } from "./types";
 import styles from "./home-screen.module.css";
@@ -18,6 +22,7 @@ type HomeScreenProps = {
   session: HomeSession;
   locale: Locale;
   movieFiltersGenres: MovieGenreOption[];
+  movieFiltersCountries: TmdbCountryOption[];
   movieFilters: MovieDiscoverFilters;
   movieCatalog: TmdbPagedCards;
   movieFiltersQuery: Record<string, string>;
@@ -42,6 +47,7 @@ export function HomeScreen({
   session,
   locale,
   movieFiltersGenres,
+  movieFiltersCountries,
   movieFilters,
   movieCatalog,
   movieFiltersQuery
@@ -126,6 +132,7 @@ export function HomeScreen({
             locale={locale}
             basePath="/"
             genres={availableMovieFilterGenres}
+            countries={movieFiltersCountries}
             filters={movieFilters}
             isPro={session.isPro}
           />

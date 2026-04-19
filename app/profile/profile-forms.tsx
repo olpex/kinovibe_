@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import {
+  activateProWithCodeAction,
   changePasswordFromProfileAction,
   updateProfileSettingsAction,
   type ProfileActionState
@@ -31,6 +32,10 @@ export function ProfileForms({ locale, isAdmin, billingPlan, initialProfile }: P
     changePasswordFromProfileAction,
     { ok: true, message: "" }
   );
+  const [proActivationState, proActivationAction, proActivationPending] = useActionState<
+    ProfileActionState,
+    FormData
+  >(activateProWithCodeAction, { ok: true, message: "" });
 
   return (
     <div className={styles.grid}>
@@ -101,9 +106,35 @@ export function ProfileForms({ locale, isAdmin, billingPlan, initialProfile }: P
         </div>
         <p className={styles.planMuted}>{translate(locale, "profile.planManageHint")}</p>
         {billingPlan !== "pro" ? (
-          <Link href="/feedback" className={styles.adminLink}>
-            {translate(locale, "profile.planUpgradeSoon")}
-          </Link>
+          <>
+            <Link href="/feedback" className={styles.adminLink}>
+              {translate(locale, "profile.planUpgradeSoon")}
+            </Link>
+            <form action={proActivationAction} className={styles.form}>
+              <h3>{translate(locale, "profile.proActivationTitle")}</h3>
+              <p>{translate(locale, "profile.proActivationHint")}</p>
+              {proActivationState.message ? (
+                <p className={proActivationState.ok ? styles.feedbackOk : styles.feedbackError}>
+                  {proActivationState.message}
+                </p>
+              ) : null}
+              <label>
+                <span>{translate(locale, "profile.proActivationCode")}</span>
+                <input
+                  name="activationCode"
+                  type="password"
+                  autoComplete="one-time-code"
+                  maxLength={120}
+                  required
+                />
+              </label>
+              <button type="submit" disabled={proActivationPending}>
+                {proActivationPending
+                  ? translate(locale, "common.updating")
+                  : translate(locale, "profile.proActivationCta")}
+              </button>
+            </form>
+          </>
         ) : null}
       </section>
 

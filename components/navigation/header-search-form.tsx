@@ -33,6 +33,7 @@ export function HeaderSearchForm({
   const [query, setQuery] = useState(searchQuery);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
@@ -47,6 +48,7 @@ export function HeaderSearchForm({
     if (!canSuggest) {
       setSuggestions([]);
       setIsLoading(false);
+      setHasError(false);
       setActiveIndex(-1);
       return;
     }
@@ -54,6 +56,7 @@ export function HeaderSearchForm({
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       setIsLoading(true);
+      setHasError(false);
       try {
         const response = await fetch(
           `/api/search/suggest?q=${encodeURIComponent(normalizedQuery)}&locale=${locale}`,
@@ -65,6 +68,7 @@ export function HeaderSearchForm({
 
         if (!response.ok) {
           setSuggestions([]);
+          setHasError(true);
           return;
         }
 
@@ -74,6 +78,7 @@ export function HeaderSearchForm({
       } catch {
         if (!controller.signal.aborted) {
           setSuggestions([]);
+          setHasError(true);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -81,7 +86,7 @@ export function HeaderSearchForm({
           setActiveIndex(-1);
         }
       }
-    }, 240);
+    }, 150);
 
     return () => {
       clearTimeout(timer);
@@ -104,7 +109,13 @@ export function HeaderSearchForm({
   }
 
   return (
-    <form action={searchAction} method="get" className={formClassName}>
+    <form
+      action={searchAction}
+      method="get"
+      className={formClassName}
+      data-track-event="search_submit"
+      data-track-click="search:submit"
+    >
       <div
         ref={rootRef}
         className={styles.inputWrap}
@@ -165,11 +176,15 @@ export function HeaderSearchForm({
           <div className={styles.dropdown} role="listbox" aria-label={translate(locale, "search.suggestAria")}>
             {isLoading ? <p className={styles.stateLine}>{translate(locale, "search.suggestLoading")}</p> : null}
 
-            {!isLoading && suggestions.length === 0 ? (
+            {!isLoading && hasError ? (
+              <p className={styles.stateLine}>{translate(locale, "search.suggestError")}</p>
+            ) : null}
+
+            {!isLoading && !hasError && suggestions.length === 0 ? (
               <p className={styles.stateLine}>{translate(locale, "search.suggestNoResults")}</p>
             ) : null}
 
-            {!isLoading && suggestions.length > 0 ? (
+            {!isLoading && !hasError && suggestions.length > 0 ? (
               <ul className={styles.list}>
                 {suggestions.map((item, index) => (
                   <li key={item.id}>

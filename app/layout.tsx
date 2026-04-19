@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import { SiteActivityTracker } from "@/components/analytics/site-activity-tracker";
+import { SiteFooter } from "@/components/navigation/site-footer";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { resolveMetadataBase, resolveSiteUrl } from "@/lib/seo/site";
@@ -128,6 +129,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         />
         <SiteActivityTracker />
         {children}
+        <SiteFooter locale={locale} />
       </body>
     </html>
   );

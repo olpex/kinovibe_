@@ -8,13 +8,14 @@ import {
   MOVIE_DISCOVER_SORT_OPTIONS,
   type MovieDiscoverFilters
 } from "@/lib/tmdb/movie-filters";
-import { type MovieGenreOption } from "@/lib/tmdb/client";
+import { type MovieGenreOption, type TmdbCountryOption } from "@/lib/tmdb/client";
 import styles from "./movie-filters.module.css";
 
 type MovieFiltersProps = {
   locale: Locale;
   basePath: string;
   genres: MovieGenreOption[];
+  countries: TmdbCountryOption[];
   filters: MovieDiscoverFilters;
   isPro: boolean;
 };
@@ -23,6 +24,7 @@ export function MovieFilters({
   locale,
   basePath,
   genres,
+  countries,
   filters,
   isPro
 }: MovieFiltersProps) {
@@ -52,7 +54,13 @@ export function MovieFilters({
         ) : null}
       </div>
 
-      <form action={basePath} method="get" className={styles.form}>
+      <form
+        action={basePath}
+        method="get"
+        className={styles.form}
+        data-track-event="filter_apply"
+        data-track-click="movie:filter_apply"
+      >
         <div className={styles.group}>
           <label htmlFor="movie-filter-sort">{translate(locale, "movie.filters.sortBy")}</label>
           <select id="movie-filter-sort" name="sort" defaultValue={filters.sortBy}>
@@ -108,6 +116,20 @@ export function MovieFilters({
               defaultValue={filters.yearTo ?? ""}
             />
           </div>
+        </div>
+
+        <div className={styles.group}>
+          <label htmlFor="movie-filter-country">
+            {translate(locale, "movie.filters.country")}
+          </label>
+          <select id="movie-filter-country" name="country" defaultValue={filters.originCountry ?? ""}>
+            <option value="">{translate(locale, "movie.filters.allCountries")}</option>
+            {countries.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <fieldset className={styles.genreGroup}>

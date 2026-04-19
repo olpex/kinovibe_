@@ -15,7 +15,16 @@ type TrackPayload = {
 };
 
 function isSupportedEventType(value: string | undefined): value is SiteEventType {
-  return value === "page_view" || value === "click" || value === "movie_added";
+  return (
+    value === "page_view" ||
+    value === "click" ||
+    value === "movie_added" ||
+    value === "search_submit" ||
+    value === "filter_apply" ||
+    value === "card_open" ||
+    value === "play_start" ||
+    value === "play_complete"
+  );
 }
 
 function getIpAddress(request: Request): string | null {

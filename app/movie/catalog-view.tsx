@@ -17,6 +17,7 @@ import {
 import {
   discoverTmdbMovieCatalogPage,
   getTmdbMovieCatalogPage,
+  getTmdbCountries,
   getTmdbMovieGenres,
   type MovieMenuCategory
 } from "@/lib/tmdb/client";
@@ -74,14 +75,16 @@ export async function MovieCatalogView({
 
   let result: Awaited<ReturnType<typeof getTmdbMovieCatalogPage>> | null = null;
   let genres = [] as Awaited<ReturnType<typeof getTmdbMovieGenres>>;
+  let countries = [] as Awaited<ReturnType<typeof getTmdbCountries>>;
 
   try {
     if (filtersEnabledCategory) {
-      [result, genres] = await Promise.all([
+      [result, genres, countries] = await Promise.all([
         useDiscover
           ? discoverTmdbMovieCatalogPage(filters, locale, page)
           : getTmdbMovieCatalogPage(category, locale, page),
-        getTmdbMovieGenres(locale).catch(() => [])
+        getTmdbMovieGenres(locale).catch(() => []),
+        getTmdbCountries(locale).catch(() => [])
       ]);
     } else {
       result = await getTmdbMovieCatalogPage(category, locale, page);
@@ -117,6 +120,7 @@ export async function MovieCatalogView({
               locale={locale}
               basePath={basePath}
               genres={genres}
+              countries={countries}
               filters={filters}
               isPro={session.isPro}
             />
@@ -146,6 +150,7 @@ export async function MovieCatalogView({
             locale={locale}
             basePath={basePath}
             genres={genres}
+            countries={countries}
             filters={filters}
             isPro={session.isPro}
           />

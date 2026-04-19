@@ -19,6 +19,7 @@
 --   5) 20260418123000_content_policy_bulk_upsert.sql
 --   6) 20260419103000_feedback_close_flag.sql
 --   7) 20260419113000_feedback_discussion_state_hardening.sql
+--   8) 20260419150000_legal_catalog_and_event_types.sql
 --
 -- Notes:
 --   - Keep this file as a human-readable entry point only.

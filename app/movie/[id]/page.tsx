@@ -167,9 +167,18 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
             ))}
           </div>
           <p className={styles.overview}>{movie.overview}</p>
+          <p className={styles.dataAttribution}>{translate(locale, "legal.catalogAttributionLabel")}</p>
           <div className={styles.heroActions}>
             {movie.trailerUrl ? (
-              <a href={movie.trailerUrl} target="_blank" rel="noreferrer" className={styles.primaryAction}>
+              <a
+                href={movie.trailerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.primaryAction}
+                data-track-event="play_start"
+                data-track-click="movie:trailer_open"
+                data-movie-id={movie.id}
+              >
                 {translate(locale, "home.watchTrailer")}
               </a>
             ) : (
@@ -247,7 +256,15 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           </div>
         </div>
         {movie.watchProviders.link ? (
-          <a href={movie.watchProviders.link} target="_blank" rel="noreferrer" className={styles.providerLink}>
+          <a
+            href={movie.watchProviders.link}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.providerLink}
+            data-track-event="play_start"
+            data-track-click="movie:provider_open"
+            data-movie-id={movie.id}
+          >
             {translate(locale, "movie.openProviders")}
           </a>
         ) : null}

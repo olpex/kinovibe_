@@ -1,6 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type SiteEventType = "page_view" | "click" | "movie_added";
+export type SiteEventType =
+  | "page_view"
+  | "click"
+  | "movie_added"
+  | "search_submit"
+  | "filter_apply"
+  | "card_open"
+  | "play_start"
+  | "play_complete";
 
 export type SiteEventInput = {
   eventType: SiteEventType;

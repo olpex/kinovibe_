@@ -163,6 +163,13 @@
   line-height: 1.55;
 }
 
+.dataAttribution {
+  margin: 0.6rem 0 0;
+  color: var(--color-text-soft);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .heroActions {
   margin-top: 0.95rem;
   display: flex;

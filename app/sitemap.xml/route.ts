@@ -27,11 +27,17 @@ const PUBLIC_ROUTES: PublicRoute[] = [
   { path: "/person", changeFrequency: "daily", priority: 0.82 },
   { path: "/award", changeFrequency: "daily", priority: 0.85 },
   { path: "/award/upcoming", changeFrequency: "daily", priority: 0.85 },
+  { path: "/free-legal", changeFrequency: "daily", priority: 0.88 },
   { path: "/leaderboard", changeFrequency: "daily", priority: 0.82 },
   { path: "/discuss", changeFrequency: "daily", priority: 0.8 },
   { path: "/talk", changeFrequency: "daily", priority: 0.76 },
   { path: "/feedback", changeFrequency: "weekly", priority: 0.65 },
   { path: "/donate", changeFrequency: "weekly", priority: 0.62 },
+  { path: "/terms", changeFrequency: "monthly", priority: 0.55 },
+  { path: "/privacy", changeFrequency: "monthly", priority: 0.55 },
+  { path: "/content-policy", changeFrequency: "monthly", priority: 0.55 },
+  { path: "/copyright", changeFrequency: "monthly", priority: 0.55 },
+  { path: "/sources-licenses", changeFrequency: "monthly", priority: 0.55 },
   { path: "/docs", changeFrequency: "weekly", priority: 0.72 },
   { path: "/api-for-business", changeFrequency: "weekly", priority: 0.7 }
 ];

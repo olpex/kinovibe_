@@ -24,6 +24,6 @@ export async function GET(request: Request) {
       }))
     });
   } catch {
-    return NextResponse.json({ items: [] });
+    return NextResponse.json({ items: [], error: "Suggest unavailable" }, { status: 502 });
   }
 }

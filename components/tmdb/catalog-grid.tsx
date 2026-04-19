@@ -36,7 +36,14 @@ export function CatalogMovieGrid({
             ? item.genres.join(", ")
             : item.genre || translate(locale, "home.defaultGenre");
         return (
-          <Link key={item.id} href={cardHref} className={styles.card}>
+          <Link
+            key={item.id}
+            href={cardHref}
+            className={styles.card}
+            data-track-event="card_open"
+            data-track-click="catalog:card_open"
+            data-movie-id={item.id}
+          >
             <div
               className={styles.poster}
               style={{

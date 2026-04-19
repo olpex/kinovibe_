@@ -52,6 +52,7 @@ const MENU_SECTIONS: MenuSection[] = [
     href: "/discuss",
     labelKey: "nav.more",
     links: [
+      { href: "/free-legal", labelKey: "menu.freeLegal" },
       { href: "/discuss", labelKey: "menu.discuss" },
       { href: "/feedback", labelKey: "menu.feedback" },
       { href: "/donate", labelKey: "menu.donate" },

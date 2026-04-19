@@ -114,9 +114,18 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
               ))}
             </div>
             <p className={styles.overview}>{tv.overview}</p>
+            <p className={styles.dataAttribution}>{translate(locale, "legal.catalogAttributionLabel")}</p>
             <div className={styles.heroActions}>
               {tv.trailerUrl ? (
-                <a href={tv.trailerUrl} target="_blank" rel="noreferrer" className={styles.primaryAction}>
+                <a
+                  href={tv.trailerUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.primaryAction}
+                  data-track-event="play_start"
+                  data-track-click="tv:trailer_open"
+                  data-movie-id={tv.id}
+                >
                   {translate(locale, "home.watchTrailer")}
                 </a>
               ) : (
@@ -165,7 +174,15 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
             </div>
           </div>
           {tv.watchProviders.link ? (
-            <a href={tv.watchProviders.link} target="_blank" rel="noreferrer" className={styles.providerLink}>
+            <a
+              href={tv.watchProviders.link}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.providerLink}
+              data-track-event="play_start"
+              data-track-click="tv:provider_open"
+              data-movie-id={tv.id}
+            >
               {translate(locale, "movie.openProviders")}
             </a>
           ) : null}

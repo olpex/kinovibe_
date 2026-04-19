@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/supabase/session";
 import {
   discoverTmdbMovieCatalogPage,
   getTmdbMovieCatalogPage,
+  getTmdbCountries,
   getTmdbMovieGenres,
   type TmdbPagedCards
 } from "@/lib/tmdb/client";
@@ -34,10 +35,11 @@ export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = parsePage(params.page);
 
-  const [data, sessionUser, movieFiltersGenres] = await Promise.all([
+  const [data, sessionUser, movieFiltersGenres, movieFilterCountries] = await Promise.all([
     getHomeScreenData(locale),
     getSessionUser(),
-    getTmdbMovieGenres(locale).catch(() => [])
+    getTmdbMovieGenres(locale).catch(() => []),
+    getTmdbCountries(locale).catch(() => [])
   ]);
   const movieFilters = enforceMovieDiscoverPlan(parseMovieDiscoverFilters(params), sessionUser.isPro);
   const movieFiltersQuery = movieDiscoverFiltersToQuery(movieFilters);
@@ -69,6 +71,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       session={sessionUser}
       locale={locale}
       movieFiltersGenres={movieFiltersGenres}
+      movieFiltersCountries={movieFilterCountries}
       movieFilters={movieFilters}
       movieCatalog={movieCatalog}
       movieFiltersQuery={movieFiltersQuery}

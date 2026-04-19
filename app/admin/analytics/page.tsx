@@ -16,7 +16,15 @@ import styles from "./analytics.module.css";
 
 type SiteEventRow = {
   user_id: string | null;
-  event_type: "page_view" | "click" | "movie_added";
+  event_type:
+    | "page_view"
+    | "click"
+    | "movie_added"
+    | "search_submit"
+    | "filter_apply"
+    | "card_open"
+    | "play_start"
+    | "play_complete";
   page_path: string | null;
   element_key: string | null;
   movie_tmdb_id: number | null;
@@ -292,6 +300,14 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   const totalVisits = events.filter((event) => event.event_type === "page_view").length;
   const totalClicks = events.filter((event) => event.event_type === "click").length;
   const totalMovieAdds = events.filter((event) => event.event_type === "movie_added").length;
+  const totalSearchSubmits = events.filter((event) => event.event_type === "search_submit").length;
+  const totalFilterApplies = events.filter((event) => event.event_type === "filter_apply").length;
+  const totalCardOpens = events.filter((event) => event.event_type === "card_open").length;
+  const totalPlayStarts = events.filter((event) => event.event_type === "play_start").length;
+  const totalPlayCompletions = events.filter((event) => event.event_type === "play_complete").length;
+  const searchSuccessRate = totalSearchSubmits > 0
+    ? Math.min(100, Math.round((totalCardOpens / totalSearchSubmits) * 100))
+    : 0;
   const countryEntries = topEntries(countryCounts, 40);
   const requestedCountry = normalizeCountryCode(params.country);
   const selectedCountry =
@@ -392,6 +408,32 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
           <article>
             <h3>{translate(locale, "analytics.events")}</h3>
             <p>{events.length.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+        </div>
+        <div className={styles.kpisSecondary}>
+          <article>
+            <h3>{translate(locale, "analytics.searchSubmit")}</h3>
+            <p>{totalSearchSubmits.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.filterApply")}</h3>
+            <p>{totalFilterApplies.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.cardOpen")}</h3>
+            <p>{totalCardOpens.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.playStarts")}</h3>
+            <p>{totalPlayStarts.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.playCompletions")}</h3>
+            <p>{totalPlayCompletions.toLocaleString(toIntlLocale(locale))}</p>
+          </article>
+          <article>
+            <h3>{translate(locale, "analytics.searchSuccessRate")}</h3>
+            <p>{searchSuccessRate}%</p>
           </article>
         </div>
       </section>
