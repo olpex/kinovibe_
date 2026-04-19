@@ -209,11 +209,11 @@ export default async function AdminFeedbackPage() {
 
   // Top-level entries (not user replies)
   const topLevelRows = supportsParentReplyId ? rows.filter((r) => !r.parent_reply_id) : rows;
-  const openTopLevelCount = supportsCloseFlag
-    ? topLevelRows.filter((row) => !row.is_closed_by_admin).length
-    : supportsReadFlag
-      ? topLevelRows.filter((row) => !row.is_read_by_admin).length
-      : topLevelRows.length;
+  const openTopLevelCount = topLevelRows.filter((row) => {
+    const closedByFlag = supportsCloseFlag ? Boolean(row.is_closed_by_admin) : false;
+    const closedByReadFallback = supportsReadFlag ? Boolean(row.is_read_by_admin) : false;
+    return !(closedByFlag || closedByReadFallback);
+  }).length;
   const headerCount = topLevelRows.length > 0 ? openTopLevelCount : fallbackNotifications.length;
 
   return (
@@ -272,11 +272,9 @@ export default async function AdminFeedbackPage() {
       ) : (
         <div className={styles.entryList}>
           {topLevelRows.map((entry) => {
-            const isClosed = supportsCloseFlag
-              ? Boolean(entry.is_closed_by_admin)
-              : supportsReadFlag
-                ? Boolean(entry.is_read_by_admin)
-                : false;
+            const isClosed =
+              (supportsCloseFlag ? Boolean(entry.is_closed_by_admin) : false) ||
+              (supportsReadFlag ? Boolean(entry.is_read_by_admin) : false);
             const adminReplies = repliesMap.get(entry.id) ?? [];
             const userReplies = userRepliesMap.get(entry.id) ?? [];
 

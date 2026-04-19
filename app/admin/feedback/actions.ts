@@ -45,14 +45,19 @@ export async function closeFeedbackThreadAction(formData: FormData): Promise<voi
   const { error: closeError } = await client
     .from("feedback_entries")
     .update({ is_closed_by_admin: true })
-    .eq("id", entryId)
-    .is("parent_reply_id", null);
+    .eq("id", entryId);
   if (closeError) {
-    await client
+    const { error: readFallbackError } = await client
       .from("feedback_entries")
       .update({ is_read_by_admin: true })
-      .eq("id", entryId)
-      .is("parent_reply_id", null);
+      .eq("id", entryId);
+    if (readFallbackError) {
+      console.error("[admin-feedback] failed to close discussion", {
+        entryId,
+        closeError,
+        readFallbackError
+      });
+    }
   }
 
   await client
