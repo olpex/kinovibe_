@@ -590,6 +590,15 @@ function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function normalizeTranslateLanguageCode(value: string | null | undefined): string {
+  const normalized = value?.trim().toLowerCase() ?? "";
+  if (!normalized) {
+    return "auto";
+  }
+  const [base] = normalized.split("-");
+  return base || "auto";
+}
+
 function readGoogleTranslateText(payload: unknown): string {
   if (!Array.isArray(payload) || !Array.isArray(payload[0])) {
     return "";
@@ -602,20 +611,26 @@ function readGoogleTranslateText(payload: unknown): string {
     .trim();
 }
 
-async function translateFromEnglishToLanguage(
+async function translateTextBetweenLanguages(
   text: string,
+  sourceLanguageCode: string,
   targetLanguageCode: string
 ): Promise<string | undefined> {
   const source = normalizeWhitespace(text);
-  if (!source || targetLanguageCode === "en") {
-    return source || undefined;
+  const sourceLanguage = normalizeTranslateLanguageCode(sourceLanguageCode);
+  const targetLanguage = normalizeTranslateLanguageCode(targetLanguageCode);
+  if (!source) {
+    return undefined;
+  }
+  if (targetLanguage === "auto" || sourceLanguage === targetLanguage) {
+    return source;
   }
 
   try {
     const url = new URL("https://translate.googleapis.com/translate_a/single");
     url.searchParams.set("client", "gtx");
-    url.searchParams.set("sl", "en");
-    url.searchParams.set("tl", targetLanguageCode);
+    url.searchParams.set("sl", sourceLanguage);
+    url.searchParams.set("tl", targetLanguage);
     url.searchParams.set("dt", "t");
     url.searchParams.set("q", source);
 
@@ -633,7 +648,6 @@ async function translateFromEnglishToLanguage(
       return undefined;
     }
 
-    // If translation result is effectively unchanged, treat it as unavailable.
     if (translated.toLowerCase() === source.toLowerCase()) {
       return undefined;
     }
@@ -642,6 +656,13 @@ async function translateFromEnglishToLanguage(
   } catch {
     return undefined;
   }
+}
+
+async function translateFromEnglishToLanguage(
+  text: string,
+  targetLanguageCode: string
+): Promise<string | undefined> {
+  return translateTextBetweenLanguages(text, "en", targetLanguageCode);
 }
 
 function buildFallbackMovieOverview(
@@ -825,14 +846,38 @@ async function translateIfNeeded(
   targetLanguageCode: string
 ): Promise<string> {
   void locale;
-  void sourceLanguageCode;
-  void targetLanguageCode;
-
-  const normalized = text.trim();
+  const normalized = normalizeWhitespace(text);
   if (!normalized) {
     return "";
   }
-  return text;
+
+  const sourceLanguage = normalizeTranslateLanguageCode(sourceLanguageCode);
+  const targetLanguage = normalizeTranslateLanguageCode(targetLanguageCode);
+  if (targetLanguage === "auto" || sourceLanguage === targetLanguage) {
+    return normalized;
+  }
+
+  const directTranslation = await translateTextBetweenLanguages(
+    normalized,
+    sourceLanguage,
+    targetLanguage
+  );
+  if (directTranslation) {
+    return directTranslation;
+  }
+
+  if (sourceLanguage !== "auto") {
+    const autoTranslation = await translateTextBetweenLanguages(
+      normalized,
+      "auto",
+      targetLanguage
+    );
+    if (autoTranslation) {
+      return autoTranslation;
+    }
+  }
+
+  return "";
 }
 
 async function fetchTmdb<T>(
@@ -3887,11 +3932,26 @@ export const getTmdbMovieDetails = cache(
         : [];
     const resolvedDirectors = directors.length > 0 ? directors : fallbackDirectingNames;
     const countries = localizeCountryNames(details.production_countries ?? [], locale);
-    const sanitizedTitle = sanitizeNarrativeText(translatedTitle || details.title, 180);
-    const sanitizedOverview = sanitizeNarrativeText(
-      translatedOverview || details.overview || detailsInEnglish?.overview || "",
-      720
-    );
+    const localizedGenres = details.genres.map((genre) => ({
+      id: genre.id,
+      name: genresMap.get(genre.id) ?? genre.name
+    }));
+    const shouldUseResolvedTitle =
+      locale === DEFAULT_LOCALE ||
+      resolvedTitle.sourceLanguageCode === targetLanguageCode ||
+      Boolean(translatedTitle);
+    const titleCandidate = shouldUseResolvedTitle
+      ? translatedTitle || resolvedTitle.text
+      : releaseTitle ?? "";
+    const sanitizedTitle = sanitizeNarrativeText(titleCandidate, 180);
+    const shouldUseResolvedOverview =
+      locale === DEFAULT_LOCALE ||
+      resolvedOverview.sourceLanguageCode === targetLanguageCode ||
+      Boolean(translatedOverview);
+    const overviewCandidate = shouldUseResolvedOverview
+      ? translatedOverview || resolvedOverview.text
+      : "";
+    const sanitizedOverview = sanitizeNarrativeText(overviewCandidate, 720);
     const sanitizedTagline = sanitizeNarrativeText(translatedTagline, 180);
     const sanitizedStatus = sanitizeNarrativeText(translatedStatus, 64);
     const trailerUrl =
@@ -3907,9 +3967,9 @@ export const getTmdbMovieDetails = cache(
       overview:
         sanitizedOverview ||
         buildFallbackMovieOverview(locale, {
-          title: sanitizedTitle || details.title,
+          title: sanitizedTitle || releaseTitle || details.title || translate(locale, "person.untitled"),
           year: parseYear(details.release_date),
-          genres: details.genres.map((genre) => genre.name),
+          genres: localizedGenres.map((genre) => genre.name),
           directors: resolvedDirectors,
           countries
         }),
@@ -3921,10 +3981,7 @@ export const getTmdbMovieDetails = cache(
       originalLanguage: details.original_language.toUpperCase(),
       countries,
       directors: resolvedDirectors,
-      genres: details.genres.map((genre) => ({
-        id: genre.id,
-        name: genre.name
-      })),
+      genres: localizedGenres,
       posterUrl: posterUrl(details.poster_path),
       backdropUrl: backdropUrl(details.backdrop_path),
       trailerUrl,
@@ -4092,9 +4149,19 @@ export const getTmdbTvDetails = cache(
         : [];
     const resolvedDirectors = directors.length > 0 ? directors : fallbackDirectingNames;
     const countries = localizeCountryNames(details.production_countries ?? [], locale);
-    const sanitizedTitle = sanitizeNarrativeText(translatedTitle || details.name, 180);
+    const localizedGenres = details.genres.map((genre) => genresMap.get(genre.id) ?? genre.name);
+    const shouldUseResolvedTitle =
+      locale === DEFAULT_LOCALE ||
+      resolvedTitle.sourceLanguageCode === targetLanguageCode ||
+      Boolean(translatedTitle);
+    const titleCandidate = shouldUseResolvedTitle
+      ? translatedTitle || resolvedTitle.text
+      : regionalTitle ?? "";
+    const sanitizedTitle = sanitizeNarrativeText(titleCandidate, 180);
     const shouldUseResolvedOverview =
-      locale === DEFAULT_LOCALE || resolvedOverview.sourceLanguageCode === targetLanguageCode;
+      locale === DEFAULT_LOCALE ||
+      resolvedOverview.sourceLanguageCode === targetLanguageCode ||
+      Boolean(translatedOverview);
     const overviewCandidate = shouldUseResolvedOverview
       ? translatedOverview || details.overview || detailsInEnglish?.overview || ""
       : "";
@@ -4117,13 +4184,13 @@ export const getTmdbTvDetails = cache(
 
     return {
       id: details.id,
-      title: sanitizedTitle || details.name,
+      title: sanitizedTitle || regionalTitle || details.name || translate(locale, "person.untitled"),
       overview:
         sanitizedOverview ||
         buildFallbackTvOverview(locale, {
-          title: sanitizedTitle || details.name,
+          title: sanitizedTitle || regionalTitle || details.name || translate(locale, "person.untitled"),
           year: parseYear(details.first_air_date),
-          genres: details.genres.map((genre) => genre.name),
+          genres: localizedGenres,
           directors: resolvedDirectors,
           countries,
           seasons: details.number_of_seasons,
@@ -4139,7 +4206,7 @@ export const getTmdbTvDetails = cache(
       directors: resolvedDirectors,
       seasons: details.number_of_seasons,
       episodes: details.number_of_episodes,
-      genres: details.genres.map((genre) => genre.name),
+      genres: localizedGenres,
       posterUrl: posterUrl(details.poster_path),
       backdropUrl: backdropUrl(details.backdrop_path),
       trailerUrl,
