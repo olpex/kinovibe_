@@ -110,22 +110,6 @@ export function HomeScreen({ data, session, locale, movieFiltersGenres }: HomeSc
         </div>
       </section>
 
-      <section className={styles.genreSection}>
-        <h2>{translate(locale, "home.browseGenres")}</h2>
-        <div className={styles.genreRow}>
-          {data.genreChips.map((genre) => (
-            <Link
-              key={genre.id}
-              href={`/movie?genres=${genre.id}`}
-              className={styles.genreChip}
-              aria-label={translate(locale, "home.browseGenreAria", { genre: genre.name })}
-            >
-              {genre.name}
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <section className={styles.homeCatalogSection}>
         <div className={styles.homeFiltersSection}>
           <MovieFilters
