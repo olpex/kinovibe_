@@ -3,11 +3,22 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+const PROVIDER_KEY = "internet_archive";
 const TARGET_COUNT = Number.parseInt(process.env.LEGAL_SEED_TARGET ?? "60", 10);
 const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
 const MIN_DESC_LEN = 40;
 const MIN_STREAM_SECONDS = 20 * 60;
+const MAX_DUPLICATES_PER_BASE_TITLE = Math.max(
+  1,
+  Number.parseInt(process.env.LEGAL_SEED_MAX_DUPLICATES_PER_BASE_TITLE ?? "2", 10) || 2
+);
+const PROVIDER_ALLOWLIST = new Set(
+  (process.env.LEGAL_SEED_PROVIDER_ALLOWLIST ?? PROVIDER_KEY)
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+);
 
 const ROOT = process.cwd();
 const MIGRATIONS_DIR = path.join(ROOT, "supabase", "migrations");
@@ -210,6 +221,15 @@ function slugify(text) {
     .slice(0, 100);
 }
 
+function canonicalTitleKey(text) {
+  return text
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function sqlText(value) {
   if (value === null || value === undefined) return "null";
   return `'${String(value).replace(/'/g, "''")}'`;
@@ -347,9 +367,16 @@ async function fetchArchiveMetadata(identifier) {
 }
 
 async function main() {
+  if (!PROVIDER_ALLOWLIST.has(PROVIDER_KEY)) {
+    throw new Error(
+      `Provider "${PROVIDER_KEY}" is not allowed by LEGAL_SEED_PROVIDER_ALLOWLIST.`
+    );
+  }
+
   const selected = [];
   const seenIds = new Set();
   const seenSlugs = new Set();
+  const duplicateCounter = new Map();
 
   for (let page = 1; page <= MAX_PAGES && selected.length < TARGET_COUNT; page += 1) {
     const payload = await fetchArchiveSearch(page);
@@ -385,6 +412,10 @@ async function main() {
       const finalTitle = mdTitle || title;
       if (!finalTitle || hasBlockedHint(finalTitle) || hasBadTitleHint(finalTitle)) continue;
       if (hasBadIdentifierHint(finalTitle)) continue;
+      const titleKey = canonicalTitleKey(finalTitle);
+      if (!titleKey) continue;
+      const duplicateCount = duplicateCounter.get(titleKey) ?? 0;
+      if (duplicateCount >= MAX_DUPLICATES_PER_BASE_TITLE) continue;
 
       const desc = firstNonEmpty(md.description, shortDesc).slice(0, 1000);
       if (desc.length < MIN_DESC_LEN) continue;
@@ -425,6 +456,7 @@ async function main() {
 
       seenIds.add(identifier);
       seenSlugs.add(baseSlug);
+      duplicateCounter.set(titleKey, duplicateCount + 1);
 
       selected.push({
         slug: baseSlug,
@@ -444,7 +476,7 @@ async function main() {
         metadata: {
           identifier,
           rights,
-          provider: "internet_archive"
+          provider: PROVIDER_KEY
         },
         providerName: "Internet Archive",
         providerType: "archive",

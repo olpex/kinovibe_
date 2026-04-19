@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "audit:content": "npx --yes tsx scripts/content-quality-audit.ts",
-    "legal:seed:generate": "node scripts/generate-legal-seed-from-archive.mjs"
+    "legal:seed:generate": "node scripts/generate-legal-seed-from-archive.mjs",
+    "legal:seed:weekly": "node scripts/legal-weekly-reseed.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.7.0",
