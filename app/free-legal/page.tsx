@@ -126,7 +126,7 @@ export default async function FreeLegalCatalogPage({ searchParams }: PageProps) 
             <option value="">{translate(locale, "legal.filter.any")}</option>
             {catalog.facets.licenseTypes.map((licenseType) => (
               <option key={licenseType} value={licenseType}>
-                {licenseType}
+                {catalog.facets.licenseTypeLabels[licenseType] ?? licenseType}
               </option>
             ))}
           </select>
@@ -154,7 +154,7 @@ export default async function FreeLegalCatalogPage({ searchParams }: PageProps) 
                   value={genre}
                   defaultChecked={selectedGenres.has(genre.toLowerCase())}
                 />
-                {genre}
+                {catalog.facets.genreLabels[genre] ?? genre}
               </label>
             ))}
           </div>

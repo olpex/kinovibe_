@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { type Locale } from "@/lib/i18n/shared";
@@ -129,8 +130,10 @@ export type LegalCatalogResult = {
   filters: Required<Pick<LegalCatalogFilters, "page" | "limit">> & Omit<LegalCatalogFilters, "page" | "limit">;
   facets: {
     genres: string[];
+    genreLabels: Record<string, string>;
     sourceTypes: string[];
     licenseTypes: string[];
+    licenseTypeLabels: Record<string, string>;
   };
 };
 
@@ -161,6 +164,71 @@ const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
 const BLOCKED_LANGUAGE_CODES = new Set(["ru"]);
 const BLOCKED_COUNTRY_CODES = new Set(["RU"]);
+const TRANSLATE_LANGUAGE_BY_LOCALE: Record<Locale, string> = {
+  en: "en",
+  uk: "uk",
+  de: "de",
+  fr: "fr",
+  it: "it",
+  es: "es",
+  pt: "pt",
+  nl: "nl",
+  sv: "sv",
+  fi: "fi",
+  no: "no",
+  da: "da",
+  cs: "cs",
+  pl: "pl",
+  sk: "sk",
+  hu: "hu",
+  ro: "ro",
+  el: "el",
+  hr: "hr",
+  me: "sr"
+};
+
+const ISO3_TO_ISO2_LANGUAGE: Record<string, string> = {
+  eng: "en",
+  ukr: "uk",
+  deu: "de",
+  ger: "de",
+  fra: "fr",
+  fre: "fr",
+  ita: "it",
+  spa: "es",
+  por: "pt",
+  nld: "nl",
+  dut: "nl",
+  swe: "sv",
+  fin: "fi",
+  nor: "no",
+  dan: "da",
+  ces: "cs",
+  cze: "cs",
+  pol: "pl",
+  slk: "sk",
+  slo: "sk",
+  hun: "hu",
+  ron: "ro",
+  rum: "ro",
+  ell: "el",
+  gre: "el",
+  hrv: "hr",
+  srp: "sr",
+  rus: "ru"
+};
+
+const HTML_ENTITY_MAP: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: "\"",
+  apos: "'",
+  nbsp: " ",
+  ndash: "-",
+  mdash: "-",
+  hellip: "..."
+};
 
 function normalizeRegion(value: string | undefined): string | undefined {
   const normalized = value?.trim().toUpperCase() ?? "";
@@ -211,6 +279,269 @@ function normalizeGenres(values: string[] | undefined): string[] {
   );
 }
 
+function normalizeWhitespace(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function normalizeTranslateLanguageCode(value: string | null | undefined): string {
+  const normalized = value?.trim().toLowerCase() ?? "";
+  if (!normalized) {
+    return "auto";
+  }
+  if (ISO3_TO_ISO2_LANGUAGE[normalized]) {
+    return ISO3_TO_ISO2_LANGUAGE[normalized];
+  }
+  const [base] = normalized.split("-");
+  if (!base) {
+    return "auto";
+  }
+  if (ISO3_TO_ISO2_LANGUAGE[base]) {
+    return ISO3_TO_ISO2_LANGUAGE[base];
+  }
+  if (/^[a-z]{2}$/.test(base)) {
+    return base;
+  }
+  return "auto";
+}
+
+function pickLanguageCode(...values: Array<string | undefined | null>): string | undefined {
+  for (const value of values) {
+    const normalized = normalizeTranslateLanguageCode(value);
+    if (normalized !== "auto") {
+      return normalized;
+    }
+  }
+  return undefined;
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (_match, entityRaw: string) => {
+    const entity = entityRaw.toLowerCase();
+
+    if (entity.startsWith("#x")) {
+      const codePoint = Number.parseInt(entity.slice(2), 16);
+      if (Number.isNaN(codePoint)) {
+        return " ";
+      }
+      try {
+        return String.fromCodePoint(codePoint);
+      } catch {
+        return " ";
+      }
+    }
+
+    if (entity.startsWith("#")) {
+      const codePoint = Number.parseInt(entity.slice(1), 10);
+      if (Number.isNaN(codePoint)) {
+        return " ";
+      }
+      try {
+        return String.fromCodePoint(codePoint);
+      } catch {
+        return " ";
+      }
+    }
+
+    return HTML_ENTITY_MAP[entity] ?? " ";
+  });
+}
+
+function stripHtmlTags(value: string): string {
+  return value
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " ");
+}
+
+function shortenTextBySentence(value: string, maxLength: number): string {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  const sentences = value.split(/(?<=[.!?])\s+/u);
+  let selected = "";
+  for (const sentence of sentences) {
+    const next = selected ? `${selected} ${sentence}` : sentence;
+    if (next.length > maxLength) {
+      break;
+    }
+    selected = next;
+    if (selected.length >= Math.floor(maxLength * 0.72)) {
+      break;
+    }
+  }
+
+  if (selected) {
+    return selected.trim();
+  }
+
+  return `${value.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
+function sanitizeLegalText(value: string | undefined | null, maxLength = 2200): string {
+  const source = value?.trim() ?? "";
+  if (!source) {
+    return "";
+  }
+
+  const clean = normalizeWhitespace(decodeHtmlEntities(stripHtmlTags(source)));
+  if (!clean) {
+    return "";
+  }
+
+  return shortenTextBySentence(clean, maxLength);
+}
+
+function hasTranslatableLetters(value: string): boolean {
+  return /[A-Za-z\u00C0-\u024F\u0400-\u04FF]/u.test(value);
+}
+
+function readGoogleTranslateText(payload: unknown): string {
+  if (!Array.isArray(payload) || !Array.isArray(payload[0])) {
+    return "";
+  }
+
+  const chunks = payload[0] as unknown[];
+  return chunks
+    .map((chunk) => (Array.isArray(chunk) && typeof chunk[0] === "string" ? chunk[0] : ""))
+    .join("")
+    .trim();
+}
+
+const translateTextBetweenLanguages = cache(
+  async (text: string, sourceLanguageCode: string, targetLanguageCode: string): Promise<string | undefined> => {
+    const source = normalizeWhitespace(text);
+    if (!source || !hasTranslatableLetters(source)) {
+      return undefined;
+    }
+
+    const sourceLanguage = normalizeTranslateLanguageCode(sourceLanguageCode);
+    const targetLanguage = normalizeTranslateLanguageCode(targetLanguageCode);
+    if (targetLanguage === "auto" || sourceLanguage === targetLanguage) {
+      return undefined;
+    }
+
+    try {
+      const url = new URL("https://translate.googleapis.com/translate_a/single");
+      url.searchParams.set("client", "gtx");
+      url.searchParams.set("sl", sourceLanguage);
+      url.searchParams.set("tl", targetLanguage);
+      url.searchParams.set("dt", "t");
+      url.searchParams.set("q", source);
+
+      const response = await fetch(url, {
+        method: "GET",
+        next: { revalidate: 86400 }
+      });
+
+      if (!response.ok) {
+        return undefined;
+      }
+
+      const payload = (await response.json()) as unknown;
+      const translated = normalizeWhitespace(readGoogleTranslateText(payload));
+      if (!translated) {
+        return undefined;
+      }
+
+      if (translated.toLowerCase() === source.toLowerCase()) {
+        return undefined;
+      }
+
+      return translated;
+    } catch {
+      return undefined;
+    }
+  }
+);
+
+async function localizeLegalText(
+  text: string | undefined,
+  locale: Locale,
+  sourceLanguageCode: string | undefined,
+  maxLength = 2200
+): Promise<string> {
+  const sanitized = sanitizeLegalText(text, maxLength);
+  if (!sanitized) {
+    return "";
+  }
+
+  const targetLanguage = normalizeTranslateLanguageCode(TRANSLATE_LANGUAGE_BY_LOCALE[locale]);
+  if (targetLanguage === "en") {
+    return sanitized;
+  }
+
+  const translated = await translateTextBetweenLanguages(
+    sanitized,
+    normalizeTranslateLanguageCode(sourceLanguageCode),
+    targetLanguage
+  );
+
+  if (!translated) {
+    return sanitized;
+  }
+
+  const reSanitized = sanitizeLegalText(translated, maxLength);
+  return reSanitized || sanitized;
+}
+
+async function localizeLegalLabel(
+  text: string | undefined,
+  locale: Locale,
+  sourceLanguageCode: string | undefined
+): Promise<string> {
+  return localizeLegalText(text, locale, sourceLanguageCode, 160);
+}
+
+async function localizeCatalogItem(item: LegalCatalogItem, locale: Locale): Promise<LegalCatalogItem> {
+  const sourceLanguage = pickLanguageCode(
+    item.languageCode,
+    typeof item.metadata.source_language_code === "string"
+      ? item.metadata.source_language_code
+      : undefined,
+    typeof item.metadata.source_language === "string" ? item.metadata.source_language : undefined
+  );
+
+  const [description, genres, countries, licenseType, attributionText, sources] = await Promise.all([
+    localizeLegalText(item.description, locale, sourceLanguage, 2400),
+    Promise.all(item.genres.map((genre) => localizeLegalLabel(genre, locale, "en"))),
+    Promise.all(item.countries.map((country) => localizeLegalLabel(country, locale, "en"))),
+    localizeLegalLabel(item.licenseType, locale, "en"),
+    item.attributionText ? localizeLegalText(item.attributionText, locale, sourceLanguage, 420) : Promise.resolve(""),
+    Promise.all(
+      item.sources.map(async (source) => {
+        const [sourceLicenseType, sourceAttribution] = await Promise.all([
+          localizeLegalLabel(source.licenseType, locale, "en"),
+          source.attributionText
+            ? localizeLegalText(source.attributionText, locale, sourceLanguage, 420)
+            : Promise.resolve("")
+        ]);
+
+        return {
+          ...source,
+          providerName: sanitizeLegalText(source.providerName, 180) || source.providerName,
+          providerType: sanitizeLegalText(source.providerType, 80) || source.providerType,
+          licenseType: sourceLicenseType || source.licenseType,
+          attributionText: sourceAttribution || source.attributionText
+        };
+      })
+    )
+  ]);
+
+  return {
+    ...item,
+    title: sanitizeLegalText(item.title, 220) || item.title,
+    description: description || item.description,
+    genres: Array.from(new Set(genres.map((entry) => entry.trim()).filter((entry) => entry.length > 0))),
+    countries: Array.from(new Set(countries.map((entry) => entry.trim()).filter((entry) => entry.length > 0))),
+    licenseType: licenseType || item.licenseType,
+    attributionText: attributionText || item.attributionText,
+    sources,
+    metadata: item.metadata
+  };
+}
+
 function isRegionAllowed(list: string[], region: string | undefined): boolean {
   if (!region || list.length === 0) {
     return true;
@@ -221,11 +552,11 @@ function isRegionAllowed(list: string[], region: string | undefined): boolean {
 function mapSource(row: LegalSourceRow): LegalSource {
   return {
     id: row.id,
-    providerName: row.provider_name,
-    providerType: row.provider_type,
-    licenseType: row.license_type,
+    providerName: sanitizeLegalText(row.provider_name, 180) || row.provider_name,
+    providerType: sanitizeLegalText(row.provider_type, 80) || row.provider_type,
+    licenseType: sanitizeLegalText(row.license_type, 120) || row.license_type,
     licenseUrl: row.license_url,
-    attributionText: row.attribution_text ?? undefined,
+    attributionText: sanitizeLegalText(row.attribution_text, 420) || undefined,
     territories: (row.territories ?? []).map((entry) => entry.toUpperCase()),
     externalWatchUrl: row.external_watch_url ?? undefined,
     metadata: row.metadata_json ?? {}
@@ -238,7 +569,7 @@ function mapStream(row: LegalStreamVariantRow): LegalStreamVariant {
     sourceId: row.source_id ?? undefined,
     streamUrl: row.stream_url,
     format: row.format,
-    qualityLabel: row.quality_label ?? undefined,
+    qualityLabel: sanitizeLegalText(row.quality_label, 60) || undefined,
     regionAllowlist: (row.region_allowlist ?? []).map((entry) => entry.toUpperCase()),
     requiresAuth: row.requires_auth,
     isEmbeddable: row.is_embeddable,
@@ -287,19 +618,19 @@ function mapCatalogItem(
   return {
     id: row.id,
     slug: row.slug,
-    title: row.title,
-    description: row.description ?? "",
+    title: sanitizeLegalText(row.title, 220) || row.title,
+    description: sanitizeLegalText(row.description, 2400),
     releaseYear: row.release_year ?? undefined,
     runtimeMinutes: row.runtime_minutes ?? undefined,
-    languageCode: row.language_code ?? undefined,
-    genres: row.genres ?? [],
-    countries: row.countries ?? [],
+    languageCode: pickLanguageCode(row.language_code),
+    genres: (row.genres ?? []).map((entry) => sanitizeLegalText(entry, 120)).filter((entry) => entry.length > 0),
+    countries: (row.countries ?? []).map((entry) => sanitizeLegalText(entry, 120)).filter((entry) => entry.length > 0),
     posterUrl: row.poster_url ?? undefined,
     backdropUrl: row.backdrop_url ?? undefined,
     sourceType: row.source_type,
-    licenseType: row.license_type,
+    licenseType: sanitizeLegalText(row.license_type, 120) || row.license_type,
     licenseUrl: row.license_url,
-    attributionText: row.attribution_text ?? undefined,
+    attributionText: sanitizeLegalText(row.attribution_text, 420) || undefined,
     externalUrl: row.external_url ?? undefined,
     metadata: row.metadata_json ?? {},
     sources,
@@ -460,7 +791,7 @@ export async function getLegalCatalog(
       totalResults: 0,
       limit: filters.limit,
       filters,
-      facets: { genres: [], sourceTypes: [], licenseTypes: [] }
+      facets: { genres: [], genreLabels: {}, sourceTypes: [], licenseTypes: [], licenseTypeLabels: {} }
     };
   }
 
@@ -473,7 +804,7 @@ export async function getLegalCatalog(
       totalResults: 0,
       limit: filters.limit,
       filters,
-      facets: { genres: [], sourceTypes: [], licenseTypes: [] }
+      facets: { genres: [], genreLabels: {}, sourceTypes: [], licenseTypes: [], licenseTypeLabels: {} }
     };
   }
 
@@ -492,7 +823,7 @@ export async function getLegalCatalog(
       totalResults: 0,
       limit: filters.limit,
       filters,
-      facets: { genres: [], sourceTypes: [], licenseTypes: [] }
+      facets: { genres: [], genreLabels: {}, sourceTypes: [], licenseTypes: [], licenseTypeLabels: {} }
     };
   }
 
@@ -548,7 +879,7 @@ export async function getLegalCatalog(
   const safePage = Math.min(filters.page, totalPages);
   const from = (safePage - 1) * filters.limit;
   const to = from + filters.limit;
-  const items = filtered.slice(from, to);
+  const currentPageItems = filtered.slice(from, to);
 
   const allGenres = new Set<string>();
   const allSourceTypes = new Set<string>();
@@ -559,6 +890,22 @@ export async function getLegalCatalog(
     allLicenseTypes.add(item.licenseType);
   }
 
+  const [items, genreLabelsEntries, licenseTypeLabelsEntries] = await Promise.all([
+    Promise.all(currentPageItems.map((item) => localizeCatalogItem(item, locale))),
+    Promise.all(
+      Array.from(allGenres).map(async (genre) => {
+        const localized = await localizeLegalLabel(genre, locale, "en");
+        return [genre, localized || genre] as const;
+      })
+    ),
+    Promise.all(
+      Array.from(allLicenseTypes).map(async (licenseType) => {
+        const localized = await localizeLegalLabel(licenseType, locale, "en");
+        return [licenseType, localized || licenseType] as const;
+      })
+    )
+  ]);
+
   return {
     items,
     page: safePage,
@@ -568,8 +915,10 @@ export async function getLegalCatalog(
     filters: { ...filters, page: safePage },
     facets: {
       genres: Array.from(allGenres).sort((a, b) => a.localeCompare(b)),
+      genreLabels: Object.fromEntries(genreLabelsEntries),
       sourceTypes: Array.from(allSourceTypes).sort((a, b) => a.localeCompare(b)),
-      licenseTypes: Array.from(allLicenseTypes).sort((a, b) => a.localeCompare(b))
+      licenseTypes: Array.from(allLicenseTypes).sort((a, b) => a.localeCompare(b)),
+      licenseTypeLabels: Object.fromEntries(licenseTypeLabelsEntries)
     }
   };
 }
