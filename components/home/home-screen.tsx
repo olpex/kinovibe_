@@ -5,8 +5,15 @@ import { SiteHeader } from "@/components/navigation/site-header";
 import { CatalogMovieGrid } from "@/components/tmdb/catalog-grid";
 import { CatalogPagination } from "@/components/tmdb/catalog-pagination";
 import { MovieFilters } from "@/components/tmdb/movie-filters";
-import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import {
+  SUPPORTED_LOCALES,
+  toIntlLocale,
+  translate,
+  type Locale
+} from "@/lib/i18n/shared";
+import {
+  DEFAULT_MOVIE_DISCOVER_SORT,
+  MOVIE_DISCOVER_SORT_OPTIONS,
   type MovieDiscoverFilters
 } from "@/lib/tmdb/movie-filters";
 import {
@@ -43,6 +50,120 @@ function pickDailyFeatured(candidates: HomeScreenData["trendingNow"]): HomeScree
   return candidates[index] ?? candidates[0] ?? null;
 }
 
+type ActiveFilterChip = {
+  key: string;
+  label: string;
+};
+
+function compactList(values: string[], limit = 3): string {
+  if (values.length <= limit) {
+    return values.join(", ");
+  }
+  return `${values.slice(0, limit).join(", ")} +${values.length - limit}`;
+}
+
+function buildActiveMovieFilterChips(params: {
+  locale: Locale;
+  filters: MovieDiscoverFilters;
+  genres: MovieGenreOption[];
+  countries: TmdbCountryOption[];
+}): ActiveFilterChip[] {
+  const { locale, filters, genres, countries } = params;
+  const chips: ActiveFilterChip[] = [];
+  const sortOption = MOVIE_DISCOVER_SORT_OPTIONS.find((option) => option.value === filters.sortBy);
+  if (filters.sortBy !== DEFAULT_MOVIE_DISCOVER_SORT && sortOption) {
+    chips.push({
+      key: "sort",
+      label: `${translate(locale, "movie.filters.sortBy")}: ${translate(locale, sortOption.labelKey)}`
+    });
+  }
+
+  if (filters.includeAdult) {
+    chips.push({
+      key: "adult",
+      label: translate(locale, "movie.filters.includeAdult")
+    });
+  }
+
+  if (filters.includeVideo) {
+    chips.push({
+      key: "video",
+      label: translate(locale, "movie.filters.includeVideo")
+    });
+  }
+
+  if (filters.yearFrom !== undefined || filters.yearTo !== undefined) {
+    const fromValue = filters.yearFrom !== undefined ? String(filters.yearFrom) : "…";
+    const toValue = filters.yearTo !== undefined ? String(filters.yearTo) : "…";
+    chips.push({
+      key: "year",
+      label: `${translate(locale, "movie.filters.releaseYearFrom")}: ${fromValue} - ${toValue}`
+    });
+  }
+
+  if (filters.genreIds.length > 0) {
+    const genreNameById = new Map(genres.map((genre) => [genre.id, genre.name]));
+    const selectedGenreNames = filters.genreIds
+      .map((genreId) => genreNameById.get(genreId))
+      .filter((value): value is string => Boolean(value));
+    if (selectedGenreNames.length > 0) {
+      chips.push({
+        key: "genres",
+        label: `${translate(locale, "movie.filters.genres")}: ${compactList(selectedGenreNames)}`
+      });
+    }
+  }
+
+  if (filters.ratingFrom !== undefined || filters.ratingTo !== undefined) {
+    const fromValue = filters.ratingFrom !== undefined ? String(filters.ratingFrom) : "0";
+    const toValue = filters.ratingTo !== undefined ? String(filters.ratingTo) : "10";
+    chips.push({
+      key: "rating",
+      label: `${translate(locale, "movie.filters.userScoreFrom")}: ${fromValue} - ${toValue}`
+    });
+  }
+
+  if (filters.voteCountFrom !== undefined) {
+    chips.push({
+      key: "votes",
+      label: `${translate(locale, "movie.filters.voteCountFrom")}: ${filters.voteCountFrom}`
+    });
+  }
+
+  if (filters.runtimeFrom !== undefined || filters.runtimeTo !== undefined) {
+    const fromValue = filters.runtimeFrom !== undefined ? String(filters.runtimeFrom) : "0";
+    const toValue = filters.runtimeTo !== undefined ? String(filters.runtimeTo) : "600";
+    chips.push({
+      key: "runtime",
+      label: `${translate(locale, "movie.filters.runtimeFrom")}: ${fromValue} - ${toValue}`
+    });
+  }
+
+  if (filters.originCountry) {
+    const countryLabel =
+      countries.find((country) => country.code === filters.originCountry)?.name ??
+      filters.originCountry;
+    chips.push({
+      key: "country",
+      label: `${translate(locale, "movie.filters.country")}: ${countryLabel}`
+    });
+  }
+
+  if (filters.originalLanguage) {
+    const localeLabel =
+      SUPPORTED_LOCALES.find((entry) => {
+        const value = entry.value === "me" ? "sr" : entry.value;
+        return value === filters.originalLanguage;
+      })?.label ?? filters.originalLanguage.toUpperCase();
+    chips.push({
+      key: "language",
+      label: `${translate(locale, "movie.filters.originalLanguage")}: ${localeLabel}`
+    });
+  }
+
+  return chips;
+}
+
 export function HomeScreen({
   data,
   session,
@@ -61,6 +182,12 @@ export function HomeScreen({
       : data.genreChips.map((genre) => ({ id: genre.id, name: genre.name }));
 
   const featured = pickDailyFeatured(data.trendingNow) ?? data.topPicks[0] ?? null;
+  const activeFilterChips = buildActiveMovieFilterChips({
+    locale,
+    filters: movieFilters,
+    genres: availableMovieFilterGenres,
+    countries: movieFiltersCountries
+  });
   const featuredOverview =
     featured?.overview && featured.overview.trim().length > 0
       ? featured.overview
@@ -157,6 +284,20 @@ export function HomeScreen({
             {movieCatalog.totalResults.toLocaleString(toIntlLocale(locale))} {translate(locale, "search.resultsFor")}{" "}
             {translate(locale, "menu.moviesAllTitle")}
           </p>
+          {activeFilterChips.length > 0 ? (
+            <div className={styles.activeFiltersBar} aria-label={translate(locale, "movie.filters.title")}>
+              <div className={styles.activeFiltersList}>
+                {activeFilterChips.map((chip) => (
+                  <span key={chip.key} className={styles.activeFilterChip} title={chip.label}>
+                    {chip.label}
+                  </span>
+                ))}
+              </div>
+              <Link href="/" className={styles.activeFiltersReset}>
+                {translate(locale, "movie.filters.reset")}
+              </Link>
+            </div>
+          ) : null}
           <CatalogMovieGrid
             locale={locale}
             items={movieCatalog.items}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import styles from "./header-search-form.module.css";
@@ -30,6 +30,7 @@ export function HeaderSearchForm({
 }: HeaderSearchFormProps) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
   const [query, setQuery] = useState(searchQuery);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,7 +87,7 @@ export function HeaderSearchForm({
           setActiveIndex(-1);
         }
       }
-    }, 150);
+    }, 250);
 
     return () => {
       clearTimeout(timer);
@@ -107,6 +108,9 @@ export function HeaderSearchForm({
     closeSuggestions();
     router.push(`/movie/${item.id}`);
   }
+
+  const isExpanded = isOpen && canSuggest;
+  const activeOptionId = activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined;
 
   return (
     <form
@@ -133,6 +137,11 @@ export function HeaderSearchForm({
           value={query}
           placeholder={searchPlaceholder}
           aria-label={translate(locale, "search.aria")}
+          role="combobox"
+          aria-expanded={isExpanded}
+          aria-controls={isExpanded ? listboxId : undefined}
+          aria-activedescendant={isExpanded ? activeOptionId : undefined}
+          aria-autocomplete="list"
           autoComplete="off"
           onChange={(event) => {
             setQuery(event.target.value);
@@ -173,7 +182,12 @@ export function HeaderSearchForm({
         />
 
         {isOpen && canSuggest ? (
-          <div className={styles.dropdown} role="listbox" aria-label={translate(locale, "search.suggestAria")}>
+          <div
+            id={listboxId}
+            className={styles.dropdown}
+            role="listbox"
+            aria-label={translate(locale, "search.suggestAria")}
+          >
             {isLoading ? <p className={styles.stateLine}>{translate(locale, "search.suggestLoading")}</p> : null}
 
             {!isLoading && hasError ? (
@@ -189,8 +203,11 @@ export function HeaderSearchForm({
                 {suggestions.map((item, index) => (
                   <li key={item.id}>
                     <Link
+                      id={`${listboxId}-option-${index}`}
                       href={`/movie/${item.id}`}
                       className={`${styles.item} ${activeIndex === index ? styles.itemActive : ""}`}
+                      role="option"
+                      aria-selected={activeIndex === index}
                       onMouseEnter={() => setActiveIndex(index)}
                       onClick={() => closeSuggestions()}
                     >

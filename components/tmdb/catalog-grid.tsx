@@ -55,25 +55,19 @@ export function CatalogMovieGrid({
               {!hasPoster ? <span className={styles.posterFallbackText}>{item.title}</span> : null}
             </div>
             <div className={styles.body}>
-              <h2>{item.title}</h2>
-              <p>
+              <h2 title={item.title}>{item.title}</h2>
+              <p className={styles.genresLine} title={genresLabel}>
                 {genresLabel} · {item.year > 0 ? item.year : translate(locale, "watchlist.tba")}
               </p>
-              <p>{countriesLabel}</p>
+              <p className={styles.metaLine} title={countriesLabel}>
+                {countriesLabel}
+              </p>
               {item.broadcast ? (
-                <>
-                  <p>
-                    {translate(locale, "tv.broadcastChannel")}: {item.broadcast.channel}
-                  </p>
-                  <p>
-                    {translate(locale, "tv.broadcastTime")}: {item.broadcast.time}
-                  </p>
-                  <p>
-                    {translate(locale, "tv.broadcastDate")}: {item.broadcast.date}
-                  </p>
-                </>
+                <p className={styles.broadcastLine}>
+                  {item.broadcast.channel} · {item.broadcast.time} · {item.broadcast.date}
+                </p>
               ) : null}
-              <span>{item.rating.toFixed(1)}</span>
+              <span className={styles.ratingBadge}>{item.rating.toFixed(1)}</span>
             </div>
           </Link>
         );

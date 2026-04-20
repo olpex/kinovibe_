@@ -78,6 +78,78 @@
   cursor: pointer;
 }
 
+.quickMenu {
+  position: relative;
+}
+
+.quickMenuSummary {
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.42rem 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-soft);
+  background: rgba(26, 34, 48, 0.82);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.quickMenuSummary::-webkit-details-marker {
+  display: none;
+}
+
+.quickMenu[open] .quickMenuSummary {
+  border-color: color-mix(in srgb, var(--color-primary) 48%, var(--color-border));
+  background: rgba(38, 50, 72, 0.88);
+}
+
+.quickMenuBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.quickMenuPanel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  width: min(260px, 84vw);
+  border: 1px solid var(--color-border);
+  border-radius: 0.8rem;
+  background: rgba(11, 15, 20, 0.96);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.36);
+  padding: 0.35rem;
+  display: grid;
+  gap: 0.22rem;
+  z-index: 30;
+}
+
+.quickMenuLink {
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  text-decoration: none;
+  color: var(--color-text);
+  font-size: 0.86rem;
+  padding: 0.48rem 0.56rem;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.quickMenuLink:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+  background: rgba(26, 34, 48, 0.88);
+}
+
 .avatarButton {
   border: 1px solid var(--color-border);
   border-radius: 999px;
@@ -172,7 +244,8 @@
 
 @media (max-width: 1200px) {
   .pill,
-  .pillAlt {
+  .pillAlt,
+  .quickMenuSummary {
     padding: 0.4rem 0.72rem;
     font-size: 0.88rem;
   }
@@ -203,6 +276,11 @@
     order: 10;
   }
 
+  .quickMenuPanel {
+    right: auto;
+    left: 0;
+  }
+
   .searchForm {
     max-width: none;
     flex: 1 1 100%;
@@ -224,7 +302,8 @@
   }
 
   .pill,
-  .pillAlt {
+  .pillAlt,
+  .quickMenuSummary {
     padding: 0.36rem 0.64rem;
     font-size: 0.82rem;
   }

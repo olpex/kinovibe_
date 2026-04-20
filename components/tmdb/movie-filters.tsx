@@ -1,3 +1,7 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   SUPPORTED_LOCALES,
   translate,
@@ -5,7 +9,10 @@ import {
 } from "@/lib/i18n/shared";
 import {
   countActiveMovieDiscoverFilters,
+  enforceMovieDiscoverPlan,
   MOVIE_DISCOVER_SORT_OPTIONS,
+  movieDiscoverFiltersToQuery,
+  parseMovieDiscoverFilters,
   type MovieDiscoverFilters
 } from "@/lib/tmdb/movie-filters";
 import { type MovieGenreOption, type TmdbCountryOption } from "@/lib/tmdb/client";
@@ -18,7 +25,37 @@ type MovieFiltersProps = {
   countries: TmdbCountryOption[];
   filters: MovieDiscoverFilters;
   isPro: boolean;
+  liveApply?: boolean;
 };
+
+const LIVE_APPLY_DEBOUNCE_MS = 450;
+
+function formDataToParams(formData: FormData): Record<string, string | string[]> {
+  const params: Record<string, string | string[]> = {};
+  for (const [key, rawValue] of formData.entries()) {
+    if (typeof rawValue !== "string") {
+      continue;
+    }
+    const value = rawValue.trim();
+    if (value.length === 0) {
+      continue;
+    }
+
+    const current = params[key];
+    if (current === undefined) {
+      params[key] = value;
+      continue;
+    }
+
+    if (Array.isArray(current)) {
+      current.push(value);
+      continue;
+    }
+
+    params[key] = [current, value];
+  }
+  return params;
+}
 
 export function MovieFilters({
   locale,
@@ -26,8 +63,14 @@ export function MovieFilters({
   genres,
   countries,
   filters,
-  isPro
+  isPro,
+  liveApply = true
 }: MovieFiltersProps) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastUrlRef = useRef<string>("");
   const selectedGenres = new Set(filters.genreIds);
   const activeCount = countActiveMovieDiscoverFilters(filters);
   const lockProFilters = !isPro;
@@ -45,6 +88,47 @@ export function MovieFilters({
     ).map(([value, label]) => ({ value, label }))
   ];
 
+  const applyFilters = useCallback(
+    (form: HTMLFormElement) => {
+      const parsed = parseMovieDiscoverFilters(formDataToParams(new FormData(form)));
+      const constrained = enforceMovieDiscoverPlan(parsed, isPro);
+      const query = movieDiscoverFiltersToQuery(constrained);
+      const params = new URLSearchParams(query);
+      const nextUrl = params.toString().length > 0 ? `${basePath}?${params.toString()}` : basePath;
+      if (nextUrl === lastUrlRef.current) {
+        return;
+      }
+      lastUrlRef.current = nextUrl;
+      startTransition(() => {
+        router.replace(nextUrl, { scroll: false });
+      });
+    },
+    [basePath, isPro, router, startTransition]
+  );
+
+  const scheduleLiveApply = useCallback(
+    (form: HTMLFormElement | null) => {
+      if (!liveApply || !form) {
+        return;
+      }
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        applyFilters(form);
+      }, LIVE_APPLY_DEBOUNCE_MS);
+    },
+    [applyFilters, liveApply]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
   return (
     <aside className={styles.sidebar} aria-label={translate(locale, "movie.filters.title")}>
       <div className={styles.header}>
@@ -55,11 +139,27 @@ export function MovieFilters({
       </div>
 
       <form
+        ref={formRef}
         action={basePath}
         method="get"
         className={styles.form}
         data-track-event="filter_apply"
         data-track-click="movie:filter_apply"
+        onInput={() => {
+          scheduleLiveApply(formRef.current);
+        }}
+        onChange={() => {
+          scheduleLiveApply(formRef.current);
+        }}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+          }
+          if (formRef.current) {
+            applyFilters(formRef.current);
+          }
+        }}
       >
         <div className={styles.group}>
           <label htmlFor="movie-filter-sort">{translate(locale, "movie.filters.sortBy")}</label>

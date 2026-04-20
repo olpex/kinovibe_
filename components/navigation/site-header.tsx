@@ -71,28 +71,30 @@ export async function SiteHeader({
               {translate(locale, "header.dataSourceLabel")}: {dataSourceLabel}
             </span>
           ) : null}
-          <Link href="/watchlist" className={styles.pill}>
-            {translate(locale, "nav.watchlist")}
-          </Link>
-          {session.isAuthenticated ? (
-            <Link href="/profile" className={styles.pill}>
-              {translate(locale, "nav.profile")}
-            </Link>
-          ) : null}
-          {session.isAuthenticated ? (
-            <Link
-              href={bellHref}
-              className={styles.bellButton}
-              aria-label={translate(locale, "inbox.bellAria")}
-            >
-              <span className={styles.bellIcon}>🔔</span>
+          <details className={styles.quickMenu}>
+            <summary className={styles.quickMenuSummary}>
+              {translate(locale, "nav.more")}
               {unreadCount > 0 ? (
-                <span className={styles.bellBadge}>
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
+                <span className={styles.quickMenuBadge}>{unreadCount > 99 ? "99+" : unreadCount}</span>
               ) : null}
-            </Link>
-          ) : null}
+            </summary>
+            <div className={styles.quickMenuPanel}>
+              <Link href="/watchlist" className={styles.quickMenuLink}>
+                {translate(locale, "nav.watchlist")}
+              </Link>
+              {session.isAuthenticated ? (
+                <Link href="/profile" className={styles.quickMenuLink}>
+                  {translate(locale, "nav.profile")}
+                </Link>
+              ) : null}
+              {session.isAuthenticated ? (
+                <Link href={bellHref} className={styles.quickMenuLink}>
+                  {translate(locale, "inbox.title")}
+                  {unreadCount > 0 ? ` (${unreadCount > 99 ? "99+" : unreadCount})` : ""}
+                </Link>
+              ) : null}
+            </div>
+          </details>
           <LanguageToggle className={styles.pill} />
           {session.isAuthenticated ? (
             <form action={signOutAction}>
