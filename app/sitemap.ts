@@ -1,3 +1,4 @@
+import type { MetadataRoute } from "next";
 import { resolveSiteUrl } from "@/lib/seo/site";
 
 type PublicRoute = {
@@ -40,37 +41,15 @@ const PUBLIC_ROUTES: PublicRoute[] = [
   { path: "/api-for-business", changeFrequency: "weekly", priority: 0.7 }
 ];
 
-function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-export function GET() {
+export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = resolveSiteUrl();
-  const nowIso = new Date().toISOString();
+  const lastModified = new Date();
 
-  const urls = PUBLIC_ROUTES.map((route) => {
-    const loc = `${siteUrl}${route.path}`;
-    return [
-      "<url>",
-      `<loc>${escapeXml(loc)}</loc>`,
-      `<lastmod>${nowIso}</lastmod>`,
-      `<changefreq>${route.changeFrequency}</changefreq>`,
-      `<priority>${route.priority.toFixed(2)}</priority>`,
-      "</url>"
-    ].join("");
-  }).join("");
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`;
-
-  return new Response(xml, {
-    headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=3600"
-    }
-  });
+  return PUBLIC_ROUTES.map((route) => ({
+    url: `${siteUrl}${route.path}`,
+    lastModified,
+    changeFrequency: route.changeFrequency,
+    priority: route.priority
+  }));
 }
+
