@@ -1,8 +1,8 @@
 import "server-only";
-import { cache } from "react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { type Locale } from "@/lib/i18n/shared";
+import { translateNaturalText } from "@/lib/translation/server";
 
 export type LegalSourceType = "public_domain" | "cc" | "licensed_partner";
 export type LegalStreamFormat = "mp4" | "hls" | "dash" | "webm" | "youtube" | "vimeo";
@@ -164,28 +164,6 @@ const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
 const BLOCKED_LANGUAGE_CODES = new Set(["ru"]);
 const BLOCKED_COUNTRY_CODES = new Set(["RU"]);
-const TRANSLATE_LANGUAGE_BY_LOCALE: Record<Locale, string> = {
-  en: "en",
-  uk: "uk",
-  de: "de",
-  fr: "fr",
-  it: "it",
-  es: "es",
-  pt: "pt",
-  nl: "nl",
-  sv: "sv",
-  fi: "fi",
-  no: "no",
-  da: "da",
-  cs: "cs",
-  pl: "pl",
-  sk: "sk",
-  hu: "hu",
-  ro: "ro",
-  el: "el",
-  hr: "hr",
-  me: "sr"
-};
 
 const ISO3_TO_ISO2_LANGUAGE: Record<string, string> = {
   eng: "en",
@@ -393,69 +371,6 @@ function sanitizeLegalText(value: string | undefined | null, maxLength = 2200): 
   return shortenTextBySentence(clean, maxLength);
 }
 
-function hasTranslatableLetters(value: string): boolean {
-  return /[A-Za-z\u00C0-\u024F\u0400-\u04FF]/u.test(value);
-}
-
-function readGoogleTranslateText(payload: unknown): string {
-  if (!Array.isArray(payload) || !Array.isArray(payload[0])) {
-    return "";
-  }
-
-  const chunks = payload[0] as unknown[];
-  return chunks
-    .map((chunk) => (Array.isArray(chunk) && typeof chunk[0] === "string" ? chunk[0] : ""))
-    .join("")
-    .trim();
-}
-
-const translateTextBetweenLanguages = cache(
-  async (text: string, sourceLanguageCode: string, targetLanguageCode: string): Promise<string | undefined> => {
-    const source = normalizeWhitespace(text);
-    if (!source || !hasTranslatableLetters(source)) {
-      return undefined;
-    }
-
-    const sourceLanguage = normalizeTranslateLanguageCode(sourceLanguageCode);
-    const targetLanguage = normalizeTranslateLanguageCode(targetLanguageCode);
-    if (targetLanguage === "auto" || sourceLanguage === targetLanguage) {
-      return undefined;
-    }
-
-    try {
-      const url = new URL("https://translate.googleapis.com/translate_a/single");
-      url.searchParams.set("client", "gtx");
-      url.searchParams.set("sl", sourceLanguage);
-      url.searchParams.set("tl", targetLanguage);
-      url.searchParams.set("dt", "t");
-      url.searchParams.set("q", source);
-
-      const response = await fetch(url, {
-        method: "GET",
-        next: { revalidate: 86400 }
-      });
-
-      if (!response.ok) {
-        return undefined;
-      }
-
-      const payload = (await response.json()) as unknown;
-      const translated = normalizeWhitespace(readGoogleTranslateText(payload));
-      if (!translated) {
-        return undefined;
-      }
-
-      if (translated.toLowerCase() === source.toLowerCase()) {
-        return undefined;
-      }
-
-      return translated;
-    } catch {
-      return undefined;
-    }
-  }
-);
-
 async function localizeLegalText(
   text: string | undefined,
   locale: Locale,
@@ -467,16 +382,14 @@ async function localizeLegalText(
     return "";
   }
 
-  const targetLanguage = normalizeTranslateLanguageCode(TRANSLATE_LANGUAGE_BY_LOCALE[locale]);
-  if (targetLanguage === "en") {
+  if (locale === "en") {
     return sanitized;
   }
 
-  const translated = await translateTextBetweenLanguages(
-    sanitized,
-    normalizeTranslateLanguageCode(sourceLanguageCode),
-    targetLanguage
-  );
+  const translated = await translateNaturalText(sanitized, {
+    sourceLanguageCode: normalizeTranslateLanguageCode(sourceLanguageCode),
+    targetLocale: locale
+  });
 
   if (!translated) {
     return sanitized;

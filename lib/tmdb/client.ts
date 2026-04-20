@@ -48,6 +48,7 @@ import {
   type TvDiscoverFilters,
   type TvDiscoverSortBy
 } from "./tv-filters";
+import { translateNaturalText } from "@/lib/translation/server";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 const DEFAULT_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
@@ -624,18 +625,6 @@ function normalizeTranslateLanguageCode(value: string | null | undefined): strin
   return base || "auto";
 }
 
-function readGoogleTranslateText(payload: unknown): string {
-  if (!Array.isArray(payload) || !Array.isArray(payload[0])) {
-    return "";
-  }
-
-  const chunks = payload[0] as unknown[];
-  return chunks
-    .map((chunk) => (Array.isArray(chunk) && typeof chunk[0] === "string" ? chunk[0] : ""))
-    .join("")
-    .trim();
-}
-
 async function translateTextBetweenLanguages(
   text: string,
   sourceLanguageCode: string,
@@ -651,36 +640,12 @@ async function translateTextBetweenLanguages(
     return source;
   }
 
-  try {
-    const url = new URL("https://translate.googleapis.com/translate_a/single");
-    url.searchParams.set("client", "gtx");
-    url.searchParams.set("sl", sourceLanguage);
-    url.searchParams.set("tl", targetLanguage);
-    url.searchParams.set("dt", "t");
-    url.searchParams.set("q", source);
-
-    const response = await fetch(url, {
-      method: "GET",
-      next: { revalidate: 86400 }
-    });
-    if (!response.ok) {
-      return undefined;
-    }
-
-    const payload = (await response.json()) as unknown;
-    const translated = normalizeWhitespace(readGoogleTranslateText(payload));
-    if (!translated) {
-      return undefined;
-    }
-
-    if (translated.toLowerCase() === source.toLowerCase()) {
-      return undefined;
-    }
-
-    return translated;
-  } catch {
-    return undefined;
-  }
+  return (
+    (await translateNaturalText(source, {
+      sourceLanguageCode: sourceLanguage,
+      targetLanguageCode: targetLanguage
+    })) ?? undefined
+  );
 }
 
 async function translateFromEnglishToLanguage(
