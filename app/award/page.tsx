@@ -1,16 +1,5 @@
-import { AwardsCatalogView } from "./awards-view";
+import { permanentRedirect } from "next/navigation";
 
-type PageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function AwardsPopularPage({ searchParams }: PageProps) {
-  return (
-    <AwardsCatalogView
-      variant="popular"
-      titleKey="menu.awardsPopularTitle"
-      subtitleKey="menu.awardsPopularSubtitle"
-      searchParams={searchParams}
-    />
-  );
+export default function AwardsPopularPage() {
+  permanentRedirect("/");
 }

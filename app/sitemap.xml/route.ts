@@ -25,8 +25,6 @@ const PUBLIC_ROUTES: PublicRoute[] = [
   { path: "/tv/on-the-air", changeFrequency: "hourly", priority: 0.92 },
   { path: "/tv/top-rated", changeFrequency: "daily", priority: 0.9 },
   { path: "/person", changeFrequency: "daily", priority: 0.82 },
-  { path: "/award", changeFrequency: "daily", priority: 0.85 },
-  { path: "/award/upcoming", changeFrequency: "daily", priority: 0.85 },
   { path: "/free-legal", changeFrequency: "daily", priority: 0.88 },
   { path: "/leaderboard", changeFrequency: "daily", priority: 0.82 },
   { path: "/discuss", changeFrequency: "daily", priority: 0.8 },
