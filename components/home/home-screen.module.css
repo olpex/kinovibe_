@@ -6,31 +6,6 @@
   margin: 0 auto;
 }
 
-.bgOrbOne,
-.bgOrbTwo {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
-  opacity: 0.18;
-  pointer-events: none;
-}
-
-.bgOrbOne {
-  width: 360px;
-  height: 360px;
-  background: var(--color-primary);
-  top: -130px;
-  left: -110px;
-}
-
-.bgOrbTwo {
-  width: 300px;
-  height: 300px;
-  background: var(--color-secondary);
-  top: 420px;
-  right: -160px;
-}
-
 .topBar {
   position: sticky;
   top: 0;
@@ -193,6 +168,14 @@
   cursor: pointer;
   transition: transform 180ms ease, background 180ms ease;
   text-decoration: none;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.inlineCta:focus-visible,
+.activeFiltersReset:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
 }
 
 .primaryButton {
@@ -390,12 +373,14 @@
 }
 
 .poster {
+  position: relative;
   height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.6rem;
-  position: relative;
+  overflow: hidden;
+  background: rgba(11, 15, 20, 0.5);
 }
 
 .poster::after {
@@ -403,6 +388,20 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.42), transparent 58%);
+  pointer-events: none;
+}
+
+.posterImage {
+  object-fit: cover;
+}
+
+.posterFallbackLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem;
 }
 
 .posterGenre {
@@ -489,37 +488,6 @@
   background: linear-gradient(90deg, var(--color-secondary), var(--color-primary));
 }
 
-.mobileNav {
-  position: fixed;
-  left: 0.8rem;
-  right: 0.8rem;
-  bottom: 0.8rem;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
-  backdrop-filter: blur(14px);
-  display: none;
-  grid-template-columns: repeat(4, 1fr);
-  padding: 0.38rem;
-  z-index: 25;
-}
-
-.mobileNav a,
-.mobileNav button {
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--color-text-soft);
-  padding: 0.5rem 0.2rem;
-  text-align: center;
-  text-decoration: none;
-}
-
-.mobileNavActive {
-  background: color-mix(in srgb, var(--color-primary) 85%, #fff 15%) !important;
-  color: #fff !important;
-}
-
 @keyframes heroReveal {
   from {
     opacity: 0;
@@ -528,6 +496,19 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroContent {
+    animation: none;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .inlineCta,
+  .posterCardLink {
+    transition: none;
   }
 }
 
@@ -570,10 +551,6 @@
 
   .activeFilterChip {
     max-width: 100%;
-  }
-
-  .mobileNav {
-    display: grid;
   }
 
   .sectionHeader {

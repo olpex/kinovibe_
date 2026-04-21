@@ -1,10 +1,11 @@
+import Image from "next/image";
 import Link from "next/link";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import { getLegalCatalog, parseLegalCatalogFilters } from "@/lib/legal/catalog";
 import { getSessionUser } from "@/lib/supabase/session";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl } from "@/lib/ui/css-image";
 import styles from "./free-legal.module.css";
 
 type PageProps = {
@@ -179,8 +180,7 @@ export default async function FreeLegalCatalogPage({ searchParams }: PageProps) 
       ) : (
         <section className={styles.grid} aria-label={translate(locale, "legal.gridAria")}>
           {catalog.items.map((item) => {
-            const posterCss = toCssImageUrl(item.posterUrl);
-            const hasPoster = Boolean(posterCss);
+            const posterSrc = encodeImageUrl(item.posterUrl);
             const genresLabel =
               item.genres.length > 0 ? item.genres.join(", ") : translate(locale, "home.defaultGenre");
             return (
@@ -192,15 +192,20 @@ export default async function FreeLegalCatalogPage({ searchParams }: PageProps) 
                 data-track-click="legal:card_open"
                 data-movie-id={item.id}
               >
-                <div
-                  className={styles.poster}
-                  style={{
-                    background: hasPoster
-                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${posterCss} center / cover no-repeat`
-                      : "linear-gradient(145deg, #2d4666 0%, #162131 100%)"
-                  }}
-                >
-                  {!hasPoster ? <span className={styles.posterFallback}>{item.title}</span> : null}
+                <div className={styles.poster}>
+                  {posterSrc ? (
+                    <Image
+                      src={posterSrc}
+                      alt={item.title}
+                      fill
+                      sizes="(max-width: 760px) 100vw, 260px"
+                      className={styles.posterImage}
+                    />
+                  ) : (
+                    <span className={styles.posterFallbackLayer}>
+                      <span className={styles.posterFallback}>{item.title}</span>
+                    </span>
+                  )}
                   <span className={styles.badge}>{item.licenseType}</span>
                 </div>
                 <div className={styles.body}>

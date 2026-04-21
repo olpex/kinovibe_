@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { translate, type Locale } from "@/lib/i18n/shared";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl } from "@/lib/ui/css-image";
 import { MovieCard } from "./types";
 import styles from "./home-screen.module.css";
 
@@ -32,8 +33,7 @@ export function MediaRail({
           <li className={styles.emptyRail}>{emptyMessage}</li>
         ) : null}
         {items.map((item) => {
-          const posterCss = toCssImageUrl(item.posterUrl);
-          const hasPoster = Boolean(posterCss);
+          const posterSrc = encodeImageUrl(item.posterUrl);
           const countriesLabel =
             item.countries.length > 0
               ? item.countries.join(", ")
@@ -45,15 +45,25 @@ export function MediaRail({
                 className={`${styles.posterCard} ${styles.posterCardLink}`}
                 aria-label={translate(locale, "home.details")}
               >
-                <div
-                  className={styles.poster}
-                  style={{
-                    background: hasPoster
-                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.12)), ${posterCss} center / cover no-repeat`
-                      : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
-                  }}
-                >
-                  {!hasPoster ? <span className={styles.posterFallbackTitle}>{item.title}</span> : null}
+                <div className={styles.poster}>
+                  {posterSrc ? (
+                    <Image
+                      src={posterSrc}
+                      alt={item.title}
+                      fill
+                      sizes="180px"
+                      className={styles.posterImage}
+                    />
+                  ) : (
+                    <span
+                      className={styles.posterFallbackLayer}
+                      style={{
+                        background: `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
+                      }}
+                    >
+                      <span className={styles.posterFallbackTitle}>{item.title}</span>
+                    </span>
+                  )}
                   <span className={styles.posterGenre}>{item.genre}</span>
                 </div>
                 <div className={styles.cardBody}>

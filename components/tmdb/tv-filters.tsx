@@ -34,6 +34,11 @@ export function TvFilters({
   const selectedGenres = new Set(filters.genreIds);
   const activeCount = countActiveTvDiscoverFilters(filters, defaultSort);
   const lockProFilters = !isPro;
+  const mobileToggleId = "tv-filters-mobile-toggle";
+  const mobileToggleLabel =
+    activeCount > 0
+      ? `${translate(locale, "tv.filters.title")} (${activeCount})`
+      : translate(locale, "tv.filters.title");
 
   const languageOptions = [
     { value: "", label: translate(locale, "movie.filters.allLanguages") },
@@ -60,12 +65,29 @@ export function TvFilters({
   return (
     <aside className={styles.sidebar} aria-label={translate(locale, "tv.filters.title")}>
       <div className={styles.header}>
-        <h2>{translate(locale, "tv.filters.title")}</h2>
-        {activeCount > 0 ? (
-          <p>{translate(locale, "movie.filters.activeSummary", { count: activeCount })}</p>
-        ) : null}
+        <div>
+          <h2>{translate(locale, "tv.filters.title")}</h2>
+          {activeCount > 0 ? (
+            <p>{translate(locale, "movie.filters.activeSummary", { count: activeCount })}</p>
+          ) : null}
+        </div>
+        <label
+          className={styles.mobileToggle}
+          htmlFor={mobileToggleId}
+        >
+          <span>{mobileToggleLabel}</span>
+          {activeCount > 0 ? (
+            <span className={styles.activeBadge}>{activeCount}</span>
+          ) : null}
+        </label>
       </div>
 
+      <input
+        id={mobileToggleId}
+        type="checkbox"
+        className={styles.mobileToggleControl}
+        aria-label={translate(locale, "tv.filters.title")}
+      />
       <form
         action={basePath}
         method="get"

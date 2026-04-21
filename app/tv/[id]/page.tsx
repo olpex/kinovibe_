@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DiscussionPanel } from "@/components/discussions/discussion-panel";
@@ -7,7 +8,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbTvDetails } from "@/lib/tmdb/client";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl, toCssImageUrl } from "@/lib/ui/css-image";
 import styles from "./tv.module.css";
 
 type TvDetailsPageProps = {
@@ -70,7 +71,7 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
     tv.countries.length > 1 ? "movie.productionCountries" : "movie.productionCountry";
   const tvYearLabel = tv.year > 0 ? String(tv.year) : translate(locale, "watchlist.tba");
   const backdropCss = toCssImageUrl(tv.backdropUrl);
-  const posterCss = toCssImageUrl(tv.posterUrl);
+  const posterSrc = encodeImageUrl(tv.posterUrl);
 
   return (
     <main className={styles.page}>
@@ -85,14 +86,20 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
           }}
         >
           <div className={styles.posterWrap}>
-            <div
-              className={styles.poster}
-              style={{
-                background: posterCss
-                  ? `${posterCss} center / cover no-repeat`
-                  : "linear-gradient(145deg, #3A0CA3, #4CC9F0)"
-              }}
-            />
+            <div className={styles.poster}>
+              {posterSrc ? (
+                <Image
+                  src={posterSrc}
+                  alt={`${tv.title} poster`}
+                  fill
+                  priority
+                  sizes="(max-width: 900px) 280px, 220px"
+                  className={styles.posterImage}
+                />
+              ) : (
+                <span className={styles.posterFallback}>{tv.title}</span>
+              )}
+            </div>
           </div>
           <div className={styles.heroContent}>
             <p className={styles.eyebrow}>{translate(locale, "menu.tvDetails")}</p>
@@ -193,17 +200,22 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
           <p className={styles.castHint}>{translate(locale, "movie.castPhotoOnlyHint")}</p>
           <div className={styles.castGrid}>
             {tv.cast.map((person) => {
-              const avatarCss = toCssImageUrl(person.avatarUrl);
+              const avatarSrc = encodeImageUrl(person.avatarUrl);
               return (
                 <Link key={person.id} href={`/person/${person.id}`} className={styles.castCard}>
-                  <div
-                    className={styles.castAvatar}
-                    style={{
-                      background: avatarCss
-                        ? `${avatarCss} center / cover no-repeat`
-                        : "linear-gradient(145deg, #5f6675, #2e3442)"
-                    }}
-                  />
+                  <div className={styles.castAvatar}>
+                    {avatarSrc ? (
+                      <Image
+                        src={avatarSrc}
+                        alt={person.name}
+                        fill
+                        sizes="48px"
+                        className={styles.castAvatarImage}
+                      />
+                    ) : (
+                      <span aria-hidden="true">{person.name.trim().charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
                   <div>
                     <h3>{person.name}</h3>
                     <p>{person.character || translate(locale, "movie.castUnknownCharacter")}</p>
@@ -218,17 +230,20 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
           <h2>{translate(locale, "movie.similarTitles")}</h2>
           <div className={styles.similarGrid}>
             {tv.similar.map((item) => {
-              const similarPosterCss = toCssImageUrl(item.posterUrl);
+              const similarPosterSrc = encodeImageUrl(item.posterUrl);
               return (
                 <Link key={item.id} href={`/tv/${item.id}`} className={styles.similarCard}>
-                  <div
-                    className={styles.similarPoster}
-                    style={{
-                      background: similarPosterCss
-                        ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${similarPosterCss} center / cover no-repeat`
-                        : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
-                    }}
-                  />
+                  <div className={styles.similarPoster}>
+                    {similarPosterSrc ? (
+                      <Image
+                        src={similarPosterSrc}
+                        alt={item.title}
+                        fill
+                        sizes="(max-width: 760px) 50vw, 190px"
+                        className={styles.similarPosterImage}
+                      />
+                    ) : null}
+                  </div>
                   <div className={styles.similarBody}>
                     <h3>{item.title}</h3>
                     <p>

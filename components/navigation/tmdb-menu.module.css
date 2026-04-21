@@ -82,7 +82,8 @@
 .dropdown a:hover,
 .dropdown a:focus-visible {
   background: rgba(0, 179, 255, 0.14);
-  outline: none;
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 2px;
 }
 
 .mobileList {
@@ -93,6 +94,7 @@
 }
 
 .mobileItem details {
+  position: relative;
   border: 1px solid var(--color-border);
   border-radius: 0.78rem;
   background: rgba(11, 15, 20, 0.72);
@@ -143,7 +145,8 @@
 .mobileDropdown a:hover,
 .mobileDropdown a:focus-visible {
   background: rgba(0, 179, 255, 0.14);
-  outline: none;
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 2px;
 }
 
 @media (max-width: 980px) {
@@ -153,6 +156,47 @@
 
   .mobileList {
     display: grid;
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    align-items: start;
+    gap: 0.42rem;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .mobileItem {
+    min-width: 0;
+  }
+
+  .mobileItem details {
+    overflow: hidden;
+    background: rgba(26, 34, 48, 0.66);
+  }
+
+  .mobileSummary {
+    min-height: 2.35rem;
+    padding: 0.48rem 0.66rem;
+    white-space: nowrap;
+  }
+
+  .mobileDropdown {
+    padding: 0.35rem;
+  }
+
+  .mobileDropdown a {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 700px) {
+  .mobileList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobileSummary {
+    white-space: normal;
+  }
+
+  .mobileDropdown a {
+    white-space: normal;
   }
 }

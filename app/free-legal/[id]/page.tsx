@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
@@ -6,7 +7,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { getLegalCatalogItemBySlugOrId } from "@/lib/legal/catalog";
 import { getSessionUser } from "@/lib/supabase/session";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl, toCssImageUrl } from "@/lib/ui/css-image";
 import styles from "../free-legal.module.css";
 
 type PageProps = {
@@ -21,7 +22,7 @@ export default async function FreeLegalItemPage({ params }: PageProps) {
     notFound();
   }
 
-  const posterCss = toCssImageUrl(item.posterUrl);
+  const posterSrc = encodeImageUrl(item.posterUrl);
   const backdropCss = toCssImageUrl(item.backdropUrl);
   const metadataLine = [
     item.releaseYear ? String(item.releaseYear) : null,
@@ -54,14 +55,22 @@ export default async function FreeLegalItemPage({ params }: PageProps) {
         }}
       >
         <div className={styles.detailPosterWrap}>
-          <div
-            className={styles.detailPoster}
-            style={{
-              background: posterCss
-                ? `${posterCss} center / cover no-repeat`
-                : "linear-gradient(145deg, #2d4666 0%, #162131 100%)"
-            }}
-          />
+          <div className={styles.detailPoster}>
+            {posterSrc ? (
+              <Image
+                src={posterSrc}
+                alt={`${item.title} poster`}
+                fill
+                priority
+                sizes="(max-width: 760px) 260px, 220px"
+                className={styles.posterImage}
+              />
+            ) : (
+              <span className={styles.posterFallbackLayer}>
+                <span className={styles.posterFallback}>{item.title}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         <div className={styles.detailContent}>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { KinoVibeLogo } from "@/components/branding/kinovibe-logo";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
@@ -8,7 +9,7 @@ import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getTmdbMovieCatalogPage, getTmdbMovieLocalizedSummaries } from "@/lib/tmdb/client";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl } from "@/lib/ui/css-image";
 import styles from "./watchlist.module.css";
 
 type WatchlistRow = {
@@ -151,18 +152,28 @@ export default async function WatchlistPage() {
             </header>
             <div className={styles.grid}>
               {guestPicks.map((item) => {
-                const posterCss = toCssImageUrl(item.posterUrl);
+                const posterSrc = encodeImageUrl(item.posterUrl);
                 return (
                   <Link key={`guest-${item.id}`} href={`/movie/${item.id}`} className={styles.card}>
-                    <div
-                      className={styles.poster}
-                      style={{
-                        background: posterCss
-                          ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), ${posterCss} center / cover no-repeat`
-                          : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
-                      }}
-                    >
-                      {!posterCss ? <span className={styles.posterFallback}>{item.title}</span> : null}
+                    <div className={styles.poster}>
+                      {posterSrc ? (
+                        <Image
+                          src={posterSrc}
+                          alt={item.title}
+                          fill
+                          sizes="(max-width: 760px) 50vw, 220px"
+                          className={styles.posterImage}
+                        />
+                      ) : (
+                        <span
+                          className={styles.posterFallbackLayer}
+                          style={{
+                            background: `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
+                          }}
+                        >
+                          <span className={styles.posterFallback}>{item.title}</span>
+                        </span>
+                      )}
                     </div>
                     <div className={styles.cardBody}>
                       <h3>{item.title}</h3>
@@ -283,22 +294,27 @@ export default async function WatchlistPage() {
             ) : (
               <div className={styles.grid}>
                 {group.items.map((item) => {
-                  const posterCss = toCssImageUrl(item.posterUrl);
+                  const posterSrc = encodeImageUrl(item.posterUrl);
                   return (
                     <Link
                       key={`${group.status}-${item.tmdbId}`}
                       href={`/movie/${item.tmdbId}`}
                       className={styles.card}
                     >
-                      <div
-                        className={styles.poster}
-                        style={{
-                          background: posterCss
-                            ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), ${posterCss} center / cover no-repeat`
-                            : "linear-gradient(145deg, #3A0CA3 0%, #4CC9F0 100%)"
-                        }}
-                      >
-                        {!posterCss ? <span className={styles.posterFallback}>{item.title}</span> : null}
+                      <div className={styles.poster}>
+                        {posterSrc ? (
+                          <Image
+                            src={posterSrc}
+                            alt={item.title}
+                            fill
+                            sizes="(max-width: 760px) 50vw, 220px"
+                            className={styles.posterImage}
+                          />
+                        ) : (
+                          <span className={styles.posterFallbackLayer}>
+                            <span className={styles.posterFallback}>{item.title}</span>
+                          </span>
+                        )}
                       </div>
                       <div className={styles.cardBody}>
                         <h3>{item.title}</h3>

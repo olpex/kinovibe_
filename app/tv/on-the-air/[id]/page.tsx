@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/navigation/site-header";
@@ -5,7 +6,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTvOnAirShowDetails } from "@/lib/tmdb/client";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl, toCssImageUrl } from "@/lib/ui/css-image";
 import styles from "../../[id]/tv.module.css";
 
 type OnAirTvDetailsPageProps = {
@@ -34,7 +35,7 @@ export default async function OnAirTvDetailsPage({ params }: OnAirTvDetailsPageP
   }
 
   const backdropCss = toCssImageUrl(details.backdropUrl);
-  const posterCss = toCssImageUrl(details.posterUrl);
+  const posterSrc = encodeImageUrl(details.posterUrl);
   const yearLabel = details.year > 0 ? String(details.year) : translate(locale, "watchlist.tba");
   const countriesLabel =
     details.countries.length > 0 ? details.countries.join(", ") : translate(locale, "common.notAvailable");
@@ -52,14 +53,20 @@ export default async function OnAirTvDetailsPage({ params }: OnAirTvDetailsPageP
           }}
         >
           <div className={styles.posterWrap}>
-            <div
-              className={styles.poster}
-              style={{
-                background: posterCss
-                  ? `${posterCss} center / cover no-repeat`
-                  : "linear-gradient(145deg, #3A0CA3, #4CC9F0)"
-              }}
-            />
+            <div className={styles.poster}>
+              {posterSrc ? (
+                <Image
+                  src={posterSrc}
+                  alt={`${details.title} poster`}
+                  fill
+                  priority
+                  sizes="(max-width: 900px) 280px, 220px"
+                  className={styles.posterImage}
+                />
+              ) : (
+                <span className={styles.posterFallback}>{details.title}</span>
+              )}
+            </div>
           </div>
           <div className={styles.heroContent}>
             <p className={styles.eyebrow}>{translate(locale, "tv.onAirDetails")}</p>
@@ -125,17 +132,22 @@ export default async function OnAirTvDetailsPage({ params }: OnAirTvDetailsPageP
           <div className={styles.castGrid}>
             {details.cast.length > 0 ? (
               details.cast.map((person) => {
-                const avatarCss = toCssImageUrl(person.avatarUrl);
+                const avatarSrc = encodeImageUrl(person.avatarUrl);
                 return (
                   <div key={`${person.id}-${person.character}`} className={styles.castCard}>
-                    <div
-                      className={styles.castAvatar}
-                      style={{
-                        background: avatarCss
-                          ? `${avatarCss} center / cover no-repeat`
-                          : "linear-gradient(145deg, #5f6675, #2e3442)"
-                      }}
-                    />
+                    <div className={styles.castAvatar}>
+                      {avatarSrc ? (
+                        <Image
+                          src={avatarSrc}
+                          alt={person.name}
+                          fill
+                          sizes="48px"
+                          className={styles.castAvatarImage}
+                        />
+                      ) : (
+                        <span aria-hidden="true">{person.name.trim().charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
                     <div>
                       <h3>{person.name}</h3>
                       <p>{person.character || translate(locale, "movie.castUnknownCharacter")}</p>
@@ -152,4 +164,3 @@ export default async function OnAirTvDetailsPage({ params }: OnAirTvDetailsPageP
     </main>
   );
 }
-

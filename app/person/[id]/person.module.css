@@ -28,8 +28,29 @@
 }
 
 .poster {
+  position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  background: linear-gradient(145deg, #4cc9f0, #3a0ca3);
+}
+
+.posterImage {
+  object-fit: cover;
+}
+
+.posterFallback,
+.creditPosterFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  color: #fff;
+  font-family: var(--font-heading);
+  line-height: 1.25;
+  text-align: center;
 }
 
 .content {
@@ -50,6 +71,12 @@
   margin: 0;
   font-family: var(--font-heading);
   font-size: clamp(1.45rem, 2.8vw, 2.3rem);
+}
+
+.content a:focus-visible,
+.creditCard:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
 }
 
 .meta {
@@ -95,8 +122,11 @@
 }
 
 .creditPoster {
+  position: relative;
   width: 100%;
   aspect-ratio: 2 / 3;
+  background: linear-gradient(145deg, #2b3445, #121a28);
+  overflow: hidden;
 }
 
 .creditBody {

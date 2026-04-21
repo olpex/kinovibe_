@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DiscussionPanel } from "@/components/discussions/discussion-panel";
@@ -7,7 +8,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbPersonDetails } from "@/lib/tmdb/client";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl } from "@/lib/ui/css-image";
 import styles from "./person.module.css";
 
 type PageProps = {
@@ -58,7 +59,7 @@ export default async function PersonDetailsPage({ params }: PageProps) {
     );
   }
 
-  const personAvatarCss = toCssImageUrl(person.avatarUrl);
+  const personAvatarSrc = encodeImageUrl(person.avatarUrl);
 
   return (
     <main className={styles.page}>
@@ -67,14 +68,20 @@ export default async function PersonDetailsPage({ params }: PageProps) {
 
         <section className={styles.hero}>
           <div className={styles.posterWrap}>
-            <div
-            className={styles.poster}
-            style={{
-                background: personAvatarCss
-                  ? `${personAvatarCss} center / cover no-repeat`
-                  : "linear-gradient(145deg, #4cc9f0, #3a0ca3)"
-              }}
-            />
+            <div className={styles.poster}>
+              {personAvatarSrc ? (
+                <Image
+                  src={personAvatarSrc}
+                  alt={person.name}
+                  fill
+                  priority
+                  sizes="(max-width: 900px) 100vw, 280px"
+                  className={styles.posterImage}
+                />
+              ) : (
+                <span className={styles.posterFallback}>{person.name}</span>
+              )}
+            </div>
           </div>
           <div className={styles.content}>
             <p className={styles.eyebrow}>{translate(locale, "nav.people")}</p>
@@ -129,21 +136,26 @@ export default async function PersonDetailsPage({ params }: PageProps) {
           <h2>{translate(locale, "menu.knownFor")}</h2>
           <div className={styles.creditsGrid}>
             {person.knownFor.map((credit) => {
-              const creditPosterCss = toCssImageUrl(credit.posterUrl);
+              const creditPosterSrc = encodeImageUrl(credit.posterUrl);
               return (
                 <Link
                   key={`${credit.mediaType}-${credit.id}-${credit.title}`}
                   href={credit.mediaType === "movie" ? `/movie/${credit.id}` : `/tv/${credit.id}`}
                   className={styles.creditCard}
                 >
-                  <div
-                    className={styles.creditPoster}
-                    style={{
-                      background: creditPosterCss
-                        ? `${creditPosterCss} center / cover no-repeat`
-                        : "linear-gradient(145deg, #2b3445, #121a28)"
-                    }}
-                  />
+                  <div className={styles.creditPoster}>
+                    {creditPosterSrc ? (
+                      <Image
+                        src={creditPosterSrc}
+                        alt={credit.title}
+                        fill
+                        sizes="(max-width: 760px) 50vw, 200px"
+                        className={styles.posterImage}
+                      />
+                    ) : (
+                      <span className={styles.creditPosterFallback}>{credit.title}</span>
+                    )}
+                  </div>
                   <div className={styles.creditBody}>
                     <h3>{credit.title}</h3>
                     <p>

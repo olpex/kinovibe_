@@ -1,7 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { translate, type Locale } from "@/lib/i18n/shared";
 import { HomeMovie, PersonCard } from "@/lib/tmdb/client";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl } from "@/lib/ui/css-image";
 import styles from "./catalog-grid.module.css";
 
 export type CatalogMovieGridProps = {
@@ -24,8 +25,7 @@ export function CatalogMovieGrid({
   return (
     <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
       {items.map((item) => {
-        const posterCss = toCssImageUrl(item.posterUrl);
-        const hasPoster = Boolean(posterCss);
+        const posterSrc = encodeImageUrl(item.posterUrl);
         const cardHref = item.href ?? `${hrefPrefix}/${item.id}`;
         const countriesLabel =
           item.countries.length > 0
@@ -44,15 +44,25 @@ export function CatalogMovieGrid({
             data-track-click="catalog:card_open"
             data-movie-id={item.id}
           >
-            <div
-              className={styles.poster}
-              style={{
-                background: hasPoster
-                  ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${posterCss} center / cover no-repeat`
-                  : `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
-              }}
-            >
-              {!hasPoster ? <span className={styles.posterFallbackText}>{item.title}</span> : null}
+            <div className={styles.poster}>
+              {posterSrc ? (
+                <Image
+                  src={posterSrc}
+                  alt={item.title}
+                  fill
+                  sizes="(max-width: 420px) 100vw, (max-width: 820px) 50vw, (max-width: 1100px) 33vw, 220px"
+                  className={styles.posterImage}
+                />
+              ) : (
+                <span
+                  className={styles.posterFallback}
+                  style={{
+                    background: `linear-gradient(145deg, ${item.gradient[0]} 0%, ${item.gradient[1]} 100%)`
+                  }}
+                >
+                  <span className={styles.posterFallbackText}>{item.title}</span>
+                </span>
+              )}
             </div>
             <div className={styles.body}>
               <h2 title={item.title}>{item.title}</h2>
@@ -89,27 +99,35 @@ export function CatalogPeopleGrid({ locale, items }: PeopleGridProps) {
   return (
     <section className={styles.grid} aria-label={translate(locale, "menu.peopleListAria")}>
       {items.map((person) => {
-        const avatarCss = toCssImageUrl(person.avatarUrl);
+        const avatarSrc = encodeImageUrl(person.avatarUrl);
         return (
           <Link key={person.id} href={`/person/${person.id}`} className={styles.card}>
-            <div
-              className={styles.poster}
-              style={{
-                background: avatarCss
-                  ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${avatarCss} center / cover no-repeat`
-                  : `linear-gradient(145deg, ${person.gradient[0]} 0%, ${person.gradient[1]} 100%)`
-              }}
-            >
-              {!avatarCss ? (
-                <span className={styles.posterFallbackText}>
+            <div className={styles.poster}>
+              {avatarSrc ? (
+                <Image
+                  src={avatarSrc}
+                  alt={person.name}
+                  fill
+                  sizes="(max-width: 420px) 100vw, (max-width: 820px) 50vw, (max-width: 1100px) 33vw, 220px"
+                  className={styles.posterImage}
+                />
+              ) : (
+                <span
+                  className={styles.posterFallback}
+                  style={{
+                    background: `linear-gradient(145deg, ${person.gradient[0]} 0%, ${person.gradient[1]} 100%)`
+                  }}
+                >
+                  <span className={styles.posterFallbackText}>
                   {person.name
                     .split(/\s+/)
                     .filter(Boolean)
                     .slice(0, 2)
                     .map((chunk) => chunk[0]?.toUpperCase() ?? "")
                     .join("")}
+                  </span>
                 </span>
-              ) : null}
+              )}
             </div>
             <div className={styles.body}>
               <h2>{person.name}</h2>

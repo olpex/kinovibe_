@@ -111,6 +111,13 @@ export function HeaderSearchForm({
 
   const isExpanded = isOpen && canSuggest;
   const activeOptionId = activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined;
+  const suggestionStatus = isLoading
+    ? translate(locale, "search.suggestLoading")
+    : hasError
+      ? translate(locale, "search.suggestError")
+      : isOpen && canSuggest && suggestions.length === 0
+        ? translate(locale, "search.suggestNoResults")
+        : "";
 
   return (
     <form
@@ -223,6 +230,10 @@ export function HeaderSearchForm({
           </div>
         ) : null}
       </div>
+
+      <span className="sr-only" aria-live="polite">
+        {suggestionStatus}
+      </span>
 
       <button type="submit">{translate(locale, "nav.search")}</button>
     </form>

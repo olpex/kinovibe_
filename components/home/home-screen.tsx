@@ -205,9 +205,6 @@ export function HomeScreen({
 
   return (
     <main className={styles.page}>
-      <div className={styles.bgOrbOne} />
-      <div className={styles.bgOrbTwo} />
-
       <SiteHeader locale={locale} session={session} dataSourceStatus={data.dataSourceStatus} />
       <EmailVerificationBanner session={session} nextPath="/" />
 
@@ -233,10 +230,10 @@ export function HomeScreen({
           <div className={styles.heroButtons}>
             {featured ? (
               <Link href={`/movie/${featured.id}`} className={styles.primaryButton}>
-                {translate(locale, "home.watchTrailer")}
+                {translate(locale, "home.details")}
               </Link>
             ) : (
-              <span className={styles.secondaryButton}>{translate(locale, "home.watchTrailer")}</span>
+              <span className={styles.secondaryButton}>{translate(locale, "home.details")}</span>
             )}
             {featured ? (
               <Link
@@ -321,16 +318,6 @@ export function HomeScreen({
         </div>
       </section>
 
-      <nav className={styles.mobileNav} aria-label={translate(locale, "home.mobileNavAria")}>
-        <Link href="/" className={styles.mobileNavActive}>
-          {translate(locale, "nav.home")}
-        </Link>
-        <Link href="/search">{translate(locale, "nav.search")}</Link>
-        <Link href="/watchlist">{translate(locale, "nav.watchlist")}</Link>
-        <Link href={session.isAuthenticated ? "/watchlist" : "/auth?next=/watchlist"}>
-          {session.isAuthenticated ? translate(locale, "nav.profile") : translate(locale, "nav.signIn")}
-        </Link>
-      </nav>
     </main>
   );
 }

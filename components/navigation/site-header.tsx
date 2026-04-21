@@ -58,12 +58,10 @@ export async function SiteHeader({
           <KinoVibeLogo />
         </Link>
         <div className={styles.rightActions}>
-          {dataSourceLabel ? (
+          {dataSourceLabel && dataSourceStatus !== "tmdb" ? (
             <span
               className={`${styles.dataSourceBadge} ${
-                dataSourceStatus === "tmdb"
-                  ? styles.dataSourceTmdb
-                  : dataSourceStatus === "fallback"
+                dataSourceStatus === "fallback"
                     ? styles.dataSourceFallback
                     : styles.dataSourceUnavailable
               }`}

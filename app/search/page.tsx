@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
+import Image from "next/image";
 import { EmailVerificationBanner } from "@/components/auth/email-verification-banner";
 import { SiteHeader } from "@/components/navigation/site-header";
 import { getRequestLocale } from "@/lib/i18n/server";
@@ -7,7 +8,7 @@ import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { getSessionUser } from "@/lib/supabase/session";
 import { searchTmdbMovies } from "@/lib/tmdb/client";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl } from "@/lib/ui/css-image";
 import styles from "./search.module.css";
 
 type SearchPageProps = {
@@ -100,17 +101,29 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       {!searchFailed ? (
         <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
           {results.items.map((movie) => {
-            const posterCss = toCssImageUrl(movie.posterUrl);
+            const posterSrc = encodeImageUrl(movie.posterUrl);
             return (
               <Link key={movie.id} href={`/movie/${movie.id}`} className={styles.movieCard}>
-                <div
-                  className={styles.poster}
-                  style={{
-                    background: posterCss
-                      ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1)), ${posterCss} center / cover no-repeat`
-                      : `linear-gradient(145deg, ${movie.gradient[0]} 0%, ${movie.gradient[1]} 100%)`
-                  }}
-                />
+                <div className={styles.poster}>
+                  {posterSrc ? (
+                    <Image
+                      src={posterSrc}
+                      alt={movie.title}
+                      fill
+                      sizes="(max-width: 760px) 50vw, 220px"
+                      className={styles.posterImage}
+                    />
+                  ) : (
+                    <span
+                      className={styles.posterFallback}
+                      style={{
+                        background: `linear-gradient(145deg, ${movie.gradient[0]} 0%, ${movie.gradient[1]} 100%)`
+                      }}
+                    >
+                      <span>{movie.title}</span>
+                    </span>
+                  )}
+                </div>
                 <div className={styles.cardBody}>
                   <h2>{movie.title}</h2>
                   <p>

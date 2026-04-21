@@ -89,10 +89,31 @@
 }
 
 .poster {
+  position: relative;
   width: 100%;
   aspect-ratio: 2 / 3;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+  background: linear-gradient(145deg, #3a0ca3, #4cc9f0);
+}
+
+.posterImage,
+.similarPosterImage,
+.castAvatarImage {
+  object-fit: cover;
+}
+
+.posterFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  text-align: center;
+  font-family: var(--font-heading);
+  line-height: 1.25;
 }
 
 .heroContent {
@@ -241,6 +262,14 @@
   font-weight: 600;
 }
 
+.primaryAction:focus-visible,
+.secondaryAction:focus-visible,
+.providerLink:focus-visible,
+.similarCard:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
+}
+
 .castGrid {
   margin-top: 0.75rem;
   display: grid;
@@ -274,15 +303,25 @@
 }
 
 .castCard:focus-visible {
-  outline: none;
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
 }
 
 .castAvatar {
+  position: relative;
   width: 48px;
   height: 48px;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(145deg, #5f6675, #2e3442);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
 }
 
 .castCard h3 {
@@ -312,7 +351,17 @@
 }
 
 .similarPoster {
+  position: relative;
   height: 220px;
+  background: linear-gradient(145deg, #252f3f, #11161f);
+}
+
+.similarPoster::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1));
+  pointer-events: none;
 }
 
 .similarBody {

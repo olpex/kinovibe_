@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   SUPPORTED_LOCALES,
@@ -67,14 +67,20 @@ export function MovieFilters({
   liveApply = true
 }: MovieFiltersProps) {
   const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastUrlRef = useRef<string>("");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const selectedGenres = new Set(filters.genreIds);
   const activeCount = countActiveMovieDiscoverFilters(filters);
   const lockProFilters = !isPro;
   const proOnlySortValues = new Set(["vote_count.desc", "vote_count.asc"]);
+  const mobileToggleLabel = isMobileFiltersOpen
+    ? translate(locale, "common.close")
+    : activeCount > 0
+      ? `${translate(locale, "movie.filters.title")} (${activeCount})`
+      : translate(locale, "movie.filters.title");
 
   const languageOptions = [
     { value: "", label: translate(locale, "movie.filters.allLanguages") },
@@ -132,17 +138,31 @@ export function MovieFilters({
   return (
     <aside className={styles.sidebar} aria-label={translate(locale, "movie.filters.title")}>
       <div className={styles.header}>
-        <h2>{translate(locale, "movie.filters.title")}</h2>
-        {activeCount > 0 ? (
-          <p>{translate(locale, "movie.filters.activeSummary", { count: activeCount })}</p>
-        ) : null}
+        <div>
+          <h2>{translate(locale, "movie.filters.title")}</h2>
+          {activeCount > 0 ? (
+            <p>{translate(locale, "movie.filters.activeSummary", { count: activeCount })}</p>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className={styles.mobileToggle}
+          aria-expanded={isMobileFiltersOpen}
+          onClick={() => setIsMobileFiltersOpen((current) => !current)}
+        >
+          <span>{mobileToggleLabel}</span>
+          {!isMobileFiltersOpen && activeCount > 0 ? (
+            <span className={styles.activeBadge}>{activeCount}</span>
+          ) : null}
+        </button>
       </div>
 
       <form
         ref={formRef}
         action={basePath}
         method="get"
-        className={styles.form}
+        className={`${styles.form} ${isMobileFiltersOpen ? styles.formOpen : ""}`}
+        aria-busy={isPending}
         data-track-event="filter_apply"
         data-track-click="movie:filter_apply"
         onInput={() => {
@@ -353,7 +373,9 @@ export function MovieFilters({
         ) : null}
 
         <div className={styles.actions}>
-          <button type="submit">{translate(locale, "movie.filters.apply")}</button>
+          <button type="submit" disabled={isPending}>
+            {isPending ? translate(locale, "common.updating") : translate(locale, "movie.filters.apply")}
+          </button>
           <a href={basePath}>{translate(locale, "movie.filters.reset")}</a>
         </div>
       </form>

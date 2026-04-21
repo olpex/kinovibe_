@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { CatalogPageShell } from "@/components/tmdb/catalog-page-shell";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbAwards } from "@/lib/tmdb/client";
-import { encodeImageUrl, toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl } from "@/lib/ui/css-image";
 import shellStyles from "@/app/menu-page.module.css";
 import styles from "./award-page.module.css";
 
@@ -510,21 +511,25 @@ export async function AwardsCatalogView({
         <section className={styles.grid} aria-label={translate(locale, "nav.awards")}>
           {groupedFilteredAwards.map((award) => {
             const openHref = award.movieTmdbId ? `/movie/${award.movieTmdbId}` : buildSearchHref(award.title);
-            const awardImageCss = toCssImageUrl(award.imageUrl);
             const awardImageHref = encodeImageUrl(award.imageUrl);
-            const hasImage = Boolean(awardImageCss);
+            const hasImage = Boolean(awardImageHref);
 
             return (
               <article key={award.id} className={styles.card}>
                 <Link href={openHref} className={styles.posterLink}>
-                  <div
-                    className={styles.poster}
-                    style={{
-                      background: hasImage
-                        ? `linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08)), ${awardImageCss} center / cover no-repeat`
-                        : "linear-gradient(145deg, #1d3557 0%, #457b9d 100%)"
-                    }}
-                  />
+                  <div className={styles.poster}>
+                    {awardImageHref ? (
+                      <Image
+                        src={awardImageHref}
+                        alt={award.title}
+                        fill
+                        sizes="(max-width: 760px) 100vw, 260px"
+                        className={styles.posterImage}
+                      />
+                    ) : (
+                      <span className={styles.posterFallback}>{award.title}</span>
+                    )}
+                  </div>
                 </Link>
 
                 <div className={styles.body}>

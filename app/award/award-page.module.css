@@ -22,6 +22,17 @@
   font-size: 0.88rem;
 }
 
+.tab:focus-visible,
+.posterLink:focus-visible,
+.body h3 a:focus-visible,
+.filterField select:focus-visible,
+.checkItem input:focus-visible,
+.filterButtonPrimary:focus-visible,
+.filterButtonGhost:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
+}
+
 .tabActive {
   background: rgba(229, 9, 20, 0.9);
   border-color: rgba(229, 9, 20, 0.92);
@@ -47,8 +58,36 @@
 }
 
 .poster {
+  position: relative;
   width: 100%;
   aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background: linear-gradient(145deg, #1d3557 0%, #457b9d 100%);
+}
+
+.poster::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08));
+  pointer-events: none;
+}
+
+.posterImage {
+  object-fit: cover;
+}
+
+.posterFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  color: #fff;
+  font-family: var(--font-heading);
+  line-height: 1.3;
+  text-align: center;
 }
 
 .body {

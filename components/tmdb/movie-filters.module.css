@@ -9,7 +9,9 @@
 }
 
 .header {
-  display: grid;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 0.3rem;
 }
 
@@ -23,6 +25,46 @@
   margin: 0;
   color: var(--color-text-soft);
   font-size: 0.82rem;
+}
+
+.mobileToggle {
+  display: none;
+  border: 1px solid var(--color-border);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--color-surface-soft) 85%, transparent);
+  color: var(--color-text);
+  min-height: 2rem;
+  padding: 0.36rem 0.58rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  gap: 0.42rem;
+  white-space: nowrap;
+}
+
+.mobileToggleControl {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.activeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .form {
@@ -48,6 +90,18 @@
   padding: 0.5rem 0.56rem;
   background: rgba(26, 34, 48, 0.75);
   color: var(--color-text);
+}
+
+.group input:focus-visible,
+.group select:focus-visible,
+.toggleGroup input:focus-visible,
+.genreGrid input:focus-visible,
+.providerGrid input:focus-visible,
+.actions button:focus-visible,
+.actions a:focus-visible,
+.paywallBox a:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
 }
 
 .toggleGroup {
@@ -198,7 +252,46 @@
   cursor: pointer;
 }
 
+.actions button:disabled {
+  cursor: progress;
+  opacity: 0.72;
+}
+
 @media (max-width: 860px) {
+  .sidebar {
+    position: sticky;
+    top: 0.65rem;
+    z-index: 4;
+  }
+
+  .header {
+    align-items: center;
+  }
+
+  .mobileToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form {
+    display: none;
+  }
+
+.formOpen {
+    display: grid;
+    max-height: min(70vh, 680px);
+    overflow-y: auto;
+    padding-right: 0.15rem;
+  }
+
+  .mobileToggleControl:checked + .form {
+    display: grid;
+    max-height: min(70vh, 680px);
+    overflow-y: auto;
+    padding-right: 0.15rem;
+  }
+
   .row {
     grid-template-columns: 1fr;
   }
@@ -210,6 +303,17 @@
 
   .providerGrid {
     max-height: 8rem;
+  }
+
+  .actions {
+    position: sticky;
+    bottom: 0.25rem;
+    z-index: 2;
+    padding: 0.42rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.78rem;
+    background: rgba(11, 15, 20, 0.94);
+    box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.28);
   }
 }
 

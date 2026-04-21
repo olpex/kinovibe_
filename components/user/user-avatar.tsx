@@ -1,5 +1,5 @@
 import styles from "./user-avatar.module.css";
-import { toCssImageUrl } from "@/lib/ui/css-image";
+import { encodeImageUrl } from "@/lib/ui/css-image";
 
 type UserAvatarProps = {
   email?: string;
@@ -26,21 +26,18 @@ export function UserAvatar({
   avatarUrl,
   size = "md"
 }: UserAvatarProps) {
-  const avatarCss = toCssImageUrl(avatarUrl);
+  const avatarSrc = encodeImageUrl(avatarUrl);
+  const initials = initialsFromProfile(firstName, lastName, email);
 
   return (
     <span
-      className={`${styles.avatar} ${avatarCss ? styles.withImage : ""} ${size === "sm" ? styles.sm : styles.md}`.trim()}
-      style={
-        avatarCss
-          ? {
-              backgroundImage: `linear-gradient(145deg, rgba(10, 20, 34, 0.35), rgba(10, 20, 34, 0.08)), ${avatarCss}`
-            }
-          : undefined
-      }
+      className={`${styles.avatar} ${avatarSrc ? styles.withImage : ""} ${size === "sm" ? styles.sm : styles.md}`.trim()}
       aria-hidden="true"
     >
-      <span className={styles.initials}>{initialsFromProfile(firstName, lastName, email)}</span>
+      {avatarSrc ? (
+        <img src={avatarSrc} alt="" className={styles.image} referrerPolicy="no-referrer" />
+      ) : null}
+      <span className={styles.initials}>{initials}</span>
     </span>
   );
 }

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { JetBrains_Mono, Manrope, Space_Grotesk } from "next/font/google";
 import { SiteActivityTracker } from "@/components/analytics/site-activity-tracker";
+import { MobileBottomNav } from "@/components/navigation/mobile-bottom-nav";
 import { SiteFooter } from "@/components/navigation/site-footer";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { toIntlLocale, translate } from "@/lib/i18n/shared";
 import { getAdsenseClientId, isAdsenseEnabled } from "@/lib/monetization/config";
 import { resolveMetadataBase, resolveSiteUrl } from "@/lib/seo/site";
+import { getSessionUser } from "@/lib/supabase/session";
 import "./globals.css";
 
 const headingFont = Space_Grotesk({
@@ -91,7 +93,7 @@ type RootLayoutProps = Readonly<{
 }>;
 
 export default async function RootLayout({ children }: RootLayoutProps) {
-  const locale = await getRequestLocale();
+  const [locale, session] = await Promise.all([getRequestLocale(), getSessionUser()]);
   const adsenseEnabled = isAdsenseEnabled();
   const adsenseClientId = getAdsenseClientId();
   const siteTitle = translate(locale, "meta.siteTitle");
@@ -140,8 +142,12 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
+        <a href="#main-content" className="skipLink">
+          {translate(locale, "common.skipToContent")}
+        </a>
         <SiteActivityTracker />
-        {children}
+        <div id="main-content">{children}</div>
+        <MobileBottomNav locale={locale} isAuthenticated={session.isAuthenticated} />
         <SiteFooter locale={locale} />
       </body>
     </html>
