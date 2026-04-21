@@ -10,8 +10,8 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import {
   formatMinorCurrency,
-  getProPriceConfig,
-  isStripeBillingEnabled
+  getActiveBillingProvider,
+  getProPriceConfig
 } from "@/lib/monetization/config";
 import { NO_INDEX_PAGE_ROBOTS } from "@/lib/seo/metadata";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -74,7 +74,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
     .maybeSingle();
   const isAdmin = isAdminEmail(user.email ?? undefined);
   const proPrice = getProPriceConfig();
-  const billingEnabled = isStripeBillingEnabled();
+  const billingProvider = getActiveBillingProvider();
+  const billingEnabled = Boolean(billingProvider);
   const planExpiresAtRaw = (profile?.plan_expires_at as string | null) ?? null;
   const planExpiresAt = planExpiresAtRaw ? new Date(planExpiresAtRaw) : null;
   const planIsActive =
@@ -150,6 +151,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         }
         planExpiresAt={planExpiresAtRaw}
         billingEnabled={billingEnabled}
+        billingProvider={billingProvider}
         billingResultState={billingResultState}
         monthlyPriceLabel={formatMinorCurrency(proPrice.monthlyAmountMinor, proPrice.currency, locale)}
         yearlyPriceLabel={formatMinorCurrency(proPrice.yearlyAmountMinor, proPrice.currency, locale)}

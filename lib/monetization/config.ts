@@ -2,6 +2,7 @@ import "server-only";
 import { toIntlLocale, type Locale } from "@/lib/i18n/shared";
 
 export type ProBillingInterval = "month" | "year";
+export type BillingProvider = "stripe" | "wayforpay";
 
 type ProPriceConfig = {
   currency: string;
@@ -38,6 +39,32 @@ export function isStripeBillingEnabled(): boolean {
     (process.env.STRIPE_SECRET_KEY ?? "").trim() &&
       (process.env.STRIPE_WEBHOOK_SECRET ?? "").trim()
   );
+}
+
+export function isWayforpayBillingEnabled(): boolean {
+  return Boolean(
+    (process.env.WAYFORPAY_MERCHANT_ACCOUNT ?? "").trim() &&
+      (process.env.WAYFORPAY_MERCHANT_SECRET_KEY ?? "").trim()
+  );
+}
+
+export function getActiveBillingProvider(): BillingProvider | null {
+  const preferred = (process.env.BILLING_PROVIDER ?? "").trim().toLowerCase();
+
+  if (preferred === "wayforpay") {
+    return isWayforpayBillingEnabled() ? "wayforpay" : null;
+  }
+  if (preferred === "stripe") {
+    return isStripeBillingEnabled() ? "stripe" : null;
+  }
+
+  if (isWayforpayBillingEnabled()) {
+    return "wayforpay";
+  }
+  if (isStripeBillingEnabled()) {
+    return "stripe";
+  }
+  return null;
 }
 
 export function formatMinorCurrency(

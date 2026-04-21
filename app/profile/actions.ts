@@ -7,11 +7,13 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import {
   formatMinorCurrency,
+  getActiveBillingProvider,
   getProPriceConfig,
-  isStripeBillingEnabled,
+  getProDurationDays,
   type ProBillingInterval
 } from "@/lib/monetization/config";
 import { getStripeServerClient } from "@/lib/monetization/stripe";
+import { buildWayforpayCheckoutFields } from "@/lib/monetization/wayforpay";
 import { resolveSiteUrl } from "@/lib/seo/site";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -230,15 +232,8 @@ export async function startProCheckoutAction(
     };
   }
 
-  if (!isStripeBillingEnabled()) {
-    return {
-      ok: false,
-      message: translate(locale, "profile.checkoutNotConfigured")
-    };
-  }
-
-  const stripe = getStripeServerClient();
-  if (!stripe) {
+  const activeProvider = getActiveBillingProvider();
+  if (!activeProvider) {
     return {
       ok: false,
       message: translate(locale, "profile.checkoutNotConfigured")
@@ -249,6 +244,65 @@ export async function startProCheckoutAction(
   const prices = getProPriceConfig();
   const amountMinor =
     interval === "year" ? prices.yearlyAmountMinor : prices.monthlyAmountMinor;
+
+  if (activeProvider === "wayforpay") {
+    const fields = buildWayforpayCheckoutFields({
+      userId: user.id,
+      userEmail: user.email ?? undefined,
+      interval,
+      locale
+    });
+
+    if (!fields) {
+      return {
+        ok: false,
+        message: translate(locale, "profile.checkoutNotConfigured")
+      };
+    }
+
+    await supabase.from("billing_checkout_sessions").insert({
+      user_id: user.id,
+      provider: "wayforpay",
+      provider_session_id: fields.orderReference,
+      plan_code: "pro",
+      billing_interval: interval,
+      status: "open",
+      checkout_url: null,
+      metadata_json: {
+        amountMinor,
+        amount: fields.amount,
+        currency: fields.currency.toLowerCase(),
+        orderDate: fields.orderDate,
+        fields,
+        durationDays: getProDurationDays(interval)
+      }
+    });
+
+    await recordSiteEvent(supabase, {
+      eventType: "pro_checkout_start",
+      userId: user.id,
+      pagePath: "/profile",
+      elementKey: `wayforpay:${interval}`,
+      metadata: {
+        provider: "wayforpay",
+        orderReference: fields.orderReference,
+        amountMinor,
+        currency: fields.currency.toLowerCase(),
+        amountLabel: formatMinorCurrency(amountMinor, prices.currency, locale)
+      }
+    });
+
+    redirect(`/billing/wayforpay/checkout?order=${encodeURIComponent(fields.orderReference)}`);
+  }
+
+  const stripe = getStripeServerClient();
+  if (!stripe) {
+    return {
+      ok: false,
+      message: translate(locale, "profile.checkoutNotConfigured")
+    };
+  }
+
   const siteUrl = resolveSiteUrl();
 
   let session;

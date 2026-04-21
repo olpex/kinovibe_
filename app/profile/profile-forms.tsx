@@ -10,6 +10,8 @@ import {
   type ProfileActionState
 } from "./actions";
 import { toIntlLocale, translate, type Locale } from "@/lib/i18n/shared";
+import { PRO_FEATURES } from "@/lib/monetization/pro-features";
+import type { BillingProvider } from "@/lib/monetization/config";
 import styles from "./profile.module.css";
 
 type ProfileFormsProps = {
@@ -20,6 +22,7 @@ type ProfileFormsProps = {
   billingInterval: "month" | "year" | null;
   planExpiresAt: string | null;
   billingEnabled: boolean;
+  billingProvider: BillingProvider | null;
   billingResultState: "idle" | "success" | "cancel";
   monthlyPriceLabel: string;
   yearlyPriceLabel: string;
@@ -39,6 +42,7 @@ export function ProfileForms({
   billingInterval,
   planExpiresAt,
   billingEnabled,
+  billingProvider,
   billingResultState,
   monthlyPriceLabel,
   yearlyPriceLabel,
@@ -152,6 +156,14 @@ export function ProfileForms({
           </strong>
         </div>
         <p className={styles.planMuted}>{translate(locale, "profile.planManageHint")}</p>
+        <div className={styles.proFeatures}>
+          {PRO_FEATURES.map((feature) => (
+            <div key={feature.titleKey}>
+              <strong>{translate(locale, feature.titleKey)}</strong>
+              <span>{translate(locale, feature.bodyKey)}</span>
+            </div>
+          ))}
+        </div>
         {billingResultState === "success" ? (
           <p className={styles.feedbackOk}>{translate(locale, "profile.checkoutSuccess")}</p>
         ) : null}
@@ -173,6 +185,11 @@ export function ProfileForms({
               <form action={checkoutAction} className={styles.form}>
                 <h3>{translate(locale, "profile.proCheckoutTitle")}</h3>
                 <p>{translate(locale, "profile.proCheckoutHint")}</p>
+                <p className={styles.planMuted}>
+                  {translate(locale, "profile.billingProviderLine", {
+                    provider: billingProvider ? translate(locale, `profile.billingProvider.${billingProvider}`) : ""
+                  })}
+                </p>
                 {checkoutState.message ? (
                   <p className={checkoutState.ok ? styles.feedbackOk : styles.feedbackError}>
                     {checkoutState.message}
