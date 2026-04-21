@@ -253,6 +253,21 @@ export function HomeScreen({
         </div>
       </section>
 
+      <section className={styles.discoveryStrip} aria-label={translate(locale, "home.discoveryAria")}>
+        <Link href="/collections" className={styles.discoveryLink}>
+          <strong>{translate(locale, "menu.collections")}</strong>
+          <span>{translate(locale, "home.collectionsTeaser")}</span>
+        </Link>
+        <Link href="/calendar" className={styles.discoveryLink}>
+          <strong>{translate(locale, "menu.calendar")}</strong>
+          <span>{translate(locale, "home.calendarTeaser")}</span>
+        </Link>
+        <Link href="/free-legal" className={styles.discoveryLink}>
+          <strong>{translate(locale, "menu.freeLegal")}</strong>
+          <span>{translate(locale, "home.legalTeaser")}</span>
+        </Link>
+      </section>
+
       <section className={styles.homeCatalogSection}>
         <div className={styles.homeFiltersSection}>
           <MovieFilters

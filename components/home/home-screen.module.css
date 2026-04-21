@@ -157,6 +157,39 @@
   flex-wrap: wrap;
 }
 
+.discoveryStrip {
+  margin-top: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.discoveryLink {
+  min-width: 0;
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.8rem 0.85rem;
+  color: var(--color-text);
+  text-decoration: none;
+  border-right: 1px solid var(--color-border);
+}
+
+.discoveryLink:last-child {
+  border-right: 0;
+}
+
+.discoveryLink strong {
+  font-size: 0.94rem;
+  line-height: 1.2;
+}
+
+.discoveryLink span {
+  color: var(--color-text-soft);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .primaryButton,
 .secondaryButton,
 .inlineCta {
@@ -173,7 +206,8 @@
 .primaryButton:focus-visible,
 .secondaryButton:focus-visible,
 .inlineCta:focus-visible,
-.activeFiltersReset:focus-visible {
+.activeFiltersReset:focus-visible,
+.discoveryLink:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
   outline-offset: 3px;
 }
@@ -194,7 +228,8 @@
 .primaryButton:hover,
 .secondaryButton:hover,
 .inlineCta:hover,
-.themeButton:hover {
+.themeButton:hover,
+.discoveryLink:hover {
   transform: translateY(-1px);
 }
 
@@ -561,6 +596,19 @@
 
   .hero {
     min-height: 280px;
+  }
+
+  .discoveryStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .discoveryLink {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .discoveryLink:last-child {
+    border-bottom: 0;
   }
 
   .poster {

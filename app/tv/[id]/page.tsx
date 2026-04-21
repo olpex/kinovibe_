@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,6 +7,7 @@ import { SiteHeader } from "@/components/navigation/site-header";
 import { getMediaDiscussions } from "@/lib/discussions/server";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
+import { resolveSiteUrl } from "@/lib/seo/site";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbTvDetails } from "@/lib/tmdb/client";
 import { encodeImageUrl, toCssImageUrl } from "@/lib/ui/css-image";
@@ -21,6 +23,32 @@ function parseTvId(value: string): number | null {
     return null;
   }
   return Math.floor(id);
+}
+
+export async function generateMetadata({
+  params
+}: TvDetailsPageProps): Promise<Metadata> {
+  const resolved = await params;
+  const locale = await getRequestLocale();
+  const site = translate(locale, "meta.siteTitle");
+  const tvId = parseTvId(resolved.id);
+  if (!tvId) {
+    return {
+      title: `${translate(locale, "menu.tvDetails")} | ${site}`
+    };
+  }
+
+  try {
+    const tv = await getTmdbTvDetails(tvId, locale);
+    return {
+      title: `${tv.title} | ${site}`,
+      description: tv.overview
+    };
+  } catch {
+    return {
+      title: `${translate(locale, "menu.tvDetails")} | ${site}`
+    };
+  }
 }
 
 export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
@@ -72,9 +100,27 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
   const tvYearLabel = tv.year > 0 ? String(tv.year) : translate(locale, "watchlist.tba");
   const backdropCss = toCssImageUrl(tv.backdropUrl);
   const posterSrc = encodeImageUrl(tv.posterUrl);
+  const siteUrl = resolveSiteUrl();
+  const tvJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TVSeries",
+    "@id": `${siteUrl}/tv/${tv.id}`,
+    url: `${siteUrl}/tv/${tv.id}`,
+    name: tv.title,
+    description: tv.overview,
+    image: tv.posterUrl,
+    datePublished: tv.year > 0 ? String(tv.year) : undefined,
+    genre: tv.genres,
+    numberOfSeasons: tv.seasons,
+    numberOfEpisodes: tv.episodes
+  };
 
   return (
     <main className={styles.page}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(tvJsonLd) }}
+      />
       <div style={{ maxWidth: "1240px", margin: "0 auto", display: "grid", gap: "1rem" }}>
         <SiteHeader locale={locale} session={sessionUser} />
         <section

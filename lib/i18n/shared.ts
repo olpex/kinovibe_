@@ -103,6 +103,10 @@ const BASE_MESSAGES: Record<string, string> = {
   "home.signInAria": "Sign in to KinoVibe",
   "home.browseGenreAria": "Browse {genre} movies",
   "home.mobileNavAria": "Bottom navigation",
+  "home.discoveryAria": "Discovery shortcuts",
+  "home.collectionsTeaser": "Editor-built lists for mood, time, and genre.",
+  "home.calendarTeaser": "Premieres, theatres, and today’s TV schedule.",
+  "home.legalTeaser": "Verified open-license titles and clear source links.",
   "home.details": "Details",
   "home.noTitlesFound": "No titles found.",
   "home.defaultGenre": "Cinema",
@@ -367,6 +371,8 @@ const BASE_MESSAGES: Record<string, string> = {
   "menu.support": "Support",
   "menu.apiDocs": "API Docs",
   "menu.apiBusiness": "API for Business",
+  "menu.collections": "Collections",
+  "menu.calendar": "Calendar",
   "menu.peopleListAria": "People list",
 
   "menu.moviesAllTitle": "All Movies",
@@ -419,6 +425,61 @@ const BASE_MESSAGES: Record<string, string> = {
   "menu.freeLegalTitle": "Free & Legal",
   "menu.freeLegalSubtitle":
     "Watch only verified open-license titles (Public Domain / Creative Commons) with clear source attribution.",
+
+  "collections.title": "Curated Movie Collections",
+  "collections.subtitle":
+    "Focused watchlists built around real viewing needs: time, mood, genre, and legal discovery paths.",
+  "collections.updated": "Editorial criteria reviewed in {date}.",
+  "collections.open": "Open collection",
+  "collections.all": "All collections",
+  "collections.matchingTitles": "matching titles",
+  "collections.empty": "No titles matched this collection right now.",
+  "collections.watchTonight.title": "Watch Tonight",
+  "collections.watchTonight.subtitle":
+    "Popular, well-rated films that do not ask for a whole evening of commitment.",
+  "collections.watchTonight.rationale":
+    "Prioritizes audience-friendly films with solid ratings, enough votes, and a runtime that still fits a weeknight.",
+  "collections.shortMovies.title": "Short Movies Under 95 Minutes",
+  "collections.shortMovies.subtitle":
+    "Compact films for nights when two hours is too much.",
+  "collections.shortMovies.rationale":
+    "Filters for shorter runtimes while keeping a baseline of audience confidence and discoverability.",
+  "collections.familyNight.title": "Family Night",
+  "collections.familyNight.subtitle":
+    "Family-friendly films with broad appeal and a calmer discovery path.",
+  "collections.familyNight.rationale":
+    "Starts with family titles, excludes adult content, and keeps ratings high enough for a shared evening.",
+  "collections.smartThrillers.title": "Smart Thrillers",
+  "collections.smartThrillers.subtitle":
+    "Thrillers with stronger ratings and enough audience signal to avoid random filler.",
+  "collections.smartThrillers.rationale":
+    "Combines thriller genre filters with rating and vote thresholds so the list feels deliberate rather than endless.",
+  "collections.scifi.title": "Science Fiction Starters",
+  "collections.scifi.subtitle":
+    "Accessible sci-fi films for viewers who want imagination without getting lost in the catalog.",
+  "collections.scifi.rationale":
+    "Balances popularity, ratings, and runtime so the collection works as a first stop, not an encyclopedia.",
+  "collections.animation.title": "Hidden Animation",
+  "collections.animation.subtitle":
+    "Animated films with strong ratings beyond the most obvious front-page picks.",
+  "collections.animation.rationale":
+    "Uses rating and vote thresholds to surface animation that is still reliable enough for discovery.",
+
+  "calendar.title": "Release & TV Calendar",
+  "calendar.subtitle":
+    "A practical view of upcoming movies, current theatrical releases, and shows airing today.",
+  "calendar.summary": "{count} highlighted titles from connected release and broadcast sources.",
+  "calendar.upcomingMovies": "Upcoming Movies",
+  "calendar.upcomingMoviesText": "Major upcoming film releases to track before they arrive.",
+  "calendar.nowPlaying": "Now Playing",
+  "calendar.nowPlayingText": "Movies currently in theatres for the selected region.",
+  "calendar.onAir": "On TV Today",
+  "calendar.onAirText": "Shows airing in {country} on {date}.",
+  "calendar.onAirFallback": "TV schedule data is temporarily unavailable.",
+  "calendar.empty": "Nothing is available for this section right now.",
+  "calendar.openUpcoming": "Open upcoming movies",
+  "calendar.openNowPlaying": "Open now playing",
+  "calendar.openOnAir": "Open on-air schedule",
 
   "award.festivalLabel": "Festival/Award",
   "award.categoryLabel": "Award category",
@@ -893,9 +954,65 @@ const UK_MESSAGES: Record<string, string> = {
   "menu.freeLegal": "Безкоштовно і легально",
   "menu.apiDocs": "Документація API",
   "menu.apiBusiness": "API для бізнесу",
+  "menu.collections": "Добірки",
+  "menu.calendar": "Календар",
   "menu.freeLegalTitle": "Безкоштовно і легально",
   "menu.freeLegalSubtitle":
     "Переглядайте лише тайтли з підтвердженою відкритою ліцензією (Public Domain / Creative Commons) та прозорим посиланням на джерело.",
+  "collections.title": "Редакторські добірки фільмів",
+  "collections.subtitle":
+    "Сфокусовані списки під реальні сценарії перегляду: час, настрій, жанр і легальні джерела.",
+  "collections.updated": "Редакційні критерії переглянуто у {date}.",
+  "collections.open": "Відкрити добірку",
+  "collections.all": "Усі добірки",
+  "collections.matchingTitles": "відповідних тайтлів",
+  "collections.empty": "Зараз для цієї добірки немає відповідних тайтлів.",
+  "collections.watchTonight.title": "Що подивитися сьогодні",
+  "collections.watchTonight.subtitle":
+    "Популярні фільми з хорошими оцінками, які не забирають увесь вечір.",
+  "collections.watchTonight.rationale":
+    "Пріоритет мають зрозумілі для широкої аудиторії фільми з достатньою кількістю голосів, стабільною оцінкою і помірною тривалістю.",
+  "collections.shortMovies.title": "Короткі фільми до 95 хвилин",
+  "collections.shortMovies.subtitle":
+    "Компактні фільми для вечорів, коли дві години — це вже забагато.",
+  "collections.shortMovies.rationale":
+    "Добірка обмежує тривалість, але зберігає мінімальний рівень рейтингу й аудиторного сигналу.",
+  "collections.familyNight.title": "Сімейний вечір",
+  "collections.familyNight.subtitle":
+    "Фільми для спільного перегляду з простішим і спокійнішим шляхом вибору.",
+  "collections.familyNight.rationale":
+    "Стартує з сімейного жанру, відсікає 18+ контент і тримає достатній рівень оцінки для спільного вечора.",
+  "collections.smartThrillers.title": "Розумні трилери",
+  "collections.smartThrillers.subtitle":
+    "Трилери з вищими оцінками і достатньою кількістю голосів без випадкового наповнювача.",
+  "collections.smartThrillers.rationale":
+    "Поєднує жанровий фільтр, рейтинг і поріг голосів, щоб список виглядав добіркою, а не нескінченним каталогом.",
+  "collections.scifi.title": "Старт у наукову фантастику",
+  "collections.scifi.subtitle":
+    "Доступні sci-fi фільми для тих, хто хоче уяви без блукання каталогом.",
+  "collections.scifi.rationale":
+    "Баланс популярності, оцінок і тривалості робить добірку першою зупинкою, а не енциклопедією.",
+  "collections.animation.title": "Неочевидна анімація",
+  "collections.animation.subtitle":
+    "Анімаційні фільми з сильними оцінками поза найочевиднішими хітами.",
+  "collections.animation.rationale":
+    "Оцінка і поріг голосів допомагають показати анімацію, якій можна довіряти під час пошуку.",
+
+  "calendar.title": "Календар релізів і ефіру",
+  "calendar.subtitle":
+    "Практичний огляд майбутніх фільмів, актуального прокату і серіалів в ефірі сьогодні.",
+  "calendar.summary": "{count} відібраних тайтлів із підключених джерел релізів та ефіру.",
+  "calendar.upcomingMovies": "Майбутні фільми",
+  "calendar.upcomingMoviesText": "Найближчі кінорелізи, за якими варто стежити заздалегідь.",
+  "calendar.nowPlaying": "Зараз у кіно",
+  "calendar.nowPlayingText": "Фільми, що зараз ідуть у кінотеатрах для вибраного регіону.",
+  "calendar.onAir": "Сьогодні в ефірі",
+  "calendar.onAirText": "Серіали в ефірі у {country} на дату {date}.",
+  "calendar.onAirFallback": "Дані телерозкладу тимчасово недоступні.",
+  "calendar.empty": "Зараз у цьому розділі немає доступних тайтлів.",
+  "calendar.openUpcoming": "Відкрити майбутні фільми",
+  "calendar.openNowPlaying": "Відкрити прокат",
+  "calendar.openOnAir": "Відкрити ефірний розклад",
   "legal.noticeTitle": "Каталог з безпечними ліцензіями",
   "legal.noticeBody":
     "Тут показуються лише тайтли з явним доказом відкритої ліцензії та атрибуцією джерела. Відтворення вбудовується тільки після перевірки ліцензії й регіону.",
@@ -991,6 +1108,10 @@ const UK_MESSAGES: Record<string, string> = {
   "home.topPicks": "Топ для вас",
   "home.searchLabel": "Пошук фільмів",
   "home.searchPlaceholder": "Пошук за назвою, актором або жанром",
+  "home.discoveryAria": "Швидкі переходи для пошуку",
+  "home.collectionsTeaser": "Редакторські списки за настроєм, часом і жанром.",
+  "home.calendarTeaser": "Прем’єри, прокат і сьогоднішній телерозклад.",
+  "home.legalTeaser": "Перевірені відкриті ліцензії та прозорі джерела.",
   "home.details": "Деталі",
   "home.defaultGenre": "Кіно",
   "home.lastUpdated": "Оновлено: {time}",

@@ -10,6 +10,7 @@ import { WatchlistControls } from "@/components/watchlist/watchlist-controls";
 import { getMediaDiscussions } from "@/lib/discussions/server";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
+import { resolveSiteUrl } from "@/lib/seo/site";
 import { getSessionUser } from "@/lib/supabase/session";
 import { getTmdbMovieDetails } from "@/lib/tmdb/client";
 import { encodeImageUrl, toCssImageUrl } from "@/lib/ui/css-image";
@@ -120,9 +121,29 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   const movieYearLabel = movie.year > 0 ? String(movie.year) : translate(locale, "watchlist.tba");
   const backdropCss = toCssImageUrl(movie.backdropUrl);
   const posterSrc = encodeImageUrl(movie.posterUrl);
+  const siteUrl = resolveSiteUrl();
+  const movieJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Movie",
+    "@id": `${siteUrl}/movie/${movie.id}`,
+    url: `${siteUrl}/movie/${movie.id}`,
+    name: movie.title,
+    description: movie.overview,
+    image: movie.posterUrl,
+    datePublished: movie.year > 0 ? String(movie.year) : undefined,
+    genre: movie.genres.map((genre) => genre.name),
+    director: movie.directors.map((name) => ({
+      "@type": "Person",
+      name
+    }))
+  };
 
   return (
     <main className={styles.page}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(movieJsonLd) }}
+      />
       <SiteHeader
         locale={locale}
         session={sessionUser}
