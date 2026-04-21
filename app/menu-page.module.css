@@ -1,10 +1,7 @@
 .page {
   min-height: 100vh;
   padding: clamp(0.7rem, 2.2vw, 1.25rem);
-  background:
-    radial-gradient(circle at 12% -6%, rgba(0, 179, 255, 0.24), transparent 40%),
-    radial-gradient(circle at 90% 8%, rgba(229, 9, 20, 0.18), transparent 36%),
-    var(--color-bg);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.6), rgba(11, 15, 20, 0) 18rem), var(--color-bg);
 }
 
 .container {
@@ -15,12 +12,9 @@
 }
 
 .section {
-  border: 1px solid var(--color-border);
-  border-radius: 1rem;
-  background: rgba(21, 27, 36, 0.78);
-  padding: clamp(0.72rem, 1.8vw, 1rem);
+  padding: clamp(0.2rem, 1vw, 0.45rem) 0 0;
   display: grid;
-  gap: 0.85rem;
+  gap: 1rem;
 }
 
 .heading {
@@ -29,6 +23,8 @@
   justify-content: space-between;
   gap: 0.7rem;
   flex-wrap: wrap;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .heading h1 {
@@ -46,6 +42,17 @@
 .inlineMessage {
   margin: 0;
   color: var(--color-text-soft);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.sourceNote {
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 34%, var(--color-border));
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--color-secondary) 9%, transparent);
+  padding: 0.45rem 0.62rem;
 }
 
 .pagination {
@@ -79,16 +86,22 @@
 .linkButton {
   border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  background: rgba(26, 34, 48, 0.78);
+  background: rgba(26, 34, 48, 0.72);
   padding: 0.52rem 0.75rem;
   color: var(--color-text);
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  font-weight: 700;
 }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--color-border);
 }
 
 .contentWithSidebar {
@@ -104,22 +117,38 @@
 }
 
 .textCard {
-  border: 1px solid var(--color-border);
-  border-radius: 0.9rem;
-  padding: 0.75rem;
-  background: rgba(11, 15, 20, 0.45);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.9rem 0;
   display: grid;
-  gap: 0.45rem;
+  gap: 0.52rem;
+  align-content: start;
+}
+
+.textCard:nth-child(odd) {
+  padding-right: 0.9rem;
+}
+
+.textCard:nth-child(even) {
+  border-left: 1px solid var(--color-border);
+  padding-left: 0.9rem;
 }
 
 .textCard h2 {
   margin: 0;
   font-size: 1rem;
+  line-height: 1.25;
 }
 
 .textCard p {
   margin: 0;
   color: var(--color-text-soft);
+  line-height: 1.5;
+}
+
+.pagination a:focus-visible,
+.linkButton:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
 }
 
 @media (max-width: 980px) {
@@ -159,6 +188,13 @@
   }
 
   .cards {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: 1fr;
+  }
+
+  .textCard:nth-child(odd),
+  .textCard:nth-child(even) {
+    border-left: 0;
+    padding-right: 0;
+    padding-left: 0;
   }
 }

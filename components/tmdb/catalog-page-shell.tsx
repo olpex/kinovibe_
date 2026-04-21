@@ -22,6 +22,9 @@ export function CatalogPageShell({
   children,
   dataSourceStatus
 }: CatalogPageShellProps) {
+  const shouldShowSourceNote =
+    dataSourceStatus === "fallback" || dataSourceStatus === "unavailable";
+
   return (
     <main className={styles.page}>
       <div className={styles.container}>
@@ -31,8 +34,10 @@ export function CatalogPageShell({
             <h1>{title}</h1>
             <p>{subtitle}</p>
           </header>
-          {dataSourceStatus ? (
-            <p className={styles.inlineMessage}>{translate(locale, "legal.catalogAttributionLabel")}</p>
+          {shouldShowSourceNote ? (
+            <p className={`${styles.inlineMessage} ${styles.sourceNote}`}>
+              {translate(locale, "legal.catalogAttributionLabel")}
+            </p>
           ) : null}
           {children}
         </section>
