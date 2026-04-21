@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { LIQPAY_CHECKOUT_URL } from "@/lib/monetization/liqpay";
+
+const LIQPAY_CHECKOUT_URL = "https://www.liqpay.ua/api/3/checkout";
 
 type LiqpayAutoSubmitProps = {
   data: string;
