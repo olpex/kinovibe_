@@ -186,7 +186,6 @@ const BASE_MESSAGES: Record<string, string> = {
   "profile.billingProviderLine": "Payment provider: {provider}.",
   "profile.billingProvider.stripe": "Stripe",
   "profile.billingProvider.liqpay": "LiqPay",
-  "profile.billingProvider.wayforpay": "WayForPay",
   "profile.proCheckoutTitle": "Upgrade to Pro",
   "profile.proCheckoutHint": "Secure one-time payment. Card data is processed by the payment provider only.",
   "profile.buyMonthly": "Buy monthly ({price})",
@@ -509,7 +508,7 @@ const BASE_MESSAGES: Record<string, string> = {
   "pro.openProfileCta": "Open Pro checkout",
   "pro.paymentTitle": "Payment connection",
   "pro.paymentProviderReady": "{provider} is configured for Pro checkout.",
-  "pro.paymentProviderMissing": "Payment is not configured yet. Add WayForPay merchant credentials to enable checkout.",
+  "pro.paymentProviderMissing": "Payment is not configured yet. Add LiqPay credentials to enable checkout.",
   "pro.feature.filtersTitle": "Advanced discovery filters",
   "pro.feature.filtersBody":
     "Filter by watch providers, vote count, certification, release windows, countries, and stronger sorting signals.",
@@ -527,7 +526,7 @@ const BASE_MESSAGES: Record<string, string> = {
     "Paid users fund hosting, API work, legal-source maintenance, and get priority in product decisions.",
 
   "billing.redirectTitle": "Opening secure payment",
-  "billing.redirectBody": "You are being redirected to WayForPay. If it does not open automatically, use the button below.",
+  "billing.redirectBody": "You are being redirected to the payment provider. If it does not open automatically, use the button below.",
   "billing.openPaymentPage": "Open payment page",
   "billing.cancelPayment": "Cancel payment",
 
@@ -1092,7 +1091,7 @@ const UK_MESSAGES: Record<string, string> = {
   "pro.openProfileCta": "Відкрити оплату Pro",
   "pro.paymentTitle": "Підключення платежів",
   "pro.paymentProviderReady": "{provider} налаштовано для оплати Pro.",
-  "pro.paymentProviderMissing": "Оплата ще не налаштована. Додайте merchant-дані WayForPay, щоб увімкнути checkout.",
+  "pro.paymentProviderMissing": "Оплата ще не налаштована. Додайте ключі LiqPay, щоб увімкнути checkout.",
   "pro.feature.filtersTitle": "Розширені фільтри пошуку",
   "pro.feature.filtersBody":
     "Фільтри за провайдерами перегляду, кількістю голосів, сертифікацією, релізними вікнами, країнами та сильнішими сигналами сортування.",
@@ -1109,7 +1108,7 @@ const UK_MESSAGES: Record<string, string> = {
   "pro.feature.priorityBody":
     "Оплати підтримують хостинг, API, легальні джерела й допомагають визначати пріоритети продукту.",
   "billing.redirectTitle": "Відкриваємо безпечну оплату",
-  "billing.redirectBody": "Вас буде перенаправлено до WayForPay. Якщо сторінка не відкрилась автоматично, натисніть кнопку нижче.",
+  "billing.redirectBody": "Вас буде перенаправлено до платіжного провайдера. Якщо сторінка не відкрилась автоматично, натисніть кнопку нижче.",
   "billing.openPaymentPage": "Відкрити сторінку оплати",
   "billing.cancelPayment": "Скасувати оплату",
   "legal.noticeTitle": "Каталог з безпечними ліцензіями",
@@ -1243,7 +1242,6 @@ const UK_MESSAGES: Record<string, string> = {
   "profile.billingProviderLine": "Платіжний провайдер: {provider}.",
   "profile.billingProvider.stripe": "Stripe",
   "profile.billingProvider.liqpay": "LiqPay",
-  "profile.billingProvider.wayforpay": "WayForPay",
   "profile.proCheckoutTitle": "Оновити до Pro",
   "profile.proCheckoutHint": "Безпечна одноразова оплата. Дані картки обробляє тільки платіжний провайдер.",
   "profile.buyMonthly": "Купити на місяць ({price})",

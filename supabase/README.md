@@ -23,6 +23,8 @@ supabase db push
 12. `20260419223500_reseed_legal_catalog_archive_org.sql`
 13. `20260419235500_billing_and_ads_monetization.sql`
 14. `20260421200000_wayforpay_billing_provider.sql`
+15. `20260421233000_liqpay_billing_provider.sql`
+16. `20260421234500_remove_wayforpay_billing_provider.sql`
 
 ## Content policy bulk seed
 Use `supabase/sql/no_russian_content_seed_template.sql` to mass-add blocked TMDB IDs and run cleanup.
