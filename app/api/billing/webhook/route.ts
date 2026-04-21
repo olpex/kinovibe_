@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { getProDurationDays, type ProBillingInterval } from "@/lib/monetization/config";
+import { addProDuration, type ProBillingInterval } from "@/lib/monetization/config";
 import { getStripeServerClient, getStripeWebhookSecret } from "@/lib/monetization/stripe";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -111,7 +111,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     existingExpire && Number.isFinite(existingExpire.getTime()) && existingExpire > now
       ? existingExpire
       : now;
-  const expiresAt = new Date(baseDate.getTime() + getProDurationDays(interval) * 24 * 60 * 60 * 1000);
+  const expiresAt = addProDuration(baseDate, interval);
 
   await admin.from("profiles").upsert(
     {

@@ -7,6 +7,7 @@ import {
   getTmdbMovieCatalogPage,
   getTmdbCountries,
   getTmdbMovieGenres,
+  getTmdbMovieWatchProviders,
   type TmdbPagedCards
 } from "@/lib/tmdb/client";
 import {
@@ -35,11 +36,12 @@ export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = parsePage(params.page);
 
-  const [data, sessionUser, movieFiltersGenres, movieFilterCountries] = await Promise.all([
+  const [data, sessionUser, movieFiltersGenres, movieFilterCountries, movieFilterProviders] = await Promise.all([
     getHomeScreenData(locale),
     getSessionUser(),
     getTmdbMovieGenres(locale).catch(() => []),
-    getTmdbCountries(locale).catch(() => [])
+    getTmdbCountries(locale).catch(() => []),
+    getTmdbMovieWatchProviders(locale).catch(() => [])
   ]);
   const movieFilters = enforceMovieDiscoverPlan(parseMovieDiscoverFilters(params), sessionUser.isPro);
   const movieFiltersQuery = movieDiscoverFiltersToQuery(movieFilters);
@@ -71,6 +73,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       session={sessionUser}
       locale={locale}
       movieFiltersGenres={movieFiltersGenres}
+      movieFiltersProviders={movieFilterProviders}
       movieFiltersCountries={movieFilterCountries}
       movieFilters={movieFilters}
       movieCatalog={movieCatalog}

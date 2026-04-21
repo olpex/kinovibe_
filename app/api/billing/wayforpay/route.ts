@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordSiteEvent } from "@/lib/analytics/events";
-import { getProDurationDays, type ProBillingInterval } from "@/lib/monetization/config";
+import { addProDuration, type ProBillingInterval } from "@/lib/monetization/config";
 import {
   amountToMinorUnits,
   signWayforpayServiceResponse,
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       existingExpire && Number.isFinite(existingExpire.getTime()) && existingExpire > now
         ? existingExpire
         : now;
-    const expiresAt = new Date(baseDate.getTime() + getProDurationDays(interval) * 24 * 60 * 60 * 1000);
+    const expiresAt = addProDuration(baseDate, interval);
 
     await admin.from("profiles").upsert(
       {

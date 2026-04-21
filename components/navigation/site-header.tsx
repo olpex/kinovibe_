@@ -69,6 +69,9 @@ export async function SiteHeader({
               {translate(locale, "header.dataSourceLabel")}: {dataSourceLabel}
             </span>
           ) : null}
+          {session.isAuthenticated && session.isPro ? (
+            <span className={styles.proBadge}>{translate(locale, "profile.planPro")}</span>
+          ) : null}
           <details className={styles.quickMenu}>
             <summary className={styles.quickMenuSummary}>
               {translate(locale, "nav.more")}

@@ -29,6 +29,9 @@ export type MovieDiscoverFilters = {
   runtimeTo?: number;
   originCountry?: string;
   originalLanguage?: string;
+  watchProviderIds?: number[];
+  certificationCountry?: string;
+  certificationCode?: string;
 };
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
@@ -137,6 +140,19 @@ export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDis
     [runtimeFrom, runtimeTo] = [runtimeTo, runtimeFrom];
   }
   const originCountry = normalizeCountryCode(firstParam(params.country));
+  const watchProviderIds = Array.from(
+    new Set(
+      listParam(params.providers)
+        .map((entry) => Number.parseInt(entry.trim(), 10))
+        .filter((entry) => Number.isFinite(entry) && entry > 0 && entry < 100000)
+    )
+  );
+  const certificationCountry = normalizeCountryCode(firstParam(params.certCountry));
+  const certificationCodeRaw = firstParam(params.cert)?.trim().toUpperCase();
+  const certificationCode =
+    certificationCodeRaw && /^[A-Z0-9+\-]{1,20}$/.test(certificationCodeRaw)
+      ? certificationCodeRaw
+      : undefined;
 
   const originalLanguageRaw = firstParam(params.lang)?.trim().toLowerCase();
   const originalLanguage =
@@ -165,7 +181,10 @@ export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDis
     runtimeFrom,
     runtimeTo,
     originCountry,
-    originalLanguage
+    originalLanguage,
+    watchProviderIds,
+    certificationCountry,
+    certificationCode
   };
 }
 
@@ -180,13 +199,21 @@ export function enforceMovieDiscoverPlan(
   return {
     ...filters,
     sortBy: PRO_ONLY_SORT_VALUES.has(filters.sortBy) ? DEFAULT_MOVIE_DISCOVER_SORT : filters.sortBy,
+    yearFrom: undefined,
+    yearTo: undefined,
     voteCountFrom: undefined,
     runtimeFrom: undefined,
-    runtimeTo: undefined
+    runtimeTo: undefined,
+    originCountry: undefined,
+    originalLanguage: undefined,
+    watchProviderIds: [],
+    certificationCountry: undefined,
+    certificationCode: undefined
   };
 }
 
 export function hasActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): boolean {
+  const watchProviderIds = filters.watchProviderIds ?? [];
   return (
     filters.sortBy !== DEFAULT_MOVIE_DISCOVER_SORT ||
     filters.includeAdult ||
@@ -200,11 +227,15 @@ export function hasActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): bo
     filters.runtimeFrom !== undefined ||
     filters.runtimeTo !== undefined ||
     filters.originCountry !== undefined ||
-    filters.originalLanguage !== undefined
+    filters.originalLanguage !== undefined ||
+    watchProviderIds.length > 0 ||
+    filters.certificationCountry !== undefined ||
+    filters.certificationCode !== undefined
   );
 }
 
 export function countActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): number {
+  const watchProviderIds = filters.watchProviderIds ?? [];
   let count = 0;
   if (filters.sortBy !== DEFAULT_MOVIE_DISCOVER_SORT) {
     count += 1;
@@ -236,10 +267,17 @@ export function countActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): 
   if (filters.originalLanguage !== undefined) {
     count += 1;
   }
+  if (watchProviderIds.length > 0) {
+    count += 1;
+  }
+  if (filters.certificationCountry !== undefined || filters.certificationCode !== undefined) {
+    count += 1;
+  }
   return count;
 }
 
 export function movieDiscoverFiltersToQuery(filters: MovieDiscoverFilters): Record<string, string> {
+  const watchProviderIds = filters.watchProviderIds ?? [];
   const query: Record<string, string> = {};
 
   if (filters.sortBy !== DEFAULT_MOVIE_DISCOVER_SORT) {
@@ -281,6 +319,15 @@ export function movieDiscoverFiltersToQuery(filters: MovieDiscoverFilters): Reco
   if (filters.originalLanguage) {
     query.lang = filters.originalLanguage;
   }
+  if (watchProviderIds.length > 0) {
+    query.providers = watchProviderIds.join(",");
+  }
+  if (filters.certificationCountry) {
+    query.certCountry = filters.certificationCountry;
+  }
+  if (filters.certificationCode) {
+    query.cert = filters.certificationCode;
+  }
 
   return query;
 }
@@ -288,6 +335,7 @@ export function movieDiscoverFiltersToQuery(filters: MovieDiscoverFilters): Reco
 export function movieDiscoverFiltersToTmdbParams(
   filters: MovieDiscoverFilters
 ): Record<string, string> {
+  const watchProviderIds = filters.watchProviderIds ?? [];
   const params: Record<string, string> = {
     sort_by: filters.sortBy,
     include_adult: String(filters.includeAdult),
@@ -323,6 +371,16 @@ export function movieDiscoverFiltersToTmdbParams(
   }
   if (filters.originalLanguage) {
     params.with_original_language = filters.originalLanguage;
+  }
+  if (watchProviderIds.length > 0) {
+    params.with_watch_providers = watchProviderIds.join("|");
+  }
+  if (filters.certificationCode) {
+    const certCountry = filters.certificationCountry ?? filters.originCountry;
+    if (certCountry) {
+      params.certification_country = certCountry;
+      params.certification = filters.certificationCode;
+    }
   }
 
   return params;

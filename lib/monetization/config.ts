@@ -87,6 +87,38 @@ export function getProDurationDays(interval: ProBillingInterval): number {
   return interval === "year" ? 365 : 30;
 }
 
+function getLastUtcDayOfMonth(year: number, monthZeroBased: number): number {
+  return new Date(Date.UTC(year, monthZeroBased + 1, 0)).getUTCDate();
+}
+
+function addUtcMonths(baseDate: Date, months: number): Date {
+  const year = baseDate.getUTCFullYear();
+  const month = baseDate.getUTCMonth();
+  const targetMonthIndex = month + months;
+  const targetYear = year + Math.floor(targetMonthIndex / 12);
+  const targetMonth = ((targetMonthIndex % 12) + 12) % 12;
+  const targetDay = Math.min(
+    baseDate.getUTCDate(),
+    getLastUtcDayOfMonth(targetYear, targetMonth)
+  );
+
+  return new Date(
+    Date.UTC(
+      targetYear,
+      targetMonth,
+      targetDay,
+      baseDate.getUTCHours(),
+      baseDate.getUTCMinutes(),
+      baseDate.getUTCSeconds(),
+      baseDate.getUTCMilliseconds()
+    )
+  );
+}
+
+export function addProDuration(baseDate: Date, interval: ProBillingInterval): Date {
+  return addUtcMonths(baseDate, interval === "year" ? 12 : 1);
+}
+
 export function isAdsenseEnabled(): boolean {
   const enabled = (process.env.NEXT_PUBLIC_ADSENSE_ENABLED ?? "").trim().toLowerCase();
   return enabled === "1" || enabled === "true" || enabled === "yes";

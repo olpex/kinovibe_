@@ -18,6 +18,7 @@ import {
 } from "@/lib/tmdb/movie-filters";
 import {
   type MovieGenreOption,
+  type MovieWatchProviderOption,
   type TmdbCountryOption,
   type TmdbPagedCards
 } from "@/lib/tmdb/client";
@@ -30,6 +31,7 @@ type HomeScreenProps = {
   session: HomeSession;
   locale: Locale;
   movieFiltersGenres: MovieGenreOption[];
+  movieFiltersProviders: MovieWatchProviderOption[];
   movieFiltersCountries: TmdbCountryOption[];
   movieFilters: MovieDiscoverFilters;
   movieCatalog: TmdbPagedCards;
@@ -66,9 +68,10 @@ function buildActiveMovieFilterChips(params: {
   locale: Locale;
   filters: MovieDiscoverFilters;
   genres: MovieGenreOption[];
+  providers: MovieWatchProviderOption[];
   countries: TmdbCountryOption[];
 }): ActiveFilterChip[] {
-  const { locale, filters, genres, countries } = params;
+  const { locale, filters, genres, providers, countries } = params;
   const chips: ActiveFilterChip[] = [];
   const sortOption = MOVIE_DISCOVER_SORT_OPTIONS.find((option) => option.value === filters.sortBy);
   if (filters.sortBy !== DEFAULT_MOVIE_DISCOVER_SORT && sortOption) {
@@ -161,6 +164,33 @@ function buildActiveMovieFilterChips(params: {
     });
   }
 
+  const watchProviderIds = filters.watchProviderIds ?? [];
+  if (watchProviderIds.length > 0) {
+    const providerNameById = new Map(providers.map((provider) => [provider.id, provider.name]));
+    const selectedProviderNames = watchProviderIds
+      .map((providerId) => providerNameById.get(providerId))
+      .filter((value): value is string => Boolean(value));
+    if (selectedProviderNames.length > 0) {
+      chips.push({
+        key: "providers",
+        label: `${translate(locale, "movie.filters.watchSection")}: ${compactList(selectedProviderNames)}`
+      });
+    }
+  }
+
+  if (filters.certificationCode || filters.certificationCountry) {
+    const countryLabel = filters.certificationCountry
+      ? countries.find((country) => country.code === filters.certificationCountry)?.name ??
+        filters.certificationCountry
+      : translate(locale, "common.notAvailable");
+    chips.push({
+      key: "certification",
+      label: `${translate(locale, "movie.filters.certifications")}: ${countryLabel} / ${
+        filters.certificationCode ?? "—"
+      }`
+    });
+  }
+
   return chips;
 }
 
@@ -169,6 +199,7 @@ export function HomeScreen({
   session,
   locale,
   movieFiltersGenres,
+  movieFiltersProviders,
   movieFiltersCountries,
   movieFilters,
   movieCatalog,
@@ -186,6 +217,7 @@ export function HomeScreen({
     locale,
     filters: movieFilters,
     genres: availableMovieFilterGenres,
+    providers: movieFiltersProviders,
     countries: movieFiltersCountries
   });
   const featuredOverview =
@@ -274,6 +306,7 @@ export function HomeScreen({
             locale={locale}
             basePath="/"
             genres={availableMovieFilterGenres}
+            providers={movieFiltersProviders}
             countries={movieFiltersCountries}
             filters={movieFilters}
             isPro={session.isPro}

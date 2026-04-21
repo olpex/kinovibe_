@@ -59,6 +59,18 @@
   border-color: rgba(254, 202, 202, 0.5);
 }
 
+.proBadge {
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  border-radius: 999px;
+  padding: 0.32rem 0.62rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #bbf7d0;
+  background: rgba(6, 78, 59, 0.35);
+}
+
 .pill,
 .pillAlt {
   border: 1px solid var(--color-border);

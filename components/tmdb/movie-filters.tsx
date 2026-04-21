@@ -15,13 +15,18 @@ import {
   parseMovieDiscoverFilters,
   type MovieDiscoverFilters
 } from "@/lib/tmdb/movie-filters";
-import { type MovieGenreOption, type TmdbCountryOption } from "@/lib/tmdb/client";
+import {
+  type MovieGenreOption,
+  type MovieWatchProviderOption,
+  type TmdbCountryOption
+} from "@/lib/tmdb/client";
 import styles from "./movie-filters.module.css";
 
 type MovieFiltersProps = {
   locale: Locale;
   basePath: string;
   genres: MovieGenreOption[];
+  providers: MovieWatchProviderOption[];
   countries: TmdbCountryOption[];
   filters: MovieDiscoverFilters;
   isPro: boolean;
@@ -61,6 +66,7 @@ export function MovieFilters({
   locale,
   basePath,
   genres,
+  providers,
   countries,
   filters,
   isPro,
@@ -73,6 +79,7 @@ export function MovieFilters({
   const lastUrlRef = useRef<string>("");
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const selectedGenres = new Set(filters.genreIds);
+  const selectedProviders = new Set(filters.watchProviderIds ?? []);
   const activeCount = countActiveMovieDiscoverFilters(filters);
   const lockProFilters = !isPro;
   const proOnlySortValues = new Set(["vote_count.desc", "vote_count.asc"]);
@@ -207,42 +214,49 @@ export function MovieFilters({
           </label>
         </div>
 
-        <div className={styles.row}>
-          <div className={styles.group}>
-            <label htmlFor="movie-filter-year-from">
-              {translate(locale, "movie.filters.releaseYearFrom")}
-            </label>
-            <input
-              id="movie-filter-year-from"
-              type="number"
-              name="yearFrom"
-              min={1900}
-              max={2100}
-              step={1}
-              defaultValue={filters.yearFrom ?? ""}
-            />
+        <fieldset className={styles.lockableFieldset} disabled={lockProFilters}>
+          <div className={styles.row}>
+            <div className={styles.group}>
+              <label htmlFor="movie-filter-year-from">
+                {translate(locale, "movie.filters.releaseYearFrom")}
+              </label>
+              <input
+                id="movie-filter-year-from"
+                type="number"
+                name="yearFrom"
+                min={1900}
+                max={2100}
+                step={1}
+                defaultValue={filters.yearFrom ?? ""}
+              />
+            </div>
+            <div className={styles.group}>
+              <label htmlFor="movie-filter-year-to">
+                {translate(locale, "movie.filters.releaseYearTo")}
+              </label>
+              <input
+                id="movie-filter-year-to"
+                type="number"
+                name="yearTo"
+                min={1900}
+                max={2100}
+                step={1}
+                defaultValue={filters.yearTo ?? ""}
+              />
+            </div>
           </div>
-          <div className={styles.group}>
-            <label htmlFor="movie-filter-year-to">
-              {translate(locale, "movie.filters.releaseYearTo")}
-            </label>
-            <input
-              id="movie-filter-year-to"
-              type="number"
-              name="yearTo"
-              min={1900}
-              max={2100}
-              step={1}
-              defaultValue={filters.yearTo ?? ""}
-            />
-          </div>
-        </div>
+        </fieldset>
 
         <div className={styles.group}>
           <label htmlFor="movie-filter-country">
             {translate(locale, "movie.filters.country")}
           </label>
-          <select id="movie-filter-country" name="country" defaultValue={filters.originCountry ?? ""}>
+          <select
+            id="movie-filter-country"
+            name="country"
+            defaultValue={filters.originCountry ?? ""}
+            disabled={lockProFilters}
+          >
             <option value="">{translate(locale, "movie.filters.allCountries")}</option>
             {countries.map((country) => (
               <option key={country.code} value={country.code}>
@@ -353,7 +367,12 @@ export function MovieFilters({
           <label htmlFor="movie-filter-language">
             {translate(locale, "movie.filters.originalLanguage")}
           </label>
-          <select id="movie-filter-language" name="lang" defaultValue={filters.originalLanguage ?? ""}>
+          <select
+            id="movie-filter-language"
+            name="lang"
+            defaultValue={filters.originalLanguage ?? ""}
+            disabled={lockProFilters}
+          >
             {languageOptions.map((option) => (
               <option key={option.value || "all"} value={option.value}>
                 {option.label}
@@ -361,6 +380,58 @@ export function MovieFilters({
             ))}
           </select>
         </div>
+
+        <fieldset className={styles.genreGroup} disabled={lockProFilters}>
+          <legend>{translate(locale, "movie.filters.watchSection")}</legend>
+          {providers.length > 0 ? (
+            <div className={styles.providerGrid}>
+              {providers.map((provider) => (
+                <label key={provider.id}>
+                  <input
+                    type="checkbox"
+                    name="providers"
+                    value={provider.id}
+                    defaultChecked={selectedProviders.has(provider.id)}
+                  />
+                  {provider.name}
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.hint}>{translate(locale, "movie.filters.noProviders")}</p>
+          )}
+        </fieldset>
+
+        <fieldset className={styles.lockableFieldset} disabled={lockProFilters}>
+          <div className={styles.group}>
+            <label htmlFor="movie-filter-cert-country">
+              {translate(locale, "movie.filters.certCountry")}
+            </label>
+            <select
+              id="movie-filter-cert-country"
+              name="certCountry"
+              defaultValue={filters.certificationCountry ?? filters.originCountry ?? ""}
+            >
+              <option value="">{translate(locale, "movie.filters.allCountries")}</option>
+              {countries.map((country) => (
+                <option key={`cert-${country.code}`} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={styles.group}>
+            <label htmlFor="movie-filter-cert-code">{translate(locale, "movie.filters.certification")}</label>
+            <input
+              id="movie-filter-cert-code"
+              type="text"
+              name="cert"
+              maxLength={20}
+              placeholder={translate(locale, "movie.filters.certificationPlaceholder")}
+              defaultValue={filters.certificationCode ?? ""}
+            />
+          </div>
+        </fieldset>
 
 
 
