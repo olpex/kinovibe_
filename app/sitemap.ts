@@ -46,9 +46,7 @@ const PUBLIC_ROUTES: PublicRoute[] = [
   { path: "/privacy", changeFrequency: "monthly", priority: 0.55 },
   { path: "/content-policy", changeFrequency: "monthly", priority: 0.55 },
   { path: "/copyright", changeFrequency: "monthly", priority: 0.55 },
-  { path: "/sources-licenses", changeFrequency: "monthly", priority: 0.55 },
-  { path: "/docs", changeFrequency: "weekly", priority: 0.72 },
-  { path: "/api-for-business", changeFrequency: "weekly", priority: 0.7 }
+  { path: "/sources-licenses", changeFrequency: "monthly", priority: 0.55 }
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

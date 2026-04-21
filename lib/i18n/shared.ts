@@ -374,8 +374,6 @@ const BASE_MESSAGES: Record<string, string> = {
   "menu.freeLegal": "Free & Legal",
   "menu.leaderboard": "Leaderboard",
   "menu.support": "Support",
-  "menu.apiDocs": "API Docs",
-  "menu.apiBusiness": "API for Business",
   "menu.collections": "Collections",
   "menu.calendar": "Calendar",
   "menu.digest": "Weekly Digest",
@@ -760,22 +758,6 @@ const BASE_MESSAGES: Record<string, string> = {
   "feedback.email.fieldCreatedAt": "Created at",
   "feedback.email.fieldSubject": "Subject",
 
-  "menu.apiDocsTitle": "API Documentation",
-  "menu.apiDocsSubtitle": "Reference links and integration notes.",
-  "menu.docsPublicApi": "TMDB public API docs",
-  "menu.docsPublicApiText": "Official API reference for movies, TV, people, and account endpoints.",
-  "menu.docsProjectRoutes": "Project route map",
-  "menu.docsProjectRoutesText": "Use this app's routes for UI checks after each deploy.",
-  "menu.openExternalDocs": "Open external docs",
-
-  "menu.apiBusinessTitle": "API for Business",
-  "menu.apiBusinessSubtitle": "Commercial and product integration notes.",
-  "menu.businessUseCases": "Typical use cases",
-  "menu.businessUseCasesText": "Discovery, metadata enrichment, editorial rails, and analytics.",
-  "menu.businessContact": "Business contact",
-  "menu.businessContactText": "For enterprise terms and licensing, use TMDB business channel.",
-  "menu.openBusinessPage": "Open business page",
-
   "watchlist.title": "My Watchlist",
   "watchlist.account": "Your account",
   "watchlist.savedTitles": "saved titles",
@@ -1027,8 +1009,6 @@ const UK_MESSAGES: Record<string, string> = {
   "menu.donate": "Підтримати",
   "menu.pro": "Pro",
   "menu.freeLegal": "Безкоштовно і легально",
-  "menu.apiDocs": "Документація API",
-  "menu.apiBusiness": "API для бізнесу",
   "menu.collections": "Добірки",
   "menu.calendar": "Календар",
   "menu.digest": "Тижневий дайджест",
@@ -1560,8 +1540,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Feedback & Suggestions",
     "menu.leaderboard": "Leaderboard",
     "menu.support": "Support",
-    "menu.apiDocs": "API Docs",
-    "menu.apiBusiness": "API for Business",
     "menu.thriller": "Thrillers"
   },
   uk: {
@@ -1574,8 +1552,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Відгуки та пропозиції",
     "menu.leaderboard": "Таблиця лідерів",
     "menu.support": "Підтримка",
-    "menu.apiDocs": "Документація API",
-    "menu.apiBusiness": "API для бізнесу",
     "menu.thriller": "Трилер-фільми"
   },
   de: {
@@ -1588,8 +1564,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Feedback & Vorschläge",
     "menu.leaderboard": "Rangliste",
     "menu.support": "Hilfe",
-    "menu.apiDocs": "API-Doku",
-    "menu.apiBusiness": "API für Unternehmen",
     "menu.thriller": "Thrillerfilme"
   },
   fr: {
@@ -1602,8 +1576,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Avis & suggestions",
     "menu.leaderboard": "Classement",
     "menu.support": "Aide",
-    "menu.apiDocs": "Docs API",
-    "menu.apiBusiness": "API entreprise",
     "menu.thriller": "Films a suspense"
   },
   it: {
@@ -1616,8 +1588,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Feedback e suggerimenti",
     "menu.leaderboard": "Classifica",
     "menu.support": "Supporto",
-    "menu.apiDocs": "Doc API",
-    "menu.apiBusiness": "API per aziende",
     "menu.thriller": "Film thriller"
   },
   es: {
@@ -1630,8 +1600,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Opiniones y sugerencias",
     "menu.leaderboard": "Clasificación",
     "menu.support": "Soporte",
-    "menu.apiDocs": "Docs API",
-    "menu.apiBusiness": "API para empresas",
     "menu.thriller": "Suspenso"
   },
   pt: {
@@ -1644,8 +1612,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Opiniões e sugestões",
     "menu.leaderboard": "Classificação",
     "menu.support": "Suporte",
-    "menu.apiDocs": "Docs API",
-    "menu.apiBusiness": "API para Empresas",
     "menu.thriller": "Suspense"
   },
   nl: {
@@ -1658,8 +1624,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Feedback & suggesties",
     "menu.leaderboard": "Ranglijst",
     "menu.support": "Ondersteuning",
-    "menu.apiDocs": "API-docs",
-    "menu.apiBusiness": "API voor Bedrijven",
     "menu.thriller": "Thrillerfilms"
   },
   sv: {
@@ -1672,8 +1636,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Feedback och förslag",
     "menu.leaderboard": "Topplista",
     "menu.support": "Hjälp",
-    "menu.apiDocs": "API-dokumentation",
-    "menu.apiBusiness": "API för företag",
     "menu.thriller": "Thrillerfilmer"
   },
   fi: {
@@ -1686,8 +1648,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Palaute ja ehdotukset",
     "menu.leaderboard": "Tulostaulukko",
     "menu.support": "Tuki",
-    "menu.apiDocs": "API-dokumentaatio",
-    "menu.apiBusiness": "API yrityksille",
     "menu.thriller": "Trillerielokuvat"
   },
   no: {
@@ -1700,8 +1660,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Tilbakemeldinger og forslag",
     "menu.leaderboard": "Toppliste",
     "menu.support": "Hjelp",
-    "menu.apiDocs": "API-dokumentasjon",
-    "menu.apiBusiness": "API for bedrifter",
     "menu.thriller": "Thrillerfilmer"
   },
   da: {
@@ -1714,8 +1672,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Feedback og forslag",
     "menu.leaderboard": "Rangliste",
     "menu.support": "Hjælp",
-    "menu.apiDocs": "API-dokumentation",
-    "menu.apiBusiness": "API til virksomheder",
     "menu.thriller": "Thrillerfilm"
   },
   cs: {
@@ -1728,8 +1684,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Zpětná vazba a návrhy",
     "menu.leaderboard": "Žebříček",
     "menu.support": "Podpora",
-    "menu.apiDocs": "Dokumentace API",
-    "menu.apiBusiness": "API pro firmy",
     "menu.thriller": "Thrilerove filmy"
   },
   pl: {
@@ -1742,8 +1696,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Opinie i sugestie",
     "menu.leaderboard": "Ranking",
     "menu.support": "Wsparcie",
-    "menu.apiDocs": "Dokumentacja API",
-    "menu.apiBusiness": "API dla firm",
     "menu.thriller": "Filmy thriller"
   },
   sk: {
@@ -1756,8 +1708,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Spätná väzba a návrhy",
     "menu.leaderboard": "Rebríček",
     "menu.support": "Podpora",
-    "menu.apiDocs": "Dokumentácia API",
-    "menu.apiBusiness": "API pre firmy",
     "menu.thriller": "Thrilerove filmy"
   },
   hu: {
@@ -1770,8 +1720,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Visszajelzés és javaslatok",
     "menu.leaderboard": "Ranglista",
     "menu.support": "Támogatás",
-    "menu.apiDocs": "API dokumentáció",
-    "menu.apiBusiness": "API vállalatoknak",
     "menu.thriller": "Thrillerfilmek"
   },
   ro: {
@@ -1784,8 +1732,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Feedback și sugestii",
     "menu.leaderboard": "Clasament",
     "menu.support": "Suport",
-    "menu.apiDocs": "Documentație API",
-    "menu.apiBusiness": "API pentru companii",
     "menu.thriller": "Filme thriller"
   },
   el: {
@@ -1798,8 +1744,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Σχόλια και προτάσεις",
     "menu.leaderboard": "Κατάταξη",
     "menu.support": "Υποστήριξη",
-    "menu.apiDocs": "Τεκμηρίωση API",
-    "menu.apiBusiness": "API για επιχειρήσεις",
     "menu.thriller": "Ταινίες θρίλερ"
   },
   hr: {
@@ -1812,8 +1756,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Povratne informacije i prijedlozi",
     "menu.leaderboard": "Poredak",
     "menu.support": "Podrška",
-    "menu.apiDocs": "API dokumentacija",
-    "menu.apiBusiness": "API za tvrtke",
     "menu.thriller": "Triler filmovi"
   },
   me: {
@@ -1826,8 +1768,6 @@ const CORE_NAV_MENU_OVERRIDES: Record<Locale, Record<string, string>> = {
     "menu.feedback": "Повратне информације и приједлози",
     "menu.leaderboard": "Ранг листа",
     "menu.support": "Подршка",
-    "menu.apiDocs": "API документација",
-    "menu.apiBusiness": "API за компаније",
     "menu.thriller": "Трилер филмови"
   }
 };
@@ -3430,3 +3370,4 @@ export function toTmdbLanguage(locale: Locale): string {
 export function toIntlLocale(locale: Locale): string {
   return toTmdbLanguage(locale);
 }
+

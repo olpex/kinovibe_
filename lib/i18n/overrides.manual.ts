@@ -46,9 +46,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Коли користувачі почнуть писати в обговореннях або голосувати за тайтли, таблиця заповниться автоматично.",
     "leaderboard.memberFallback": "Учасник",
     "leaderboard.youBadge": "Ви",
-    "menu.docsProjectRoutes": "Мапа маршрутів проєкту",
-    "menu.docsProjectRoutesText":
-      "Використовуйте маршрути цього застосунку для перевірки UI після кожного деплою.",
     "menu.supportWatchlistText":
       "Перевірте, чи правильно налаштовані таблиці фільмів і списку перегляду.",
     "home.browseGenreAria": "Переглянути фільми жанру {genre}",
@@ -178,8 +175,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Classifica di esempio per la modalità MVP. Collega il punteggio completo degli eventi per mostrare la classifica in tempo reale.",
     "menu.supportWatchlistText":
       "Verifica che le tabelle dei film e della watchlist siano configurate correttamente.",
-    "menu.docsProjectRoutesText":
-      "Usa le route di questa app per i controlli UI dopo ogni deploy.",
     "home.runtimeTbd": "Durata da definire",
     "movie.detailsUnavailable": "Dettagli non disponibili",
     "menu.discussHubHint":
@@ -229,8 +224,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Clasificación de ejemplo para el modo MVP. Conecta el scoring completo de eventos para mostrar ranking en vivo.",
     "menu.supportWatchlistText":
       "Comprueba si las tablas de películas y de lista de seguimiento están configuradas correctamente.",
-    "menu.docsProjectRoutesText":
-      "Usa las rutas de esta app para verificar la UI después de cada despliegue.",
     "home.browseGenreAria": "Explorar películas de {genre}",
     "home.runtimeTbd": "Duración por confirmar",
     "movie.detailsUnavailable": "Detalles no disponibles",
@@ -278,18 +271,13 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "menu.discussSubtitle": "Tópicos da comunidade e hubs temáticos.",
     "menu.supportTitle": "Centro de Suporte",
     "menu.supportSubtitle": "Ajuda rápida para login, perfil e problemas da watchlist.",
-    "menu.apiDocsTitle": "Documentação da API",
-    "menu.apiDocsSubtitle": "Ligações de referência e notas de integração.",
     "nav.search": "Pesquisar",
-    "menu.apiBusinessTitle": "API para Empresas",
     "menu.tvDetails": "Detalhes da série",
     "menu.seasons": "Temporadas",
     "menu.leaderboardHint":
       "Classificação de exemplo para o modo MVP. Ligue a pontuação completa de eventos para mostrar ranking em tempo real.",
     "menu.supportWatchlistText":
       "Verifique se as tabelas de filmes e da watchlist estão configuradas corretamente.",
-    "menu.docsProjectRoutesText":
-      "Use as rotas desta app para verificações de UI após cada deploy.",
     "home.progressAria": "{progress}% visto",
     "home.browseGenreAria": "Explorar filmes do género {genre}",
     "home.runtimeTbd": "Duração por confirmar",
@@ -338,18 +326,13 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "menu.discussSubtitle": "Community-threads en thematische hubs.",
     "menu.supportTitle": "Supportcentrum",
     "menu.supportSubtitle": "Snelle hulp bij inloggen, profiel en watchlist-problemen.",
-    "menu.apiDocsTitle": "API-documentatie",
-    "menu.apiDocsSubtitle": "Referentielinks en integratienotities.",
     "nav.search": "Zoeken",
-    "menu.apiBusinessTitle": "API voor Bedrijven",
     "menu.tvDetails": "Seriedetails",
     "menu.seasons": "Seizoenen",
     "menu.leaderboardHint":
       "Voorbeeldranglijst voor de MVP-modus. Koppel volledige event scoring om live-rangorde te tonen.",
     "menu.supportWatchlistText":
       "Controleer of de tabellen voor films en watchlist correct zijn ingesteld.",
-    "menu.docsProjectRoutesText":
-      "Gebruik de routes van deze app voor UI-checks na elke deploy.",
     "home.progressAria": "{progress}% bekeken",
     "home.browseGenreAria": "Bekijk films in het genre {genre}",
     "home.runtimeTbd": "Speelduur volgt",
@@ -400,8 +383,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Exempelranking för MVP-läget. Koppla in full händelsepoäng för att visa live-ranking.",
     "menu.supportWatchlistText":
       "Kontrollera att tabellerna för filmer och bevakningslista är korrekt konfigurerade.",
-    "menu.docsProjectRoutesText":
-      "Använd appens rutter för UI-kontroller efter varje driftsättning.",
     "home.runtimeTbd": "Speltid saknas",
     "movie.detailsUnavailable": "Detaljer inte tillgängliga",
     "menu.discussHubHint":
@@ -444,7 +425,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "meta.siteDescription": "Cinefiileille suunniteltu palvelu elokuvien löytämiseen.",
     "menu.discussTitle": "Keskustelut",
     "nav.search": "Hae",
-    "menu.apiBusinessTitle": "API yrityksille",
     "menu.tvDetails": "Sarjan tiedot",
     "menu.seasons": "Kaudet",
     "home.progressAria": "{progress}% katsottu",
@@ -452,8 +432,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Esimerkkisijoitus MVP-tilalle. Kytke tapahtumien täysi pisteytys näyttääksesi live-sijoituksen.",
     "menu.supportWatchlistText":
       "Tarkista, että elokuva- ja katselulistataulut on määritetty oikein.",
-    "menu.docsProjectRoutesText":
-      "Käytä tämän sovelluksen reittejä käyttöliittymän tarkistuksiin jokaisen deployn jälkeen.",
     "home.runtimeTbd": "Kesto tarkentuu myöhemmin",
     "movie.detailsUnavailable": "Tiedot eivät ole saatavilla",
     "menu.discussHubHint":
@@ -502,8 +480,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Eksempelrangering for MVP-modus. Koble til full hendelsesscore for å vise live-rangering.",
     "menu.supportWatchlistText":
       "Sjekk at tabellene for filmer og watchlist er riktig konfigurert.",
-    "menu.docsProjectRoutesText":
-      "Bruk appens ruter til UI-kontroller etter hver deploy.",
     "home.progressAria": "{progress}% sett",
     "home.browseGenreAria": "Bla gjennom filmer i sjangeren {genre}",
     "home.runtimeTbd": "Spilletid kommer",
@@ -554,8 +530,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Eksempelrangering til MVP-tilstand. Tilslut fuld event-scoring for at vise live-rangering.",
     "menu.supportWatchlistText":
       "Tjek, at tabellerne for film og watchlist er konfigureret korrekt.",
-    "menu.docsProjectRoutesText":
-      "Brug appens ruter til UI-kontrol efter hver deploy.",
     "home.progressAria": "{progress}% set",
     "home.browseGenreAria": "Udforsk film i genren {genre}",
     "home.runtimeTbd": "Spilletid følger",
@@ -606,8 +580,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Ukázkové pořadí pro režim MVP. Pro živé pořadí připojte plné bodování událostí.",
     "menu.supportWatchlistText":
       "Zkontrolujte, že tabulky filmů a watchlistu jsou správně nastavené.",
-    "menu.docsProjectRoutesText":
-      "Použijte trasy této aplikace pro kontrolu UI po každém nasazení.",
     "home.progressAria": "{progress}% zhlédnuto",
     "home.browseGenreAria": "Procházet filmy žánru {genre}",
     "home.runtimeTbd": "Délka bude upřesněna",
@@ -658,8 +630,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Przykładowy ranking dla trybu MVP. Podłącz pełny scoring zdarzeń, aby wyświetlać ranking na żywo.",
     "menu.supportWatchlistText":
       "Sprawdź, czy tabele filmów i listy do obejrzenia są poprawnie skonfigurowane.",
-    "menu.docsProjectRoutesText":
-      "Korzystaj z tras tej aplikacji do kontroli UI po każdym wdrożeniu.",
     "home.progressAria": "{progress}% obejrzano",
     "home.browseGenreAria": "Przeglądaj filmy z gatunku {genre}",
     "home.runtimeTbd": "Czas trwania wkrótce",
@@ -701,7 +671,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "feedback.authRequired": "Zaloguj się, aby zostawiać opinie i sugestie."
   },
   sk: {
-    "menu.apiBusinessTitle": "API pre firmy",
     "home.runtimeTbd": "Dĺžka bude upresnená",
     "menu.discussHubHint":
       "Tu sa zobrazujú iba tituly s prvou recenziou. Začnite na stránke titulu, aby ste ju vytvorili.",
@@ -725,7 +694,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "feedback.authRequired": "Prihláste sa pre zanechanie spätnej väzby."
   },
   hu: {
-    "menu.apiBusinessTitle": "API vállalatoknak",
     "home.runtimeTbd": "Játékidő hamarosan",
     "menu.discussHubHint":
       "Itt csak az első értékeléssel rendelkező címek jelennek meg. Kezdjen egy cím oldaláról, hogy létrehozzon egyet.",
@@ -759,8 +727,6 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
       "Clasament exemplu pentru modul MVP. Conectează scoringul complet al evenimentelor pentru ranking live.",
     "menu.supportWatchlistText":
       "Verifică dacă tabelele pentru filme și lista de urmărire sunt configurate corect.",
-    "menu.docsProjectRoutesText":
-      "Folosește rutele acestei aplicații pentru verificări UI după fiecare deploy.",
     "home.browseGenreAria": "Răsfoiește filme din genul {genre}",
     "home.runtimeTbd": "Durată în curs de actualizare",
     "movie.detailsUnavailable": "Detalii indisponibile",
@@ -855,3 +821,4 @@ export const MANUAL_TRANSLATION_OVERRIDES: Record<string, Record<string, string>
     "feedback.authRequired": "Prijavite se za ostavljanje povratnih informacija i prijedloga."
   }
 };
+
