@@ -260,7 +260,7 @@ export async function startProCheckoutAction(
       };
     }
 
-    await supabase.from("billing_checkout_sessions").insert({
+    const { error: checkoutInsertError } = await supabase.from("billing_checkout_sessions").insert({
       user_id: user.id,
       provider: "wayforpay",
       provider_session_id: fields.orderReference,
@@ -277,6 +277,15 @@ export async function startProCheckoutAction(
         durationDays: getProDurationDays(interval)
       }
     });
+
+    if (checkoutInsertError) {
+      return {
+        ok: false,
+        message: translate(locale, "profile.checkoutCreateFailed", {
+          reason: checkoutInsertError.message
+        })
+      };
+    }
 
     await recordSiteEvent(supabase, {
       eventType: "pro_checkout_start",
