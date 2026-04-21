@@ -149,67 +149,6 @@ export async function changePasswordFromProfileAction(
   };
 }
 
-export async function activateProWithCodeAction(
-  _previousState: ProfileActionState,
-  formData: FormData
-): Promise<ProfileActionState> {
-  const locale = await getRequestLocale();
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) {
-    return {
-      ok: false,
-      message: translate(locale, "profile.supabaseMissing")
-    };
-  }
-
-  const auth = await supabase.auth.getUser();
-  const user = auth.data.user;
-  if (!user) {
-    return {
-      ok: false,
-      message: translate(locale, "profile.unauthorized")
-    };
-  }
-
-  const providedCode = asString(formData.get("activationCode"));
-  const expectedCode = (process.env.PRO_ACTIVATION_CODE ?? "").trim();
-
-  if (!providedCode || !expectedCode || providedCode !== expectedCode) {
-    return {
-      ok: false,
-      message: translate(locale, "profile.proActivationInvalid")
-    };
-  }
-
-  const { error } = await supabase
-    .from("profiles")
-    .upsert(
-      {
-        id: user.id,
-        billing_plan: "pro",
-        billing_status: "active",
-        billing_provider: "manual",
-        billing_plan_interval: null,
-        pro_source: "manual",
-        plan_expires_at: null
-      },
-      { onConflict: "id" }
-    );
-
-  if (error) {
-    return {
-      ok: false,
-      message: translate(locale, "profile.updateFailed", { reason: error.message })
-    };
-  }
-
-  revalidatePath("/profile");
-  return {
-    ok: true,
-    message: translate(locale, "profile.proActivationSuccess")
-  };
-}
-
 export async function startProCheckoutAction(
   _previousState: ProfileActionState,
   formData: FormData

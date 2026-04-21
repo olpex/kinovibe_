@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import {
-  activateProWithCodeAction,
   changePasswordFromProfileAction,
   startProCheckoutAction,
   updateProfileSettingsAction,
@@ -56,10 +55,6 @@ export function ProfileForms({
     changePasswordFromProfileAction,
     { ok: true, message: "" }
   );
-  const [proActivationState, proActivationAction, proActivationPending] = useActionState<
-    ProfileActionState,
-    FormData
-  >(activateProWithCodeAction, { ok: true, message: "" });
   const [checkoutState, checkoutAction, checkoutPending] = useActionState<ProfileActionState, FormData>(
     startProCheckoutAction,
     { ok: true, message: "" }
@@ -214,32 +209,6 @@ export function ProfileForms({
                 ? translate(locale, "profile.planUpgradeSoon")
                 : translate(locale, "profile.openDonateSupport")}
             </Link>
-            {!billingEnabled ? (
-              <form action={proActivationAction} className={styles.form}>
-                <h3>{translate(locale, "profile.proActivationTitle")}</h3>
-                <p>{translate(locale, "profile.proActivationHint")}</p>
-                {proActivationState.message ? (
-                  <p className={proActivationState.ok ? styles.feedbackOk : styles.feedbackError}>
-                    {proActivationState.message}
-                  </p>
-                ) : null}
-                <label>
-                  <span>{translate(locale, "profile.proActivationCode")}</span>
-                  <input
-                    name="activationCode"
-                    type="password"
-                    autoComplete="one-time-code"
-                    maxLength={120}
-                    required
-                  />
-                </label>
-                <button type="submit" disabled={proActivationPending}>
-                  {proActivationPending
-                    ? translate(locale, "common.updating")
-                    : translate(locale, "profile.proActivationCta")}
-                </button>
-              </form>
-            ) : null}
           </>
         ) : null}
       </section>
