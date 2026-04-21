@@ -7,6 +7,13 @@ import styles from "./donate.module.css";
 const DEFAULT_DONATE_AMOUNTS = [100, 150, 200, 250, 300] as const;
 const DEFAULT_DONATE_CURRENCY = "UAH";
 
+type DonateProvider = {
+  key: string;
+  labelKey: string;
+  url: string;
+  trackingKey: string;
+};
+
 function buildMonobankDonateUrl(baseUrl: string, amount: number): string | null {
   if (!baseUrl) {
     return null;
@@ -19,6 +26,57 @@ function buildMonobankDonateUrl(baseUrl: string, amount: number): string | null 
   } catch {
     return null;
   }
+}
+
+function normalizeExternalUrl(raw: string | undefined): string {
+  const value = (raw ?? "").trim();
+  if (!value) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" ? parsed.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
+function getDonateProviders(monobankJarUrl: string): DonateProvider[] {
+  const candidates: DonateProvider[] = [
+    {
+      key: "monobank",
+      labelKey: "donate.provider.monobank",
+      url: normalizeExternalUrl(monobankJarUrl),
+      trackingKey: "monobank"
+    },
+    {
+      key: "kofi",
+      labelKey: "donate.provider.kofi",
+      url: normalizeExternalUrl(process.env.DONATE_KOFI_URL),
+      trackingKey: "kofi"
+    },
+    {
+      key: "buymeacoffee",
+      labelKey: "donate.provider.buyMeACoffee",
+      url: normalizeExternalUrl(process.env.DONATE_BUYMEACOFFEE_URL),
+      trackingKey: "buymeacoffee"
+    },
+    {
+      key: "github",
+      labelKey: "donate.provider.githubSponsors",
+      url: normalizeExternalUrl(process.env.DONATE_GITHUB_SPONSORS_URL),
+      trackingKey: "github_sponsors"
+    },
+    {
+      key: "patreon",
+      labelKey: "donate.provider.patreon",
+      url: normalizeExternalUrl(process.env.DONATE_PATREON_URL),
+      trackingKey: "patreon"
+    }
+  ];
+
+  return candidates.filter((provider) => provider.url);
 }
 
 function parseDonateCurrency(raw: string | undefined): string {
@@ -57,6 +115,7 @@ export default async function DonatePage() {
   const monobankJarUrl = (process.env.DONATE_MONOBANK_JAR_URL ?? "").trim();
   const donateCurrency = parseDonateCurrency(process.env.DONATE_DEFAULT_CURRENCY);
   const donateAmounts = parseDonateAmounts(process.env.DONATE_AMOUNTS);
+  const providers = getDonateProviders(monobankJarUrl);
 
   return (
     <CatalogPageShell
@@ -106,6 +165,35 @@ export default async function DonatePage() {
               {translate(locale, "donate.configMissing")} {translate(locale, "donate.configHint")}
             </p>
           ) : null}
+        </article>
+
+        <article className={styles.card}>
+          <div>
+            <h2 className={styles.cardTitle}>{translate(locale, "donate.externalTitle")}</h2>
+            <p className={styles.hint}>{translate(locale, "donate.externalBody")}</p>
+          </div>
+
+          {providers.length > 0 ? (
+            <div className={styles.providerList}>
+              {providers.map((provider) => (
+                <a
+                  key={provider.key}
+                  href={provider.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.providerLink}
+                  data-track-click={`donate_provider:${provider.trackingKey}`}
+                >
+                  <span>{translate(locale, provider.labelKey)}</span>
+                  <b>{translate(locale, "donate.openProvider")}</b>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.hint}>
+              {translate(locale, "donate.noExternalProviders")} {translate(locale, "donate.externalConfigHint")}
+            </p>
+          )}
         </article>
       </section>
     </CatalogPageShell>

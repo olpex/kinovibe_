@@ -1,0 +1,134 @@
+.overview {
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: rgba(11, 15, 20, 0.42);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  gap: 0.85rem;
+  padding: 0.85rem;
+}
+
+.kicker {
+  margin: 0 0 0.35rem;
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.overview h2,
+.sectionHeader h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.overview p,
+.sectionHeader p,
+.empty,
+.watchlistItem p {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-soft);
+  line-height: 1.5;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.metrics div,
+.watchlistItem {
+  border: 1px solid var(--color-border);
+  border-radius: 0.8rem;
+  background: rgba(26, 34, 48, 0.64);
+}
+
+.metrics div {
+  display: grid;
+  align-content: center;
+  gap: 0.25rem;
+  min-height: 4.7rem;
+  padding: 0.62rem;
+}
+
+.metrics span,
+.watchlistItem span {
+  color: var(--color-text-soft);
+  font-size: 0.76rem;
+}
+
+.metrics strong {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.section {
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.linkButton {
+  border: 1px solid var(--color-border);
+  border-radius: 0.8rem;
+  background: rgba(26, 34, 48, 0.72);
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.52rem 0.75rem;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.watchlistRail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.6rem;
+}
+
+.watchlistItem {
+  color: var(--color-text);
+  display: grid;
+  gap: 0.22rem;
+  min-height: 6.4rem;
+  padding: 0.68rem;
+  text-decoration: none;
+}
+
+.watchlistItem strong {
+  line-height: 1.25;
+}
+
+.empty {
+  border: 1px dashed var(--color-border);
+  border-radius: 0.9rem;
+  background: rgba(21, 27, 36, 0.55);
+  padding: 1rem;
+}
+
+.linkButton:focus-visible,
+.watchlistItem:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
+}
+
+@media (max-width: 860px) {
+  .overview,
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+}

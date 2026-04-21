@@ -61,6 +61,85 @@
   color: var(--color-text-soft);
 }
 
+.insights {
+  margin-top: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(280px, 1.4fr) minmax(170px, 0.8fr);
+  gap: 0.75rem;
+  align-items: stretch;
+  padding: 0.8rem;
+}
+
+.insightCopy h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
+.insightCopy p {
+  margin: 0.3rem 0 0;
+  color: var(--color-text-soft);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.insightGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.insightMetric,
+.nextPick,
+.digestLink {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-surface-soft) 82%, transparent);
+  padding: 0.58rem 0.65rem;
+}
+
+.insightMetric {
+  display: grid;
+  align-content: center;
+  gap: 0.25rem;
+  min-height: 4.3rem;
+}
+
+.insightMetric span,
+.nextPick span {
+  color: var(--color-text-soft);
+  font-size: 0.76rem;
+}
+
+.insightMetric strong {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.nextPick {
+  color: var(--color-text);
+  display: grid;
+  gap: 0.25rem;
+  text-decoration: none;
+}
+
+.nextPick strong {
+  line-height: 1.25;
+}
+
+.digestLink {
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .emptyCard {
   margin-top: 1rem;
   border: 1px dashed var(--color-border);
@@ -161,6 +240,12 @@
 .linkPillAlt:focus-visible,
 .ctaLink:focus-visible,
 .secondaryLink:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
+  outline-offset: 3px;
+}
+
+.nextPick:focus-visible,
+.digestLink:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--color-secondary) 72%, #fff 28%);
   outline-offset: 3px;
 }
@@ -278,5 +363,10 @@
   .topBar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .insights,
+  .insightGrid {
+    grid-template-columns: 1fr;
   }
 }

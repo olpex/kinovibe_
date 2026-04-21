@@ -231,6 +231,19 @@ export default async function WatchlistPage() {
     label: translate(locale, STATUS_LABELS[status]),
     items: items.filter((item) => item.status === status)
   }));
+  const statusCounts = Object.fromEntries(
+    grouped.map((group) => [group.status, group.items.length])
+  ) as Record<(typeof STATUS_ORDER)[number], number>;
+  const completionRate = items.length > 0 ? Math.round((statusCounts.watched / items.length) * 100) : 0;
+  const nextPick =
+    items
+      .filter((item) => item.status === "watching" || item.status === "to_watch")
+      .sort((a, b) => {
+        if (a.status !== b.status) {
+          return a.status === "watching" ? -1 : 1;
+        }
+        return b.rating - a.rating;
+      })[0] ?? null;
 
   return (
     <main className={styles.page}>
@@ -264,6 +277,38 @@ export default async function WatchlistPage() {
           {items.length.toLocaleString(toIntlLocale(locale))} {translate(locale, "watchlist.savedTitles")}
         </p>
       </section>
+
+      {!error && items.length > 0 ? (
+        <section className={styles.insights} aria-label={translate(locale, "watchlist.insightsTitle")}>
+          <div className={styles.insightCopy}>
+            <h2>{translate(locale, "watchlist.insightsTitle")}</h2>
+            <p>{translate(locale, "watchlist.insightsHint")}</p>
+          </div>
+          <div className={styles.insightGrid}>
+            <div className={styles.insightMetric}>
+              <span>{translate(locale, "watchlist.readyNext")}</span>
+              <strong>{statusCounts.to_watch.toLocaleString(toIntlLocale(locale))}</strong>
+            </div>
+            <div className={styles.insightMetric}>
+              <span>{translate(locale, "watchlist.inProgress")}</span>
+              <strong>{statusCounts.watching.toLocaleString(toIntlLocale(locale))}</strong>
+            </div>
+            <div className={styles.insightMetric}>
+              <span>{translate(locale, "watchlist.completionRate")}</span>
+              <strong>{completionRate}%</strong>
+            </div>
+          </div>
+          {nextPick ? (
+            <Link href={`/movie/${nextPick.tmdbId}`} className={styles.nextPick}>
+              <span>{translate(locale, "watchlist.topRatedNext")}</span>
+              <strong>{nextPick.title}</strong>
+            </Link>
+          ) : null}
+          <Link href="/digest" className={styles.digestLink}>
+            {translate(locale, "watchlist.openDigest")}
+          </Link>
+        </section>
+      ) : null}
 
       {error ? (
         <section className={styles.emptyCard}>

@@ -51,6 +51,7 @@ const MENU_SECTIONS: MenuSection[] = [
       { href: "/leaderboard", labelKey: "menu.leaderboard" },
       { href: "/collections", labelKey: "menu.collections" },
       { href: "/calendar", labelKey: "menu.calendar" },
+      { href: "/digest", labelKey: "menu.digest" },
       { href: "/talk", labelKey: "menu.support" },
       { href: "/docs", labelKey: "menu.apiDocs" },
       { href: "/api-for-business", labelKey: "menu.apiBusiness" }

@@ -35,6 +35,7 @@ const PUBLIC_ROUTES: PublicRoute[] = [
   { path: "/collections/science-fiction-starters", changeFrequency: "weekly", priority: 0.84 },
   { path: "/collections/hidden-animation", changeFrequency: "weekly", priority: 0.84 },
   { path: "/calendar", changeFrequency: "hourly", priority: 0.9 },
+  { path: "/digest", changeFrequency: "daily", priority: 0.86 },
   { path: "/leaderboard", changeFrequency: "daily", priority: 0.82 },
   { path: "/discuss", changeFrequency: "daily", priority: 0.8 },
   { path: "/talk", changeFrequency: "daily", priority: 0.76 },

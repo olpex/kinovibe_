@@ -192,8 +192,10 @@ export function ProfileForms({
                 </div>
               </form>
             ) : null}
-            <Link href="/feedback" className={styles.adminLink}>
-              {translate(locale, "profile.planUpgradeSoon")}
+            <Link href={billingEnabled ? "/feedback" : "/donate"} className={styles.adminLink}>
+              {billingEnabled
+                ? translate(locale, "profile.planUpgradeSoon")
+                : translate(locale, "profile.openDonateSupport")}
             </Link>
             {!billingEnabled ? (
               <form action={proActivationAction} className={styles.form}>
