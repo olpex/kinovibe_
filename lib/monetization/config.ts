@@ -2,7 +2,7 @@ import "server-only";
 import { toIntlLocale, type Locale } from "@/lib/i18n/shared";
 
 export type ProBillingInterval = "month" | "year";
-export type BillingProvider = "stripe" | "wayforpay";
+export type BillingProvider = "stripe" | "wayforpay" | "liqpay";
 
 type ProPriceConfig = {
   currency: string;
@@ -48,9 +48,19 @@ export function isWayforpayBillingEnabled(): boolean {
   );
 }
 
+export function isLiqpayBillingEnabled(): boolean {
+  return Boolean(
+    (process.env.LIQPAY_PUBLIC_KEY ?? "").trim() &&
+      (process.env.LIQPAY_PRIVATE_KEY ?? "").trim()
+  );
+}
+
 export function getActiveBillingProvider(): BillingProvider | null {
   const preferred = (process.env.BILLING_PROVIDER ?? "").trim().toLowerCase();
 
+  if (preferred === "liqpay") {
+    return isLiqpayBillingEnabled() ? "liqpay" : null;
+  }
   if (preferred === "wayforpay") {
     return isWayforpayBillingEnabled() ? "wayforpay" : null;
   }
@@ -58,6 +68,9 @@ export function getActiveBillingProvider(): BillingProvider | null {
     return isStripeBillingEnabled() ? "stripe" : null;
   }
 
+  if (isLiqpayBillingEnabled()) {
+    return "liqpay";
+  }
   if (isWayforpayBillingEnabled()) {
     return "wayforpay";
   }

@@ -12,6 +12,7 @@ import {
   getProDurationDays,
   type ProBillingInterval
 } from "@/lib/monetization/config";
+import { buildLiqpayCheckoutPayload } from "@/lib/monetization/liqpay";
 import { getStripeServerClient } from "@/lib/monetization/stripe";
 import { buildWayforpayCheckoutFields } from "@/lib/monetization/wayforpay";
 import { resolveSiteUrl } from "@/lib/seo/site";
@@ -244,6 +245,67 @@ export async function startProCheckoutAction(
   const prices = getProPriceConfig();
   const amountMinor =
     interval === "year" ? prices.yearlyAmountMinor : prices.monthlyAmountMinor;
+
+  if (activeProvider === "liqpay") {
+    const payload = buildLiqpayCheckoutPayload({
+      userId: user.id,
+      interval,
+      locale
+    });
+
+    if (!payload) {
+      return {
+        ok: false,
+        message: translate(locale, "profile.checkoutNotConfigured")
+      };
+    }
+
+    const { error: checkoutInsertError } = await supabase.from("billing_checkout_sessions").insert({
+      user_id: user.id,
+      provider: "liqpay",
+      provider_session_id: payload.orderId,
+      plan_code: "pro",
+      billing_interval: interval,
+      status: "open",
+      checkout_url: null,
+      metadata_json: {
+        amountMinor,
+        amount: payload.amount,
+        currency: payload.currency.toLowerCase(),
+        signatureAlgorithm: payload.signatureAlgorithm,
+        checkout: {
+          data: payload.data,
+          signature: payload.signature
+        },
+        durationDays: getProDurationDays(interval)
+      }
+    });
+
+    if (checkoutInsertError) {
+      return {
+        ok: false,
+        message: translate(locale, "profile.checkoutCreateFailed", {
+          reason: checkoutInsertError.message
+        })
+      };
+    }
+
+    await recordSiteEvent(supabase, {
+      eventType: "pro_checkout_start",
+      userId: user.id,
+      pagePath: "/profile",
+      elementKey: `liqpay:${interval}`,
+      metadata: {
+        provider: "liqpay",
+        orderId: payload.orderId,
+        amountMinor,
+        currency: payload.currency.toLowerCase(),
+        amountLabel: formatMinorCurrency(amountMinor, prices.currency, locale)
+      }
+    });
+
+    redirect(`/billing/liqpay/checkout?order=${encodeURIComponent(payload.orderId)}`);
+  }
 
   if (activeProvider === "wayforpay") {
     const fields = buildWayforpayCheckoutFields({
