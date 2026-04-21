@@ -18,13 +18,17 @@ export function CatalogMovieGrid({
   emptyMessage,
   hrefPrefix
 }: CatalogMovieGridProps) {
-  if (items.length === 0) {
+  const visibleItems = Array.from(
+    new Map(items.map((item) => [item.href ?? `${hrefPrefix}/${item.id}`, item])).values()
+  );
+
+  if (visibleItems.length === 0) {
     return <p className={styles.empty}>{emptyMessage ?? translate(locale, "home.noTitlesFound")}</p>;
   }
 
   return (
     <section className={styles.grid} aria-label={translate(locale, "search.resultsAria")}>
-      {items.map((item) => {
+      {visibleItems.map((item) => {
         const posterSrc = encodeImageUrl(item.posterUrl);
         const cardHref = item.href ?? `${hrefPrefix}/${item.id}`;
         const countriesLabel =
@@ -37,7 +41,7 @@ export function CatalogMovieGrid({
             : item.genre || translate(locale, "home.defaultGenre");
         return (
           <Link
-            key={item.id}
+            key={cardHref}
             href={cardHref}
             className={styles.card}
             data-track-event="card_open"

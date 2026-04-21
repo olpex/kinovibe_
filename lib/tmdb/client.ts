@@ -2050,10 +2050,10 @@ export async function getTvOnAirSchedulePage(
 
   const scheduleEntries = await getTvMazeScheduleByCountryDate(region, dateIso);
 
-  const filteredCards: OnAirScheduleCard[] = [];
+  const uniqueCardsByShowId = new Map<number, OnAirScheduleCard>();
   for (const entry of scheduleEntries) {
     const show = entry.show;
-    if (!show || !show.name) {
+    if (!show?.id || !show.name) {
       continue;
     }
 
@@ -2126,8 +2126,9 @@ export async function getTvOnAirSchedulePage(
       show.genres?.[0] ??
       translate(locale, "home.defaultGenre");
 
+    const airTimestamp = parseAiringTimestamp(entry);
     const card: HomeMovie = {
-      id: entry.id,
+      id: show.id,
       title: show.name,
       year,
       genre,
@@ -2146,16 +2147,21 @@ export async function getTvOnAirSchedulePage(
       }
     };
 
-    filteredCards.push({
+    const candidate = {
       card,
       popularity,
       rating,
       year,
-      airTimestamp: parseAiringTimestamp(entry)
-    });
+      airTimestamp
+    };
+
+    const existing = uniqueCardsByShowId.get(show.id);
+    if (!existing || candidate.airTimestamp < existing.airTimestamp) {
+      uniqueCardsByShowId.set(show.id, candidate);
+    }
   }
 
-  const sortedCards = applyOnAirSort(filteredCards, filters.sortBy);
+  const sortedCards = applyOnAirSort(Array.from(uniqueCardsByShowId.values()), filters.sortBy);
   const totalResults = sortedCards.length;
   const totalPages = Math.max(1, Math.ceil(totalResults / ON_AIR_PAGE_SIZE));
   const boundedPage = Math.min(safePage, totalPages);
