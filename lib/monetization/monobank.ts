@@ -64,7 +64,7 @@ function isValidUaIban(value: string): boolean {
 }
 
 function normalizeUAIban(value: string): string {
-  return value.replace(/\s+/g, "").toUpperCase();
+  return value.replace(/[^A-Za-z0-9]+/g, "").toUpperCase();
 }
 
 function getMonobankConfig(): MonobankConfig | null {

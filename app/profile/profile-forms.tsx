@@ -204,10 +204,8 @@ export function ProfileForms({
                 </div>
               </form>
             ) : null}
-            <Link href={billingEnabled ? "/feedback" : "/donate"} className={styles.adminLink}>
-              {billingEnabled
-                ? translate(locale, "profile.planUpgradeSoon")
-                : translate(locale, "profile.openDonateSupport")}
+            <Link href="/feedback" className={styles.adminLink}>
+              {translate(locale, "profile.planUpgradeSoon")}
             </Link>
             {!billingEnabled ? (
               <p className={styles.feedbackError}>{translate(locale, "profile.checkoutNotConfigured")}</p>
