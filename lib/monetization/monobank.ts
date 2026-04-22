@@ -326,3 +326,268 @@ export function findMatchingMonobankStatementItem(args: {
 
   return candidates[0] ?? null;
 }
+
+type MonobankInvoiceCreateResponseError = {
+  errText?: string;
+  errorDescription?: string;
+  message?: string;
+};
+
+export type MonobankInvoiceStatusPayload = {
+  invoiceId: string;
+  status: string;
+  amount?: number;
+  ccy?: number;
+  reference?: string;
+  createdDate?: string;
+  modifiedDate?: string;
+  failureReason?: string;
+  paymentInfo?: {
+    tranId?: string | number;
+    rrn?: string;
+    approvalCode?: string;
+    maskedPan?: string;
+    bank?: string;
+    paymentSystem?: string;
+    paymentMethod?: string;
+    [key: string]: unknown;
+  } | null;
+  [key: string]: unknown;
+};
+
+export type MonobankHostedCheckoutData = {
+  invoiceId: string;
+  pageUrl: string;
+  amountMinor: number;
+  currency: string;
+  interval: ProBillingInterval;
+  reference: string;
+};
+
+function getMonobankAcquiringToken(): string {
+  return (
+    (process.env.MONOBANK_ACQUIRING_TOKEN ?? "").trim() ||
+    (process.env.MONOBANK_PERSONAL_TOKEN ?? "").trim()
+  );
+}
+
+function getMonobankInvoiceExpiresSeconds(): number {
+  return parsePositiveInt(process.env.MONOBANK_INVOICE_EXPIRES_SECONDS, 3600);
+}
+
+function buildMonobankWebhookUrl(siteUrl: string): string {
+  const base = `${siteUrl.replace(/\/+$/, "")}/api/billing/monobank/webhook`;
+  const token = (process.env.MONOBANK_WEBHOOK_TOKEN ?? "").trim();
+  if (!token) {
+    return base;
+  }
+  return `${base}?token=${encodeURIComponent(token)}`;
+}
+
+function parseMonobankApiError(payload: unknown, fallback: string): string {
+  if (!payload || typeof payload !== "object") {
+    return fallback;
+  }
+
+  const errorPayload = payload as MonobankInvoiceCreateResponseError;
+  return (
+    errorPayload.errorDescription?.trim() ||
+    errorPayload.errText?.trim() ||
+    errorPayload.message?.trim() ||
+    fallback
+  );
+}
+
+function currencyNumericToCode(value: unknown): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "UAH";
+  }
+
+  if (value === 980) {
+    return "UAH";
+  }
+  if (value === 840) {
+    return "USD";
+  }
+  if (value === 978) {
+    return "EUR";
+  }
+  return "UAH";
+}
+
+function asPositiveAmountMinor(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.floor(parsed);
+    }
+  }
+  return null;
+}
+
+export async function createMonobankHostedCheckout(args: {
+  userId: string;
+  interval: ProBillingInterval;
+  siteUrl: string;
+}): Promise<{ ok: true; data: MonobankHostedCheckoutData } | { ok: false; error: string }> {
+  const token = getMonobankAcquiringToken();
+  if (!token) {
+    return { ok: false, error: "monobank_not_configured" };
+  }
+
+  const prices = getProPriceConfig();
+  const currency = prices.currency.toUpperCase();
+  const ccy = getCurrencyNumericCode(currency);
+  if (ccy === null) {
+    return { ok: false, error: "monobank_currency_not_supported" };
+  }
+
+  const amountMinor =
+    args.interval === "year" ? prices.yearlyAmountMinor : prices.monthlyAmountMinor;
+  const reference = `kv-pro-${args.interval}-${randomUUID().replace(/-/g, "")}`;
+  const destination =
+    args.interval === "year" ? "KinoVibe Pro Yearly" : "KinoVibe Pro Monthly";
+  const expiresSeconds = getMonobankInvoiceExpiresSeconds();
+
+  const payload: Record<string, unknown> = {
+    amount: amountMinor,
+    ccy,
+    redirectUrl: `${args.siteUrl.replace(/\/+$/, "")}/profile`,
+    webHookUrl: buildMonobankWebhookUrl(args.siteUrl),
+    merchantPaymInfo: {
+      reference,
+      destination,
+      comment: `KinoVibe Pro ${args.interval}`,
+      customerInfo: args.userId
+    }
+  };
+  if (expiresSeconds > 0) {
+    payload.validity = expiresSeconds;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${MONOBANK_API_BASE_URL}/api/merchant/invoice/create`, {
+      method: "POST",
+      headers: {
+        "X-Token": token,
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store"
+    });
+  } catch {
+    return { ok: false, error: "monobank_request_failed" };
+  }
+
+  let data: unknown = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: parseMonobankApiError(data, `monobank_http_${response.status}`)
+    };
+  }
+
+  if (!data || typeof data !== "object") {
+    return { ok: false, error: "monobank_invalid_payload" };
+  }
+
+  const result = data as { invoiceId?: unknown; pageUrl?: unknown };
+  const invoiceId = typeof result.invoiceId === "string" ? result.invoiceId.trim() : "";
+  const pageUrl = typeof result.pageUrl === "string" ? result.pageUrl.trim() : "";
+  if (!invoiceId || !pageUrl) {
+    return { ok: false, error: "monobank_invalid_payload" };
+  }
+
+  return {
+    ok: true,
+    data: {
+      invoiceId,
+      pageUrl,
+      amountMinor,
+      currency,
+      interval: args.interval,
+      reference
+    }
+  };
+}
+
+export async function fetchMonobankInvoiceStatus(args: {
+  invoiceId: string;
+}): Promise<{ ok: true; invoice: MonobankInvoiceStatusPayload } | { ok: false; error: string }> {
+  const token = getMonobankAcquiringToken();
+  if (!token) {
+    return { ok: false, error: "monobank_not_configured" };
+  }
+
+  const invoiceId = args.invoiceId.trim();
+  if (!invoiceId) {
+    return { ok: false, error: "monobank_invoice_id_required" };
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(
+      `${MONOBANK_API_BASE_URL}/api/merchant/invoice/status?invoiceId=${encodeURIComponent(invoiceId)}`,
+      {
+        method: "GET",
+        headers: {
+          "X-Token": token,
+          "Accept": "application/json"
+        },
+        cache: "no-store"
+      }
+    );
+  } catch {
+    return { ok: false, error: "monobank_request_failed" };
+  }
+
+  let data: unknown = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      error: parseMonobankApiError(data, `monobank_http_${response.status}`)
+    };
+  }
+
+  if (!data || typeof data !== "object") {
+    return { ok: false, error: "monobank_invalid_payload" };
+  }
+
+  const invoice = data as MonobankInvoiceStatusPayload;
+  if (typeof invoice.invoiceId !== "string" || invoice.invoiceId.trim().length === 0) {
+    return { ok: false, error: "monobank_invalid_payload" };
+  }
+  if (typeof invoice.status !== "string" || invoice.status.trim().length === 0) {
+    return { ok: false, error: "monobank_invalid_payload" };
+  }
+
+  return {
+    ok: true,
+    invoice
+  };
+}
+
+export function getMonobankInvoiceAmountMinor(invoice: MonobankInvoiceStatusPayload): number | null {
+  return asPositiveAmountMinor(invoice.amount);
+}
+
+export function getMonobankInvoiceCurrency(invoice: MonobankInvoiceStatusPayload): string {
+  return currencyNumericToCode(invoice.ccy);
+}

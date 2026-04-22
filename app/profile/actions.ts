@@ -6,8 +6,7 @@ import { recordSiteEvent } from "@/lib/analytics/events";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import {
-  buildMonobankTransferCheckoutData,
-  getMonobankCheckoutExpiresHours
+  createMonobankHostedCheckout
 } from "@/lib/monetization/monobank";
 import {
   formatMinorCurrency,
@@ -15,6 +14,7 @@ import {
   getProDurationDays,
   type ProBillingInterval
 } from "@/lib/monetization/config";
+import { resolveSiteUrl } from "@/lib/seo/site";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ProfileActionState = {
@@ -187,36 +187,36 @@ export async function startProCheckoutAction(
     };
   }
 
-  const checkout = buildMonobankTransferCheckoutData({ interval });
-  if (!checkout) {
+  const checkout = await createMonobankHostedCheckout({
+    userId: user.id,
+    interval,
+    siteUrl: resolveSiteUrl()
+  });
+  if (!checkout.ok) {
     return {
       ok: false,
-      message: translate(locale, "profile.checkoutNotConfigured")
+      message: translate(locale, "profile.checkoutCreateFailed", {
+        reason: checkout.error
+      })
     };
   }
 
   const { error: checkoutInsertError } = await supabase.from("billing_checkout_sessions").insert({
     user_id: user.id,
     provider: "monobank",
-    provider_session_id: checkout.orderId,
+    provider_session_id: checkout.data.invoiceId,
     plan_code: "pro",
     billing_interval: interval,
     status: "open",
-    checkout_url: null,
+    checkout_url: checkout.data.pageUrl,
     metadata_json: {
-      amountMinor: checkout.amountMinor,
-      amount: checkout.amountLabel,
-      currency: checkout.currency.toLowerCase(),
+      amountMinor: checkout.data.amountMinor,
+      currency: checkout.data.currency.toLowerCase(),
       durationDays: getProDurationDays(interval),
-      checkoutExpiresAt: checkout.checkoutExpiresAtIso,
-      checkoutExpiresHours: getMonobankCheckoutExpiresHours(),
-      transfer: {
-        iban: checkout.iban,
-        receiverName: checkout.receiverName,
-        bankName: checkout.bankName,
-        paymentPurpose: checkout.paymentPurpose,
-        paymentReference: checkout.paymentReference,
-        qrText: checkout.qrText
+      acquiring: {
+        invoiceId: checkout.data.invoiceId,
+        pageUrl: checkout.data.pageUrl,
+        reference: checkout.data.reference
       }
     }
   });
@@ -237,13 +237,13 @@ export async function startProCheckoutAction(
     elementKey: `monobank:${interval}`,
     metadata: {
       provider: "monobank",
-      orderId: checkout.orderId,
-      paymentReference: checkout.paymentReference,
-      amountMinor: checkout.amountMinor,
-      currency: checkout.currency.toLowerCase(),
-      amountLabel: formatMinorCurrency(checkout.amountMinor, checkout.currency, locale)
+      invoiceId: checkout.data.invoiceId,
+      reference: checkout.data.reference,
+      amountMinor: checkout.data.amountMinor,
+      currency: checkout.data.currency.toLowerCase(),
+      amountLabel: formatMinorCurrency(checkout.data.amountMinor, checkout.data.currency, locale)
     }
   });
 
-  redirect(`/billing/monobank/checkout?order=${encodeURIComponent(checkout.orderId)}`);
+  redirect(checkout.data.pageUrl);
 }

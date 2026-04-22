@@ -26,10 +26,6 @@ function parseMinor(value: string | undefined, fallback: number): number {
   return Math.floor(parsed);
 }
 
-function normalizeUAIban(value: string): string {
-  return value.replace(/[^A-Za-z0-9]+/g, "").toUpperCase();
-}
-
 export function getProPriceConfig(): ProPriceConfig {
   return {
     currency: parseCurrency(process.env.PRO_PRICE_CURRENCY),
@@ -38,16 +34,11 @@ export function getProPriceConfig(): ProPriceConfig {
   };
 }
 
-function isValidUaIban(value: string): boolean {
-  return /^UA[0-9]{27}$/.test(normalizeUAIban(value));
-}
-
 export function isMonobankBillingEnabled(): boolean {
-  const token = (process.env.MONOBANK_PERSONAL_TOKEN ?? "").trim();
-  const iban = normalizeUAIban(process.env.MONOBANK_IBAN ?? "");
-  const receiverName = (process.env.MONOBANK_RECEIVER_NAME ?? "").trim();
-
-  return Boolean(token && receiverName && isValidUaIban(iban));
+  const token =
+    (process.env.MONOBANK_ACQUIRING_TOKEN ?? "").trim() ||
+    (process.env.MONOBANK_PERSONAL_TOKEN ?? "").trim();
+  return Boolean(token);
 }
 
 export function getActiveBillingProvider(): BillingProvider | null {
