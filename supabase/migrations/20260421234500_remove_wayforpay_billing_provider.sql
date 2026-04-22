@@ -1,4 +1,26 @@
 -- Remove WayForPay from supported billing providers.
+-- Some environments may still contain legacy "wayforpay" rows.
+-- Remap them to "liqpay" before tightening CHECK constraints.
+
+update public.profiles
+set billing_provider = 'liqpay'
+where billing_provider = 'wayforpay';
+
+update public.billing_customers
+set provider = 'liqpay'
+where provider = 'wayforpay';
+
+update public.billing_checkout_sessions
+set provider = 'liqpay'
+where provider = 'wayforpay';
+
+update public.billing_subscriptions
+set provider = 'liqpay'
+where provider = 'wayforpay';
+
+update public.billing_payments
+set provider = 'liqpay'
+where provider = 'wayforpay';
 
 alter table public.profiles
   drop constraint if exists profiles_billing_provider_check;
