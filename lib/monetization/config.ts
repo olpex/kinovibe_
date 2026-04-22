@@ -2,7 +2,7 @@ import "server-only";
 import { toIntlLocale, type Locale } from "@/lib/i18n/shared";
 
 export type ProBillingInterval = "month" | "year";
-export type BillingProvider = "stripe" | "liqpay";
+export type BillingProvider = "stripe" | "liqpay" | "monobank";
 
 type ProPriceConfig = {
   currency: string;
@@ -48,9 +48,24 @@ export function isLiqpayBillingEnabled(): boolean {
   );
 }
 
+function isValidUaIban(value: string): boolean {
+  return /^UA[0-9]{27}$/.test(value.toUpperCase());
+}
+
+export function isMonobankBillingEnabled(): boolean {
+  const token = (process.env.MONOBANK_PERSONAL_TOKEN ?? "").trim();
+  const iban = (process.env.MONOBANK_IBAN ?? "").trim();
+  const receiverName = (process.env.MONOBANK_RECEIVER_NAME ?? "").trim();
+
+  return Boolean(token && receiverName && isValidUaIban(iban));
+}
+
 export function getActiveBillingProvider(): BillingProvider | null {
   const preferred = (process.env.BILLING_PROVIDER ?? "").trim().toLowerCase();
 
+  if (preferred === "monobank") {
+    return isMonobankBillingEnabled() ? "monobank" : null;
+  }
   if (preferred === "liqpay") {
     return isLiqpayBillingEnabled() ? "liqpay" : null;
   }
@@ -58,6 +73,9 @@ export function getActiveBillingProvider(): BillingProvider | null {
     return isStripeBillingEnabled() ? "stripe" : null;
   }
 
+  if (isMonobankBillingEnabled()) {
+    return "monobank";
+  }
   if (isLiqpayBillingEnabled()) {
     return "liqpay";
   }

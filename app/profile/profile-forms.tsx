@@ -209,6 +209,9 @@ export function ProfileForms({
                 ? translate(locale, "profile.planUpgradeSoon")
                 : translate(locale, "profile.openDonateSupport")}
             </Link>
+            {!billingEnabled ? (
+              <p className={styles.feedbackError}>{translate(locale, "profile.checkoutNotConfigured")}</p>
+            ) : null}
           </>
         ) : null}
       </section>

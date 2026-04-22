@@ -6,6 +6,10 @@ import { recordSiteEvent } from "@/lib/analytics/events";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/shared";
 import {
+  buildMonobankTransferCheckoutData,
+  getMonobankCheckoutExpiresHours
+} from "@/lib/monetization/monobank";
+import {
   formatMinorCurrency,
   getActiveBillingProvider,
   getProPriceConfig,
@@ -183,6 +187,68 @@ export async function startProCheckoutAction(
   const prices = getProPriceConfig();
   const amountMinor =
     interval === "year" ? prices.yearlyAmountMinor : prices.monthlyAmountMinor;
+
+  if (activeProvider === "monobank") {
+    const checkout = buildMonobankTransferCheckoutData({ interval });
+    if (!checkout) {
+      return {
+        ok: false,
+        message: translate(locale, "profile.checkoutNotConfigured")
+      };
+    }
+
+    const { error: checkoutInsertError } = await supabase.from("billing_checkout_sessions").insert({
+      user_id: user.id,
+      provider: "monobank",
+      provider_session_id: checkout.orderId,
+      plan_code: "pro",
+      billing_interval: interval,
+      status: "open",
+      checkout_url: null,
+      metadata_json: {
+        amountMinor: checkout.amountMinor,
+        amount: checkout.amountLabel,
+        currency: checkout.currency.toLowerCase(),
+        durationDays: getProDurationDays(interval),
+        checkoutExpiresAt: checkout.checkoutExpiresAtIso,
+        checkoutExpiresHours: getMonobankCheckoutExpiresHours(),
+        transfer: {
+          iban: checkout.iban,
+          receiverName: checkout.receiverName,
+          bankName: checkout.bankName,
+          paymentPurpose: checkout.paymentPurpose,
+          paymentReference: checkout.paymentReference,
+          qrText: checkout.qrText
+        }
+      }
+    });
+
+    if (checkoutInsertError) {
+      return {
+        ok: false,
+        message: translate(locale, "profile.checkoutCreateFailed", {
+          reason: checkoutInsertError.message
+        })
+      };
+    }
+
+    await recordSiteEvent(supabase, {
+      eventType: "pro_checkout_start",
+      userId: user.id,
+      pagePath: "/profile",
+      elementKey: `monobank:${interval}`,
+      metadata: {
+        provider: "monobank",
+        orderId: checkout.orderId,
+        paymentReference: checkout.paymentReference,
+        amountMinor: checkout.amountMinor,
+        currency: checkout.currency.toLowerCase(),
+        amountLabel: formatMinorCurrency(checkout.amountMinor, checkout.currency, locale)
+      }
+    });
+
+    redirect(`/billing/monobank/checkout?order=${encodeURIComponent(checkout.orderId)}`);
+  }
 
   if (activeProvider === "liqpay") {
     const payload = buildLiqpayCheckoutPayload({
