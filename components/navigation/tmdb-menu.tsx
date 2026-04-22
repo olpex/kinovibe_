@@ -39,22 +39,6 @@ const MENU_SECTIONS: MenuSection[] = [
     href: "/person",
     labelKey: "nav.people",
     links: [{ href: "/person", labelKey: "menu.popular" }]
-  },
-  {
-    href: "/discuss",
-    labelKey: "nav.more",
-    links: [
-      { href: "/free-legal", labelKey: "menu.freeLegal" },
-      { href: "/discuss", labelKey: "menu.discuss" },
-      { href: "/feedback", labelKey: "menu.feedback" },
-      { href: "/donate", labelKey: "menu.donate" },
-      { href: "/pro", labelKey: "menu.pro" },
-      { href: "/leaderboard", labelKey: "menu.leaderboard" },
-      { href: "/collections", labelKey: "menu.collections" },
-      { href: "/calendar", labelKey: "menu.calendar" },
-      { href: "/digest", labelKey: "menu.digest" },
-      { href: "/talk", labelKey: "menu.support" }
-    ]
   }
 ];
 

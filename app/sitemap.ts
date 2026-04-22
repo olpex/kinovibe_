@@ -40,8 +40,6 @@ const PUBLIC_ROUTES: PublicRoute[] = [
   { path: "/discuss", changeFrequency: "daily", priority: 0.8 },
   { path: "/talk", changeFrequency: "daily", priority: 0.76 },
   { path: "/feedback", changeFrequency: "weekly", priority: 0.65 },
-  { path: "/pro", changeFrequency: "weekly", priority: 0.74 },
-  { path: "/donate", changeFrequency: "weekly", priority: 0.62 },
   { path: "/terms", changeFrequency: "monthly", priority: 0.55 },
   { path: "/privacy", changeFrequency: "monthly", priority: 0.55 },
   { path: "/content-policy", changeFrequency: "monthly", priority: 0.55 },

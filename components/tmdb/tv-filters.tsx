@@ -28,12 +28,10 @@ export function TvFilters({
   genres,
   countryOptions,
   filters,
-  defaultSort,
-  isPro
+  defaultSort
 }: TvFiltersProps) {
   const selectedGenres = new Set(filters.genreIds);
   const activeCount = countActiveTvDiscoverFilters(filters, defaultSort);
-  const lockProFilters = !isPro;
   const mobileToggleId = "tv-filters-mobile-toggle";
   const mobileToggleLabel =
     activeCount > 0
@@ -143,7 +141,6 @@ export function TvFilters({
             max={1000000}
             step={10}
             defaultValue={filters.voteCountFrom ?? ""}
-            disabled={lockProFilters}
           />
         </div>
 
@@ -180,7 +177,6 @@ export function TvFilters({
             id="tv-filter-country"
             name="country"
             defaultValue={filters.originCountry ?? ""}
-            disabled={lockProFilters}
           >
             <option value="">{translate(locale, "tv.filters.allCountries")}</option>
             {resolvedCountryOptions.map((option) => (
@@ -214,7 +210,6 @@ export function TvFilters({
             id="tv-filter-language"
             name="lang"
             defaultValue={filters.originalLanguage ?? ""}
-            disabled={lockProFilters}
           >
             {languageOptions.map((option) => (
               <option key={option.value || "all"} value={option.value}>
@@ -223,14 +218,6 @@ export function TvFilters({
             ))}
           </select>
         </div>
-
-        {lockProFilters ? (
-          <div className={styles.paywallBox}>
-            <strong>{translate(locale, "monetization.proRequiredTitle")}</strong>
-            <p>{translate(locale, "monetization.proFiltersHint")}</p>
-            <a href="/profile">{translate(locale, "monetization.managePlan")}</a>
-          </div>
-        ) : null}
 
         <div className={styles.actions}>
           <button type="submit">{translate(locale, "movie.filters.apply")}</button>

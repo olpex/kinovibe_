@@ -9,7 +9,6 @@ import {
 } from "@/lib/i18n/shared";
 import {
   countActiveMovieDiscoverFilters,
-  enforceMovieDiscoverPlan,
   MOVIE_DISCOVER_SORT_OPTIONS,
   movieDiscoverFiltersToQuery,
   parseMovieDiscoverFilters,
@@ -69,7 +68,6 @@ export function MovieFilters({
   providers,
   countries,
   filters,
-  isPro,
   liveApply = true
 }: MovieFiltersProps) {
   const router = useRouter();
@@ -81,8 +79,6 @@ export function MovieFilters({
   const selectedGenres = new Set(filters.genreIds);
   const selectedProviders = new Set(filters.watchProviderIds ?? []);
   const activeCount = countActiveMovieDiscoverFilters(filters);
-  const lockProFilters = !isPro;
-  const proOnlySortValues = new Set(["vote_count.desc", "vote_count.asc"]);
   const mobileToggleLabel = isMobileFiltersOpen
     ? translate(locale, "common.close")
     : activeCount > 0
@@ -104,8 +100,7 @@ export function MovieFilters({
   const applyFilters = useCallback(
     (form: HTMLFormElement) => {
       const parsed = parseMovieDiscoverFilters(formDataToParams(new FormData(form)));
-      const constrained = enforceMovieDiscoverPlan(parsed, isPro);
-      const query = movieDiscoverFiltersToQuery(constrained);
+      const query = movieDiscoverFiltersToQuery(parsed);
       const params = new URLSearchParams(query);
       const nextUrl = params.toString().length > 0 ? `${basePath}?${params.toString()}` : basePath;
       if (nextUrl === lastUrlRef.current) {
@@ -116,7 +111,7 @@ export function MovieFilters({
         router.replace(nextUrl, { scroll: false });
       });
     },
-    [basePath, isPro, router, startTransition]
+    [basePath, router, startTransition]
   );
 
   const scheduleLiveApply = useCallback(
@@ -192,11 +187,7 @@ export function MovieFilters({
           <label htmlFor="movie-filter-sort">{translate(locale, "movie.filters.sortBy")}</label>
           <select id="movie-filter-sort" name="sort" defaultValue={filters.sortBy}>
             {MOVIE_DISCOVER_SORT_OPTIONS.map((option) => (
-              <option
-                key={option.value}
-                value={option.value}
-                disabled={lockProFilters && proOnlySortValues.has(option.value)}
-              >
+              <option key={option.value} value={option.value}>
                 {translate(locale, option.labelKey)}
               </option>
             ))}
@@ -214,7 +205,7 @@ export function MovieFilters({
           </label>
         </div>
 
-        <fieldset className={styles.lockableFieldset} disabled={lockProFilters}>
+        <fieldset className={styles.lockableFieldset}>
           <div className={styles.row}>
             <div className={styles.group}>
               <label htmlFor="movie-filter-year-from">
@@ -255,7 +246,6 @@ export function MovieFilters({
             id="movie-filter-country"
             name="country"
             defaultValue={filters.originCountry ?? ""}
-            disabled={lockProFilters}
           >
             <option value="">{translate(locale, "movie.filters.allCountries")}</option>
             {countries.map((country) => (
@@ -326,11 +316,10 @@ export function MovieFilters({
             max={500000}
             step={10}
             defaultValue={filters.voteCountFrom ?? ""}
-            disabled={lockProFilters}
           />
         </div>
 
-        <fieldset className={styles.lockableFieldset} disabled={lockProFilters}>
+        <fieldset className={styles.lockableFieldset}>
           <div className={styles.row}>
             <div className={styles.group}>
               <label htmlFor="movie-filter-runtime-from">
@@ -371,7 +360,6 @@ export function MovieFilters({
             id="movie-filter-language"
             name="lang"
             defaultValue={filters.originalLanguage ?? ""}
-            disabled={lockProFilters}
           >
             {languageOptions.map((option) => (
               <option key={option.value || "all"} value={option.value}>
@@ -381,7 +369,7 @@ export function MovieFilters({
           </select>
         </div>
 
-        <fieldset className={styles.genreGroup} disabled={lockProFilters}>
+        <fieldset className={styles.genreGroup}>
           <legend>{translate(locale, "movie.filters.watchSection")}</legend>
           {providers.length > 0 ? (
             <div className={styles.providerGrid}>
@@ -402,7 +390,7 @@ export function MovieFilters({
           )}
         </fieldset>
 
-        <fieldset className={styles.lockableFieldset} disabled={lockProFilters}>
+        <fieldset className={styles.lockableFieldset}>
           <div className={styles.group}>
             <label htmlFor="movie-filter-cert-country">
               {translate(locale, "movie.filters.certCountry")}
@@ -432,16 +420,6 @@ export function MovieFilters({
             />
           </div>
         </fieldset>
-
-
-
-        {lockProFilters ? (
-          <div className={styles.paywallBox}>
-            <strong>{translate(locale, "monetization.proRequiredTitle")}</strong>
-            <p>{translate(locale, "monetization.proFiltersHint")}</p>
-            <a href="/profile">{translate(locale, "monetization.managePlan")}</a>
-          </div>
-        ) : null}
 
         <div className={styles.actions}>
           <button type="submit" disabled={isPending}>

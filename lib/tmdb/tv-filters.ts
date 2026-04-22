@@ -145,18 +145,9 @@ export function parseTvDiscoverFilters(
 
 export function enforceTvDiscoverPlan(
   filters: TvDiscoverFilters,
-  isPro: boolean
+  _isPro: boolean
 ): TvDiscoverFilters {
-  if (isPro) {
-    return filters;
-  }
-
-  return {
-    ...filters,
-    voteCountFrom: undefined,
-    originCountry: undefined,
-    originalLanguage: undefined
-  };
+  return filters;
 }
 
 export function hasActiveTvDiscoverFilters(

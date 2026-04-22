@@ -129,27 +129,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DigestPage() {
   const [locale, session] = await Promise.all([getRequestLocale(), getSessionUser()]);
-  if (!session.isPro) {
-    return (
-      <CatalogPageShell
-        locale={locale}
-        session={session}
-        title={translate(locale, "digest.title")}
-        subtitle={translate(locale, "digest.subtitle")}
-      >
-        <section className={styles.empty}>
-          <h2>{translate(locale, "monetization.proRequiredTitle")}</h2>
-          <p>{translate(locale, "pro.feature.digestBody")}</p>
-          <Link
-            href={session.isAuthenticated ? "/profile" : "/auth?next=/profile"}
-            className={styles.linkButton}
-          >
-            {translate(locale, "monetization.managePlan")}
-          </Link>
-        </section>
-      </CatalogPageShell>
-    );
-  }
 
   const tvFilters: TvDiscoverFilters = {
     sortBy: "first_air_date.desc",

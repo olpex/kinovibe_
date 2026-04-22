@@ -36,7 +36,6 @@ export type MovieDiscoverFilters = {
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
 const SORT_VALUES = new Set<string>(MOVIE_DISCOVER_SORT_OPTIONS.map((entry) => entry.value));
-const PRO_ONLY_SORT_VALUES = new Set<string>(["vote_count.desc", "vote_count.asc"]);
 const BLOCKED_COUNTRY_CODES = new Set(["RU"]);
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -190,26 +189,9 @@ export function parseMovieDiscoverFilters(params: CatalogSearchParams): MovieDis
 
 export function enforceMovieDiscoverPlan(
   filters: MovieDiscoverFilters,
-  isPro: boolean
+  _isPro: boolean
 ): MovieDiscoverFilters {
-  if (isPro) {
-    return filters;
-  }
-
-  return {
-    ...filters,
-    sortBy: PRO_ONLY_SORT_VALUES.has(filters.sortBy) ? DEFAULT_MOVIE_DISCOVER_SORT : filters.sortBy,
-    yearFrom: undefined,
-    yearTo: undefined,
-    voteCountFrom: undefined,
-    runtimeFrom: undefined,
-    runtimeTo: undefined,
-    originCountry: undefined,
-    originalLanguage: undefined,
-    watchProviderIds: [],
-    certificationCountry: undefined,
-    certificationCode: undefined
-  };
+  return filters;
 }
 
 export function hasActiveMovieDiscoverFilters(filters: MovieDiscoverFilters): boolean {

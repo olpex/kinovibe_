@@ -196,21 +196,6 @@ export default async function WatchlistPage() {
     );
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("billing_plan,plan_expires_at,billing_status")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const planExpiresAtRaw = (profile?.plan_expires_at as string | null) ?? null;
-  const planExpiresAt = planExpiresAtRaw ? new Date(planExpiresAtRaw) : null;
-  const planIsStillActive =
-    !planExpiresAt || !Number.isFinite(planExpiresAt.getTime()) || planExpiresAt.getTime() > Date.now();
-  const isPro =
-    (profile?.billing_plan as string | null)?.toLowerCase() === "pro" &&
-    (profile?.billing_status as string | null)?.toLowerCase() !== "expired" &&
-    planIsStillActive;
-
   const { data, error } = await supabase
     .from("watchlist_items")
     .select(
@@ -293,7 +278,7 @@ export default async function WatchlistPage() {
         </p>
       </section>
 
-      {!error && items.length > 0 && isPro ? (
+      {!error && items.length > 0 ? (
         <section className={styles.insights} aria-label={translate(locale, "watchlist.insightsTitle")}>
           <div className={styles.insightCopy}>
             <h2>{translate(locale, "watchlist.insightsTitle")}</h2>
@@ -321,16 +306,6 @@ export default async function WatchlistPage() {
           ) : null}
           <Link href="/digest" className={styles.digestLink}>
             {translate(locale, "watchlist.openDigest")}
-          </Link>
-        </section>
-      ) : null}
-
-      {!error && items.length > 0 && !isPro ? (
-        <section className={styles.emptyCard}>
-          <h2>{translate(locale, "monetization.proRequiredTitle")}</h2>
-          <p>{translate(locale, "pro.feature.watchlistBody")}</p>
-          <Link href="/profile" className={styles.ctaLink}>
-            {translate(locale, "monetization.managePlan")}
           </Link>
         </section>
       ) : null}
