@@ -22,9 +22,9 @@ supabase db push
 11. `20260419221000_disable_legacy_legal_starter.sql`
 12. `20260419223500_reseed_legal_catalog_archive_org.sql`
 13. `20260419235500_billing_and_ads_monetization.sql`
-14. `20260421200000_wayforpay_billing_provider.sql`
-15. `20260421233000_liqpay_billing_provider.sql`
-16. `20260421234500_remove_wayforpay_billing_provider.sql`
+14. `20260421200000_billing_provider_legacy_step1.sql`
+15. `20260421233000_billing_provider_legacy_step2.sql`
+16. `20260421234500_billing_provider_legacy_step3.sql`
 17. `20260422110000_monobank_billing_provider.sql`
 
 ## Content policy bulk seed

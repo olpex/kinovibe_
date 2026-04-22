@@ -12,13 +12,9 @@ import {
 import {
   formatMinorCurrency,
   getActiveBillingProvider,
-  getProPriceConfig,
   getProDurationDays,
   type ProBillingInterval
 } from "@/lib/monetization/config";
-import { buildLiqpayCheckoutPayload } from "@/lib/monetization/liqpay";
-import { getStripeServerClient } from "@/lib/monetization/stripe";
-import { resolveSiteUrl } from "@/lib/seo/site";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type ProfileActionState = {
@@ -184,217 +180,70 @@ export async function startProCheckoutAction(
   }
 
   const interval = normalizeInterval(asString(formData.get("interval")));
-  const prices = getProPriceConfig();
-  const amountMinor =
-    interval === "year" ? prices.yearlyAmountMinor : prices.monthlyAmountMinor;
-
-  if (activeProvider === "monobank") {
-    const checkout = buildMonobankTransferCheckoutData({ interval });
-    if (!checkout) {
-      return {
-        ok: false,
-        message: translate(locale, "profile.checkoutNotConfigured")
-      };
-    }
-
-    const { error: checkoutInsertError } = await supabase.from("billing_checkout_sessions").insert({
-      user_id: user.id,
-      provider: "monobank",
-      provider_session_id: checkout.orderId,
-      plan_code: "pro",
-      billing_interval: interval,
-      status: "open",
-      checkout_url: null,
-      metadata_json: {
-        amountMinor: checkout.amountMinor,
-        amount: checkout.amountLabel,
-        currency: checkout.currency.toLowerCase(),
-        durationDays: getProDurationDays(interval),
-        checkoutExpiresAt: checkout.checkoutExpiresAtIso,
-        checkoutExpiresHours: getMonobankCheckoutExpiresHours(),
-        transfer: {
-          iban: checkout.iban,
-          receiverName: checkout.receiverName,
-          bankName: checkout.bankName,
-          paymentPurpose: checkout.paymentPurpose,
-          paymentReference: checkout.paymentReference,
-          qrText: checkout.qrText
-        }
-      }
-    });
-
-    if (checkoutInsertError) {
-      return {
-        ok: false,
-        message: translate(locale, "profile.checkoutCreateFailed", {
-          reason: checkoutInsertError.message
-        })
-      };
-    }
-
-    await recordSiteEvent(supabase, {
-      eventType: "pro_checkout_start",
-      userId: user.id,
-      pagePath: "/profile",
-      elementKey: `monobank:${interval}`,
-      metadata: {
-        provider: "monobank",
-        orderId: checkout.orderId,
-        paymentReference: checkout.paymentReference,
-        amountMinor: checkout.amountMinor,
-        currency: checkout.currency.toLowerCase(),
-        amountLabel: formatMinorCurrency(checkout.amountMinor, checkout.currency, locale)
-      }
-    });
-
-    redirect(`/billing/monobank/checkout?order=${encodeURIComponent(checkout.orderId)}`);
-  }
-
-  if (activeProvider === "liqpay") {
-    const payload = buildLiqpayCheckoutPayload({
-      userId: user.id,
-      interval,
-      locale
-    });
-
-    if (!payload) {
-      return {
-        ok: false,
-        message: translate(locale, "profile.checkoutNotConfigured")
-      };
-    }
-
-    const { error: checkoutInsertError } = await supabase.from("billing_checkout_sessions").insert({
-      user_id: user.id,
-      provider: "liqpay",
-      provider_session_id: payload.orderId,
-      plan_code: "pro",
-      billing_interval: interval,
-      status: "open",
-      checkout_url: null,
-      metadata_json: {
-        amountMinor,
-        amount: payload.amount,
-        currency: payload.currency.toLowerCase(),
-        signatureAlgorithm: payload.signatureAlgorithm,
-        checkout: {
-          data: payload.data,
-          signature: payload.signature
-        },
-        durationDays: getProDurationDays(interval)
-      }
-    });
-
-    if (checkoutInsertError) {
-      return {
-        ok: false,
-        message: translate(locale, "profile.checkoutCreateFailed", {
-          reason: checkoutInsertError.message
-        })
-      };
-    }
-
-    await recordSiteEvent(supabase, {
-      eventType: "pro_checkout_start",
-      userId: user.id,
-      pagePath: "/profile",
-      elementKey: `liqpay:${interval}`,
-      metadata: {
-        provider: "liqpay",
-        orderId: payload.orderId,
-        amountMinor,
-        currency: payload.currency.toLowerCase(),
-        amountLabel: formatMinorCurrency(amountMinor, prices.currency, locale)
-      }
-    });
-
-    redirect(`/billing/liqpay/checkout?order=${encodeURIComponent(payload.orderId)}`);
-  }
-
-  const stripe = getStripeServerClient();
-  if (!stripe) {
+  if (activeProvider !== "monobank") {
     return {
       ok: false,
       message: translate(locale, "profile.checkoutNotConfigured")
     };
   }
 
-  const siteUrl = resolveSiteUrl();
-
-  let session;
-  try {
-    session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      success_url: `${siteUrl}/profile?billing=success`,
-      cancel_url: `${siteUrl}/profile?billing=cancel`,
-      client_reference_id: user.id,
-      customer_email: user.email ?? undefined,
-      allow_promotion_codes: true,
-      metadata: {
-        userId: user.id,
-        planCode: "pro",
-        billingInterval: interval
-      },
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: prices.currency.toLowerCase(),
-            unit_amount: amountMinor,
-            product_data: {
-              name:
-                interval === "year"
-                  ? "KinoVibe Pro (Year)"
-                  : "KinoVibe Pro (Month)",
-              description: `Unlock advanced KinoVibe filters and personalization (${interval}).`
-            }
-          }
-        }
-      ]
-    });
-  } catch (error) {
+  const checkout = buildMonobankTransferCheckoutData({ interval });
+  if (!checkout) {
     return {
       ok: false,
-      message: translate(locale, "profile.checkoutCreateFailed", {
-        reason: error instanceof Error ? error.message : "unknown_error"
-      })
+      message: translate(locale, "profile.checkoutNotConfigured")
     };
   }
 
-  if (!session.url) {
-    return {
-      ok: false,
-      message: translate(locale, "profile.checkoutCreateFailed", {
-        reason: "missing_checkout_url"
-      })
-    };
-  }
-
-  await supabase.from("billing_checkout_sessions").insert({
+  const { error: checkoutInsertError } = await supabase.from("billing_checkout_sessions").insert({
     user_id: user.id,
-    provider: "stripe",
-    provider_session_id: session.id,
+    provider: "monobank",
+    provider_session_id: checkout.orderId,
     plan_code: "pro",
     billing_interval: interval,
     status: "open",
-    checkout_url: session.url,
+    checkout_url: null,
     metadata_json: {
-      amountMinor,
-      currency: prices.currency.toLowerCase()
+      amountMinor: checkout.amountMinor,
+      amount: checkout.amountLabel,
+      currency: checkout.currency.toLowerCase(),
+      durationDays: getProDurationDays(interval),
+      checkoutExpiresAt: checkout.checkoutExpiresAtIso,
+      checkoutExpiresHours: getMonobankCheckoutExpiresHours(),
+      transfer: {
+        iban: checkout.iban,
+        receiverName: checkout.receiverName,
+        bankName: checkout.bankName,
+        paymentPurpose: checkout.paymentPurpose,
+        paymentReference: checkout.paymentReference,
+        qrText: checkout.qrText
+      }
     }
   });
+
+  if (checkoutInsertError) {
+    return {
+      ok: false,
+      message: translate(locale, "profile.checkoutCreateFailed", {
+        reason: checkoutInsertError.message
+      })
+    };
+  }
 
   await recordSiteEvent(supabase, {
     eventType: "pro_checkout_start",
     userId: user.id,
     pagePath: "/profile",
-    elementKey: `checkout:${interval}`,
+    elementKey: `monobank:${interval}`,
     metadata: {
-      amountMinor,
-      currency: prices.currency.toLowerCase(),
-      amountLabel: formatMinorCurrency(amountMinor, prices.currency, locale)
+      provider: "monobank",
+      orderId: checkout.orderId,
+      paymentReference: checkout.paymentReference,
+      amountMinor: checkout.amountMinor,
+      currency: checkout.currency.toLowerCase(),
+      amountLabel: formatMinorCurrency(checkout.amountMinor, checkout.currency, locale)
     }
   });
 
-  redirect(session.url);
+  redirect(`/billing/monobank/checkout?order=${encodeURIComponent(checkout.orderId)}`);
 }
