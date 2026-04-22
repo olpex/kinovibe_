@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/monobank-pro-sync",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/audit-retention",
