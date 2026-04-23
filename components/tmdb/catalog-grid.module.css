@@ -8,7 +8,7 @@
   border: 1px solid var(--color-border);
   border-radius: 1rem;
   overflow: hidden;
-  background: rgba(21, 27, 36, 0.9);
+  background: color-mix(in srgb, var(--color-surface) 95%, transparent);
   display: grid;
   grid-template-rows: 260px auto;
   text-decoration: none;
@@ -18,7 +18,7 @@
 .card:hover {
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+  box-shadow: var(--shadow-soft);
 }
 
 .card:focus-visible {
@@ -35,14 +35,18 @@
   justify-content: center;
   padding: 0.7rem;
   text-align: center;
-  background: rgba(11, 15, 20, 0.55);
+  background: color-mix(in srgb, var(--color-surface-soft) 82%, transparent);
 }
 
 .poster::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.04));
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-bg) 40%, transparent),
+    color-mix(in srgb, var(--color-bg) 6%, transparent)
+  );
   pointer-events: none;
 }
 
@@ -102,7 +106,7 @@
 
 .broadcastLine {
   font-size: 0.78rem !important;
-  color: color-mix(in srgb, var(--color-text-soft) 90%, #fff 10%) !important;
+  color: var(--color-text-soft) !important;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   line-clamp: 1;
@@ -114,11 +118,11 @@
   display: inline-flex;
   margin-top: 0.2rem;
   justify-self: start;
-  border: 1px solid rgba(0, 179, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 38%, var(--color-border));
   border-radius: 999px;
   padding: 0.18rem 0.45rem;
   font-size: 0.76rem;
-  color: #9fe4ff;
+  color: color-mix(in srgb, var(--color-secondary) 62%, var(--color-text) 38%);
   font-variant-numeric: tabular-nums;
 }
 
@@ -144,7 +148,7 @@
   border-radius: 0.9rem;
   padding: 1rem;
   color: var(--color-text-soft);
-  background: rgba(21, 27, 36, 0.6);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

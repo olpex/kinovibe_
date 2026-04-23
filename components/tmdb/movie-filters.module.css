@@ -1,7 +1,7 @@
 .sidebar {
   border: 1px solid var(--color-border);
   border-radius: 0.95rem;
-  background: rgba(11, 15, 20, 0.58);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
   padding: 0.85rem;
   display: grid;
   gap: 0.75rem;
@@ -88,7 +88,7 @@
   border: 1px solid var(--color-border);
   border-radius: 0.62rem;
   padding: 0.5rem 0.56rem;
-  background: rgba(26, 34, 48, 0.75);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
   color: var(--color-text);
 }
 
@@ -237,7 +237,7 @@
 .actions a {
   border: 1px solid var(--color-border);
   border-radius: 0.65rem;
-  background: rgba(26, 34, 48, 0.8);
+  background: color-mix(in srgb, var(--color-surface-soft) 90%, transparent);
   color: var(--color-text);
   min-height: 2.15rem;
   padding: 0.45rem 0.62rem;
@@ -312,8 +312,8 @@
     padding: 0.42rem;
     border: 1px solid var(--color-border);
     border-radius: 0.78rem;
-    background: rgba(11, 15, 20, 0.94);
-    box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.28);
+    background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+    box-shadow: var(--shadow-soft);
   }
 }
 
