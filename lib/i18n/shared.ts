@@ -78,8 +78,10 @@ const BASE_MESSAGES: Record<string, string> = {
 
   "theme.switchToLight": "Switch to light theme",
   "theme.switchToDark": "Switch to dark theme",
+  "theme.switchToSystem": "Switch to system theme",
   "theme.lightMode": "Light mode",
   "theme.darkMode": "Dark mode",
+  "theme.systemMode": "System mode",
 
   "home.featuredTonight": "Featured tonight",
   "home.watchTrailer": "Watch trailer",
@@ -1214,8 +1216,10 @@ const UK_MESSAGES: Record<string, string> = {
   "menu.discussTvFallback": "Обговорення епізодів і фанатських теорій щодо {title}.",
   "theme.switchToLight": "Увімкнути світлу тему",
   "theme.switchToDark": "Увімкнути темну тему",
+  "theme.switchToSystem": "Увімкнути системну тему",
   "theme.lightMode": "Світла тема",
   "theme.darkMode": "Темна тема",
+  "theme.systemMode": "Системна тема",
   "home.featuredTonight": "Головне сьогодні",
   "home.watchTrailer": "Дивитись трейлер",
   "home.addToWatchlist": "Додати в список",

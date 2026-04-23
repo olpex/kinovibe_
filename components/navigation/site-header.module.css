@@ -6,7 +6,7 @@
   padding: 0.9rem 1rem;
   border-radius: 1rem;
   border: 1px solid var(--color-border);
-  background: rgba(11, 15, 20, 0.74);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   backdrop-filter: blur(10px);
 }
 
@@ -41,7 +41,7 @@
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-  background: rgba(26, 34, 48, 0.82);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
 }
 
 .dataSourceTmdb {
@@ -80,7 +80,7 @@
   align-items: center;
   gap: 0.4rem;
   color: var(--color-text-soft);
-  background: rgba(26, 34, 48, 0.82);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
   font-weight: 650;
 }
 
@@ -103,7 +103,7 @@
   align-items: center;
   gap: 0.4rem;
   color: var(--color-text-soft);
-  background: rgba(26, 34, 48, 0.82);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
   font-weight: 650;
   cursor: pointer;
 }
@@ -114,7 +114,7 @@
 
 .quickMenu[open] .quickMenuSummary {
   border-color: color-mix(in srgb, var(--color-primary) 48%, var(--color-border));
-  background: rgba(38, 50, 72, 0.88);
+  background: color-mix(in srgb, var(--color-surface-soft) 92%, transparent);
 }
 
 .quickMenuBadge {
@@ -139,7 +139,7 @@
   width: min(260px, 84vw);
   border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  background: rgba(11, 15, 20, 0.96);
+  background: color-mix(in srgb, var(--color-surface) 95%, transparent);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.36);
   padding: 0.35rem;
   display: grid;
@@ -159,7 +159,7 @@
 
 .quickMenuLink:hover {
   border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
-  background: rgba(26, 34, 48, 0.88);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
 }
 
 .logo:focus-visible,
@@ -182,7 +182,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(26, 34, 48, 0.65);
+  background: color-mix(in srgb, var(--color-surface-soft) 80%, transparent);
 }
 
 .bellButton {
@@ -192,7 +192,7 @@
   justify-content: center;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: rgba(26, 34, 48, 0.82);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
   padding: 0.35rem 0.55rem;
   color: var(--color-text-soft);
   text-decoration: none;
@@ -254,7 +254,7 @@
   border-radius: 0.75rem;
   padding: 0.58rem 0.75rem;
   color: var(--color-text);
-  background: rgba(26, 34, 48, 0.78);
+  background: color-mix(in srgb, var(--color-surface-soft) 88%, transparent);
 }
 
 .searchForm button {

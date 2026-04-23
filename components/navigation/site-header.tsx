@@ -11,6 +11,7 @@ import {
   getAdminUnreadFeedbackCount,
   getUnreadNotificationCount
 } from "@/lib/notifications/client";
+import { ThemeToggle } from "./theme-toggle";
 import { TmdbMenu } from "./tmdb-menu";
 import { HeaderSearchForm } from "./header-search-form";
 import styles from "./site-header.module.css";
@@ -80,6 +81,7 @@ export async function SiteHeader({
               ) : null}
             </Link>
           ) : null}
+          <ThemeToggle locale={locale} />
           <LanguageToggle className={styles.pill} />
           {session.isAuthenticated ? (
             <form action={signOutAction}>

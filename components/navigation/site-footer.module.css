@@ -3,10 +3,15 @@
   max-width: 1180px;
   border: 1px solid var(--color-border);
   border-radius: 0.9rem;
-  background: rgba(21, 27, 36, 0.72);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
   padding: 0.7rem 0.8rem;
   display: grid;
   gap: 0.5rem;
+}
+
+.topRow {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .links {
@@ -20,7 +25,7 @@
   border-radius: 999px;
   padding: 0.34rem 0.62rem;
   color: var(--color-text);
-  background: rgba(11, 15, 20, 0.35);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
   text-decoration: none;
   font-size: 0.82rem;
 }

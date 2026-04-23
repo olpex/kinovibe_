@@ -1,0 +1,16 @@
+.button {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.42rem 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text-soft);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: color-mix(in srgb, var(--color-secondary) 45%, var(--color-border));
+}

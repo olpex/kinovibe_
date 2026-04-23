@@ -118,13 +118,34 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       "query-input": "required name=search_term_string"
     }
   };
+  const themeInitScript = `
+    (function () {
+      try {
+        var key = "kinovibe-theme";
+        var pref = localStorage.getItem(key);
+        if (pref !== "light" && pref !== "dark" && pref !== "system") {
+          pref = "light";
+        }
+        var resolved =
+          pref === "system"
+            ? (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+            : pref;
+        document.body.dataset.theme = resolved;
+        document.documentElement.style.colorScheme = resolved;
+      } catch (e) {
+        document.body.dataset.theme = "light";
+        document.documentElement.style.colorScheme = "light";
+      }
+    })();
+  `;
 
   return (
     <html lang={locale}>
       <body
-        data-theme="dark"
+        data-theme="light"
         className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable}`}
       >
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         {adsenseEnabled && adsenseClientId ? (
           <Script
             id="adsense-script"

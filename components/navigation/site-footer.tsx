@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { translate, type Locale } from "@/lib/i18n/shared";
+import { ThemeToggle } from "./theme-toggle";
 import styles from "./site-footer.module.css";
 
 type SiteFooterProps = {
@@ -9,6 +10,9 @@ type SiteFooterProps = {
 export function SiteFooter({ locale }: SiteFooterProps) {
   return (
     <footer className={styles.footer}>
+      <div className={styles.topRow}>
+        <ThemeToggle locale={locale} />
+      </div>
       <nav className={styles.links} aria-label={translate(locale, "legal.footerAria")}>
         <Link href="/free-legal" className={styles.link}>
           {translate(locale, "menu.freeLegal")}
