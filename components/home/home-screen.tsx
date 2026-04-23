@@ -232,8 +232,8 @@ export function HomeScreen({
       })
     : null;
   const heroBackground = featuredBackdropCss
-    ? `linear-gradient(125deg, rgba(11, 15, 20, 0.88), rgba(21, 27, 36, 0.95)), ${featuredBackdropCss} center / cover no-repeat`
-    : `radial-gradient(circle at 20% 20%, ${featured?.gradient[0] ?? "#3A0CA3"} 0%, transparent 55%), radial-gradient(circle at 85% 30%, ${featured?.gradient[1] ?? "#4CC9F0"} 0%, transparent 45%), linear-gradient(140deg, rgba(11, 15, 20, 0.9), rgba(21, 27, 36, 0.98))`;
+    ? `${featuredBackdropCss} center / cover no-repeat`
+    : "linear-gradient(145deg, var(--color-media-fallback-start), var(--color-media-fallback-end))";
 
   return (
     <main className={styles.page}>

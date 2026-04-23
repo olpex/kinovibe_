@@ -156,7 +156,7 @@
   width: min(520px, 100%);
   border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: rgba(13, 18, 24, 0.98);
+  background: color-mix(in srgb, var(--color-surface) 98%, transparent);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
   padding: 0.9rem;
   position: relative;
@@ -172,7 +172,7 @@
   border-radius: 999px;
   width: 1.8rem;
   height: 1.8rem;
-  background: rgba(26, 34, 48, 0.75);
+  background: color-mix(in srgb, var(--color-surface-soft) 92%, transparent);
   color: var(--color-text-soft);
   cursor: pointer;
 }

@@ -1,7 +1,7 @@
 .overview {
   border: 1px solid var(--color-border);
   border-radius: 0.9rem;
-  background: rgba(11, 15, 20, 0.42);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
   gap: 0.85rem;
@@ -43,7 +43,7 @@
 .watchlistItem {
   border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  background: rgba(26, 34, 48, 0.64);
+  background: color-mix(in srgb, var(--color-surface-soft) 89%, transparent);
 }
 
 .metrics div {
@@ -84,7 +84,7 @@
 .linkButton {
   border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  background: rgba(26, 34, 48, 0.72);
+  background: color-mix(in srgb, var(--color-surface-soft) 86%, transparent);
   color: var(--color-text);
   display: inline-flex;
   align-items: center;
@@ -116,7 +116,7 @@
 .empty {
   border: 1px dashed var(--color-border);
   border-radius: 0.9rem;
-  background: rgba(21, 27, 36, 0.55);
+  background: color-mix(in srgb, var(--color-surface-soft) 90%, transparent);
   padding: 1rem;
 }
 

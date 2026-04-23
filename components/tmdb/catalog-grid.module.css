@@ -42,11 +42,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--color-bg) 40%, transparent),
-    color-mix(in srgb, var(--color-bg) 6%, transparent)
-  );
+  background: var(--color-media-scrim);
   pointer-events: none;
 }
 
@@ -128,10 +124,10 @@
 
 .posterFallbackText {
   z-index: 1;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--color-media-chip-border);
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.32);
-  color: #fff;
+  background: var(--color-media-chip-bg);
+  color: var(--color-media-chip-text);
   font-family: var(--font-heading);
   font-size: 0.9rem;
   line-height: 1.35;

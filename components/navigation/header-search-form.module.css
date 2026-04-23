@@ -15,7 +15,7 @@
   right: 0;
   border: 1px solid var(--color-border);
   border-radius: 0.8rem;
-  background: rgba(11, 15, 20, 0.96);
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.36);
   z-index: 30;
   max-height: min(360px, 55vh);
@@ -60,7 +60,7 @@
 .item:hover,
 .itemActive {
   border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
-  background: rgba(26, 34, 48, 0.88);
+  background: color-mix(in srgb, var(--color-surface-soft) 90%, transparent);
 }
 
 .item:focus-visible {

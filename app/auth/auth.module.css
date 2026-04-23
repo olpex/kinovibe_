@@ -48,7 +48,7 @@
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 1rem;
-  background: linear-gradient(140deg, rgba(11, 15, 20, 0.82), rgba(21, 27, 36, 0.95));
+  background: linear-gradient(140deg, var(--color-media-fallback-start), var(--color-media-fallback-end));
 }
 
 .hero h1 {

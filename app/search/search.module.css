@@ -141,14 +141,14 @@
   position: relative;
   height: 240px;
   overflow: hidden;
-  background: rgba(11, 15, 20, 0.55);
+  background: linear-gradient(145deg, var(--color-media-fallback-start), var(--color-media-fallback-end));
 }
 
 .poster::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.1));
+  background: var(--color-media-scrim);
   pointer-events: none;
 }
 
@@ -166,10 +166,10 @@
 }
 
 .posterFallback span {
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--color-media-chip-border);
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.32);
-  color: #fff;
+  background: var(--color-media-chip-bg);
+  color: var(--color-media-chip-text);
   font-family: var(--font-heading);
   font-size: 0.9rem;
   line-height: 1.35;

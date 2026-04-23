@@ -7,13 +7,22 @@
   --color-secondary: #00b3ff;
   --color-bg: #f2f5fb;
   --color-surface: #ffffff;
-  --color-surface-soft: #ebeff7;
-  --color-text: #111827;
-  --color-text-soft: #4b5563;
+  --color-surface-soft: #eef3fb;
+  --color-text: #0b1220;
+  --color-text-soft: #1f2937;
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-danger: #ef4444;
   --color-border: rgba(15, 23, 42, 0.14);
+  --color-media-fallback-start: #dbe8ff;
+  --color-media-fallback-end: #f4f8ff;
+  --color-media-fallback-alt-start: #dbeafe;
+  --color-media-fallback-alt-end: #f1f5f9;
+  --color-media-chip-bg: rgba(255, 255, 255, 0.88);
+  --color-media-chip-border: rgba(15, 23, 42, 0.2);
+  --color-media-chip-text: #0b1220;
+  --color-media-scrim: transparent;
+  --color-backdrop-overlay: rgba(255, 255, 255, 0.84);
 
   --radius-card: 14px;
   --radius-control: 10px;
@@ -27,6 +36,15 @@ body[data-theme="dark"] {
   --color-text: #f5f7fa;
   --color-text-soft: #9aa4b2;
   --color-border: rgba(255, 255, 255, 0.1);
+  --color-media-fallback-start: #273246;
+  --color-media-fallback-end: #121927;
+  --color-media-fallback-alt-start: #334155;
+  --color-media-fallback-alt-end: #111827;
+  --color-media-chip-bg: rgba(11, 15, 20, 0.56);
+  --color-media-chip-border: rgba(255, 255, 255, 0.24);
+  --color-media-chip-text: #f5f7fa;
+  --color-media-scrim: linear-gradient(to top, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.08));
+  --color-backdrop-overlay: rgba(11, 15, 20, 0.65);
   --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.25);
 }
 

@@ -1,7 +1,7 @@
 .filtersCard {
   border: 1px solid var(--color-border);
   border-radius: 0.95rem;
-  background: rgba(11, 15, 20, 0.42);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
   padding: 0.75rem;
   display: grid;
   gap: 0.68rem;
@@ -29,7 +29,7 @@
   border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 0.28rem 0.58rem;
-  background: rgba(26, 34, 48, 0.78);
+  background: color-mix(in srgb, var(--color-surface-soft) 85%, transparent);
   color: var(--color-text-soft);
   font-size: 0.82rem;
   text-decoration: none;
@@ -37,7 +37,7 @@
 
 .filterTabActive {
   border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-border));
-  background: color-mix(in srgb, var(--color-primary) 68%, rgba(26, 34, 48, 0.9));
+  background: color-mix(in srgb, var(--color-primary) 68%, var(--color-surface-soft));
   color: #fff;
 }
 
@@ -51,7 +51,7 @@
 .explainerCard {
   border: 1px solid var(--color-border);
   border-radius: 1rem;
-  background: rgba(11, 15, 20, 0.5);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   padding: 0.9rem;
   display: grid;
   gap: 0.65rem;
@@ -102,7 +102,7 @@
 .kpiCard {
   border: 1px solid var(--color-border);
   border-radius: 0.85rem;
-  background: rgba(11, 15, 20, 0.5);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   padding: 0.7rem;
   display: grid;
   gap: 0.42rem;
@@ -124,7 +124,7 @@
 .selfCard {
   border: 1px solid var(--color-border);
   border-radius: 0.85rem;
-  background: rgba(11, 15, 20, 0.5);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   padding: 0.75rem;
   display: grid;
   gap: 0.45rem;
@@ -151,7 +151,7 @@
   overflow-x: auto;
   border: 1px solid var(--color-border);
   border-radius: 0.95rem;
-  background: rgba(11, 15, 20, 0.45);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
 }
 
 .table {
@@ -181,7 +181,7 @@
 }
 
 .currentUserRow {
-  background: color-mix(in srgb, var(--color-secondary) 14%, rgba(11, 15, 20, 0.4));
+  background: color-mix(in srgb, var(--color-secondary) 14%, var(--color-surface-soft));
 }
 
 .memberCell {
@@ -203,7 +203,7 @@
   border: 1px dashed var(--color-border);
   border-radius: 0.95rem;
   padding: 0.95rem;
-  background: rgba(11, 15, 20, 0.38);
+  background: color-mix(in srgb, var(--color-surface) 91%, transparent);
   display: grid;
   gap: 0.5rem;
 }

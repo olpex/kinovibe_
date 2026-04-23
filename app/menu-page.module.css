@@ -4,7 +4,7 @@
   background: linear-gradient(
       180deg,
       color-mix(in srgb, var(--color-secondary) 18%, transparent),
-      rgba(11, 15, 20, 0) 18rem
+      transparent 18rem
     ),
     var(--color-bg);
 }

@@ -127,8 +127,8 @@ export default async function TvDetailsPage({ params }: TvDetailsPageProps) {
           className={styles.hero}
           style={{
             background: backdropCss
-              ? `linear-gradient(120deg, rgba(11, 15, 20, 0.88), rgba(21, 27, 36, 0.95)), ${backdropCss} center / cover no-repeat`
-              : "linear-gradient(145deg, #1f2632 0%, #11161f 100%)"
+              ? `${backdropCss} center / cover no-repeat`
+              : "linear-gradient(145deg, var(--color-media-fallback-start), var(--color-media-fallback-end))"
           }}
         >
           <div className={styles.posterWrap}>

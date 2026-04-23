@@ -110,6 +110,10 @@
 .heroContent {
   max-width: 620px;
   padding: 2.2rem clamp(1rem, 4vw, 2.2rem);
+  margin: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-backdrop-overlay);
   animation: heroReveal 420ms ease-out both;
 }
 
@@ -415,14 +419,14 @@
   justify-content: center;
   padding: 0.6rem;
   overflow: hidden;
-  background: rgba(11, 15, 20, 0.5);
+  background: linear-gradient(145deg, var(--color-media-fallback-start), var(--color-media-fallback-end));
 }
 
 .poster::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.42), transparent 58%);
+  background: var(--color-media-scrim);
   pointer-events: none;
 }
 
@@ -445,19 +449,19 @@
   top: 0.6rem;
   right: 0.6rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
+  border: 1px solid var(--color-media-chip-border);
+  background: var(--color-media-chip-bg);
+  color: var(--color-media-chip-text);
   padding: 0.18rem 0.48rem;
   font-size: 0.72rem;
 }
 
 .posterFallbackTitle {
   z-index: 1;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--color-media-chip-border);
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.34);
-  color: #fff;
+  background: var(--color-media-chip-bg);
+  color: var(--color-media-chip-text);
   font-family: var(--font-heading);
   font-size: 0.86rem;
   line-height: 1.35;

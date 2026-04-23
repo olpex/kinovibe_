@@ -2,7 +2,7 @@
 .authCard {
   border: 1px solid var(--color-border);
   border-radius: 0.95rem;
-  background: rgba(11, 15, 20, 0.45);
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
   padding: 0.9rem;
   display: grid;
   gap: 0.55rem;
@@ -40,7 +40,7 @@
 .form textarea {
   border: 1px solid var(--color-border);
   border-radius: 0.72rem;
-  background: rgba(26, 34, 48, 0.78);
+  background: color-mix(in srgb, var(--color-surface-soft) 85%, transparent);
   color: var(--color-text);
   padding: 0.56rem 0.62rem;
   font: inherit;
