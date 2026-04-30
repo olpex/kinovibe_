@@ -60,7 +60,7 @@ function createMaintenanceResponse(): NextResponse {
       }
 
       main {
-        max-width: 520px;
+        max-width: 760px;
       }
 
       h1 {
@@ -75,12 +75,45 @@ function createMaintenanceResponse(): NextResponse {
         font-size: 18px;
         line-height: 1.55;
       }
+
+      ul {
+        margin: 24px 0 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 12px;
+      }
+
+      li {
+        color: #dce4ee;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      strong {
+        color: #ffffff;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>KinoVibe</h1>
-      <p>Сайт тимчасово закритий на технічні роботи. Будь ласка, поверніться пізніше.</p>
+      <p>Сайт тимчасово закритий до моменту оплати проєкту за PRO-планом за допомогою небайдужих відвідувачів.</p>
+      <ul aria-label="Maintenance notice translations">
+        <li><strong>English:</strong> The site is temporarily closed until the project is paid for under the PRO plan with the help of caring visitors.</li>
+        <li><strong>Français:</strong> Le site est temporairement fermé jusqu'au paiement du projet dans le cadre du plan PRO avec l'aide de visiteurs bienveillants.</li>
+        <li><strong>Italiano:</strong> Il sito è temporaneamente chiuso fino al pagamento del progetto con il piano PRO grazie all'aiuto dei visitatori interessati.</li>
+        <li><strong>Deutsch:</strong> Die Website ist vorübergehend geschlossen, bis das Projekt mit dem PRO-Plan mithilfe engagierter Besucher bezahlt wird.</li>
+        <li><strong>Polski:</strong> Strona jest tymczasowo zamknięta do czasu opłacenia projektu w planie PRO dzięki pomocy zaangażowanych odwiedzających.</li>
+        <li><strong>Română:</strong> Site-ul este închis temporar până la achitarea proiectului prin planul PRO, cu ajutorul vizitatorilor cărora le pasă.</li>
+        <li><strong>Български:</strong> Сайтът е временно затворен до заплащането на проекта по PRO плана с помощта на загрижени посетители.</li>
+        <li><strong>Svenska:</strong> Webbplatsen är tillfälligt stängd tills projektet har betalats via PRO-planen med hjälp av omtänksamma besökare.</li>
+        <li><strong>Suomi:</strong> Sivusto on väliaikaisesti suljettu, kunnes projekti on maksettu PRO-paketilla välittävien kävijöiden avulla.</li>
+        <li><strong>Magyar:</strong> Az oldal ideiglenesen zárva van, amíg a projekt a PRO csomag keretében, segítőkész látogatók támogatásával ki nem lesz fizetve.</li>
+        <li><strong>Čeština:</strong> Web je dočasně uzavřen, dokud nebude projekt uhrazen v rámci plánu PRO s pomocí návštěvníků, kterým na něm záleží.</li>
+        <li><strong>Slovenčina:</strong> Stránka je dočasne zatvorená, kým nebude projekt uhradený v rámci plánu PRO s pomocou návštevníkov, ktorým na ňom záleží.</li>
+        <li><strong>Dansk:</strong> Webstedet er midlertidigt lukket, indtil projektet er betalt via PRO-planen med hjælp fra engagerede besøgende.</li>
+      </ul>
     </main>
   </body>
 </html>`,
