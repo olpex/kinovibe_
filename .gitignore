@@ -14,3 +14,4 @@ pnpm-debug.log*
 .next-dev-*.log
 
 .vercel
+.env*.local
